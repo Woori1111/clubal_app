@@ -9,10 +9,41 @@
 
 ## 현재 기본 구현
 
-- `lib/main.dart`
+- `lib/features/home/presentation/clubal_home_shell.dart`
   - 클러버 브랜드 홈 스캐폴드
-  - iOS 26.3 감성의 글래스/렌즈 배경
-  - 하단 5탭(홈/매칭/채팅/파티/메뉴) 플로팅 젤리 네비게이션
+  - 메뉴 탭에서 설정 화면 진입
+- `lib/features/settings/presentation/clubal_settings_page.dart`
+  - 구글 로그인/로그아웃
+- `lib/features/navigation/widgets/clubal_jelly_bottom_nav.dart`
+  - 하단 5탭 플로팅 젤리 네비게이션
+
+## 파일 구조
+
+```text
+lib/
+  app/
+    clubal_app.dart
+  core/
+    theme/
+      app_theme.dart
+    widgets/
+      clubal_background.dart
+      glass_card.dart
+      pressed_icon_action_button.dart
+  features/
+    home/presentation/clubal_home_shell.dart
+    settings/presentation/clubal_settings_page.dart
+    navigation/
+      models/nav_tab.dart
+      widgets/clubal_jelly_bottom_nav.dart
+  firebase_options.dart
+  main.dart
+```
+
+## Pretendard 폰트
+
+- 현재 테마는 `Pretendard`를 기본 폰트로 사용하며 weight `400/500/700` 기준으로 스타일링되어 있습니다.
+- 실제 Pretendard 파일을 앱에 번들하려면 `pubspec.yaml`에 폰트 assets를 추가해 주세요.
 
 ## 실행
 
@@ -24,7 +55,7 @@ flutter run
 ## Firebase 연결 준비
 
 - `pubspec.yaml`에 `firebase_core`가 추가되어 있습니다.
-- 현재 `lib/main.dart`에서 앱 시작 시 `Firebase.initializeApp()`을 시도합니다.
+- `lib/main.dart`에서 `DefaultFirebaseOptions.currentPlatform` 기반으로 초기화합니다.
 - 실제 연결을 위해 아래 파일/설정이 필요합니다.
   - iOS: `ios/Runner/GoogleService-Info.plist`
   - Android: `android/app/google-services.json`

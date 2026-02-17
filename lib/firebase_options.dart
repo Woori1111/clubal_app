@@ -63,7 +63,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '302365711592',
     projectId: 'clubal',
     storageBucket: 'clubal.firebasestorage.app',
-    iosClientId: '302365711592-4mehvo94eivr9h67plpfc1nd4nr268uu.apps.googleusercontent.com',
+    iosClientId:
+        '302365711592-4mehvo94eivr9h67plpfc1nd4nr268uu.apps.googleusercontent.com',
     iosBundleId: 'com.example.clubalApp',
   );
 }
