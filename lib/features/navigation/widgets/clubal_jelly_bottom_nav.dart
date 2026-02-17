@@ -26,9 +26,6 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav>
   final GlobalKey _gestureKey = GlobalKey();
   double _fromT = 0.0;
   double _toT = 0.0;
-  double? _dragT;
-  double _dragStretch = 0.0;
-  double _lastDragLocalX = 0.0;
 
   @override
   void initState() {
@@ -45,7 +42,7 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav>
   @override
   void didUpdateWidget(covariant ClubalJellyBottomNav oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_dragT == null && oldWidget.selectedIndex != widget.selectedIndex) {
+    if (oldWidget.selectedIndex != widget.selectedIndex) {
       _fromT = _currentT;
       _toT = _indexToT(widget.selectedIndex);
       _controller.forward(from: 0);
@@ -67,9 +64,6 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav>
   }
 
   double get _currentT {
-    if (_dragT != null) {
-      return _dragT!.clamp(0.0, 1.0);
-    }
     if (!_controller.isAnimating) {
       return _toT;
     }
@@ -77,7 +71,7 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav>
     return lerpDouble(_fromT, _toT, eased) ?? _toT;
   }
 
-  double? _tFromGlobalPosition(Offset globalPosition) {
+  int? _indexFromGlobalPosition(Offset globalPosition) {
     final context = _gestureKey.currentContext;
     if (context == null) {
       return null;
@@ -91,181 +85,127 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav>
     if (width <= 0) {
       return null;
     }
-    return (local.dx / width).clamp(0.0, 1.0);
-  }
-
-  void _startDirectDrag(Offset globalPosition) {
-    final t = _tFromGlobalPosition(globalPosition);
-    if (t == null) {
-      return;
-    }
-    _controller.stop();
-    setState(() {
-      _dragT = t;
-      _dragStretch = 0.0;
-      _lastDragLocalX = t;
-    });
-  }
-
-  void _updateDirectDrag(Offset globalPosition) {
-    final t = _tFromGlobalPosition(globalPosition);
-    if (t == null) {
-      return;
-    }
-    final velocity = (t - _lastDragLocalX).abs();
-    setState(() {
-      _dragT = t;
-      _dragStretch = (velocity * 8).clamp(0.0, 0.12);
-      _lastDragLocalX = t;
-    });
-  }
-
-  void _snapToNearestFromGlobal(Offset globalPosition) {
-    final context = _gestureKey.currentContext;
-    if (context == null) {
-      return;
-    }
-    final box = context.findRenderObject() as RenderBox?;
-    if (box == null || !box.hasSize) {
-      return;
-    }
-    final local = box.globalToLocal(globalPosition);
-    final itemWidth = box.size.width / widget.tabs.length;
+    final itemWidth = width / widget.tabs.length;
     final targetIndex = ((local.dx / itemWidth) - 0.5).round().clamp(
       0,
       widget.tabs.length - 1,
     );
+    return targetIndex;
+  }
 
+  void _animateToIndex(int targetIndex) {
+    _controller.stop();
     _fromT = _currentT;
     _toT = _indexToT(targetIndex);
-    setState(() {
-      _dragT = null;
-      _dragStretch = 0.0;
-    });
-    widget.onChanged(targetIndex);
+    if (targetIndex != widget.selectedIndex) {
+      widget.onChanged(targetIndex);
+    }
     _controller.forward(from: 0);
   }
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).padding.bottom;
-    const navHeight = 74.0;
+    const navHeight = 70.0;
     const sideInset = 8.0;
     const outerRadius = 34.0;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 0, 16, 12 + bottomInset),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),
       child: SizedBox(
         height: navHeight,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final navWidth = constraints.maxWidth - (sideInset * 2);
             final itemWidth = navWidth / widget.tabs.length;
-            final blobWidth = itemWidth * 0.95;
+            final blobWidth = itemWidth * 1.03;
             final blobHeight = 58.0;
             final blobLeft =
                 sideInset + (navWidth * _currentT) - (blobWidth / 2);
             final pulse = math.sin(_controller.value * math.pi);
-            final stretchX = 1 + (pulse * 0.18) + _dragStretch;
-            final squashY = 1 - (pulse * 0.12) - (_dragStretch * 0.6);
+            final blobScale = 1 + (pulse.abs() * 0.22);
+            final navScale = 1 + (pulse.abs() * 0.04);
 
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(outerRadius),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(outerRadius),
-                        border: Border.all(
-                          color: const Color(0x55FFFFFF),
-                          width: 1.2,
-                        ),
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0x4DF3FAFF), Color(0x33A7B7FF)],
+            return Transform.scale(
+              scale: navScale,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(outerRadius),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(outerRadius),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0x26F3FAFF), Color(0x1AA7B7FF)],
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x26FFFFFF),
+                              blurRadius: 16,
+                              spreadRadius: 0.5,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ),
-                ),
-                Positioned(
-                  left: blobLeft,
-                  top: (navHeight - blobHeight) / 2,
-                  child: Transform(
-                    alignment: Alignment.center,
-                    transform: Matrix4.diagonal3Values(stretchX, squashY, 1),
-                    child: _FloatingGlassBlob(
-                      width: blobWidth,
-                      height: blobHeight,
+                  Positioned(
+                    left: blobLeft,
+                    top: (navHeight - blobHeight) / 2,
+                    child: Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.diagonal3Values(blobScale, blobScale, 1),
+                      child: _FloatingGlassBlob(
+                        width: blobWidth,
+                        height: blobHeight,
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
-                  left: sideInset,
-                  right: sideInset,
-                  top: 0,
-                  bottom: 0,
-                  child: IgnorePointer(
-                    child: Row(
-                      children: [
-                        for (int i = 0; i < widget.tabs.length; i++)
-                          Expanded(
-                            child: _NavItemButton(
-                              tab: widget.tabs[i],
-                              selected: i == widget.selectedIndex,
+                  Positioned(
+                    left: sideInset,
+                    right: sideInset,
+                    top: 0,
+                    bottom: 0,
+                    child: IgnorePointer(
+                      child: Row(
+                        children: [
+                          for (int i = 0; i < widget.tabs.length; i++)
+                            Expanded(
+                              child: _NavItemButton(
+                                tab: widget.tabs[i],
+                                selected: i == widget.selectedIndex,
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
-                  key: _gestureKey,
-                  left: sideInset,
-                  right: sideInset,
-                  top: 0,
-                  bottom: 0,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTapDown: (details) =>
-                        _startDirectDrag(details.globalPosition),
-                    onTapUp: (details) =>
-                        _snapToNearestFromGlobal(details.globalPosition),
-                    onTapCancel: () {
-                      setState(() {
-                        _dragT = null;
-                        _dragStretch = 0.0;
-                      });
-                    },
-                    onHorizontalDragStart: (details) =>
-                        _startDirectDrag(details.globalPosition),
-                    onHorizontalDragUpdate: (details) =>
-                        _updateDirectDrag(details.globalPosition),
-                    onHorizontalDragEnd: (_) {
-                      final context = _gestureKey.currentContext;
-                      if (context == null) {
-                        return;
-                      }
-                      final box = context.findRenderObject() as RenderBox?;
-                      if (box == null || !box.hasSize) {
-                        return;
-                      }
-                      final x = (_dragT ?? _currentT) * box.size.width;
-                      _snapToNearestFromGlobal(box.localToGlobal(Offset(x, 0)));
-                    },
-                    onHorizontalDragCancel: () {
-                      setState(() {
-                        _dragT = null;
-                        _dragStretch = 0.0;
-                      });
-                    },
+                  Positioned(
+                    key: _gestureKey,
+                    left: sideInset,
+                    right: sideInset,
+                    top: 0,
+                    bottom: 0,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTapUp: (details) {
+                        final targetIndex = _indexFromGlobalPosition(
+                          details.globalPosition,
+                        );
+                        if (targetIndex == null) {
+                          return;
+                        }
+                        _animateToIndex(targetIndex);
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             );
           },
         ),
