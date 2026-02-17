@@ -5,8 +5,8 @@ class AppTheme {
 
   static ThemeData dark() {
     final base = ThemeData(
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF080A13),
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: const Color(0xFFF4F7FB),
       useMaterial3: true,
       fontFamily: 'Pretendard',
       fontFamilyFallback: const [
@@ -16,7 +16,7 @@ class AppTheme {
       ],
       colorScheme: ColorScheme.fromSeed(
         seedColor: const Color(0xFF8ED9FF),
-        brightness: Brightness.dark,
+        brightness: Brightness.light,
       ),
     );
 
@@ -24,27 +24,31 @@ class AppTheme {
       textTheme: base.textTheme.copyWith(
         headlineSmall: base.textTheme.headlineSmall?.copyWith(
           fontWeight: FontWeight.w700, // Pretendard Bold
-          color: const Color(0xFFE9F6FF),
+          color: const Color(0xFF1D2630),
         ),
         titleLarge: base.textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.w700, // Pretendard Bold
+          color: const Color(0xFF1E2732),
         ),
         titleSmall: base.textTheme.titleSmall?.copyWith(
           fontWeight: FontWeight.w500, // Pretendard Medium
+          color: const Color(0xFF243242),
         ),
         bodyMedium: base.textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.w400, // Pretendard Regular
-          color: const Color(0xCCDEEFFF),
+          color: const Color(0xCC2C3D50),
         ),
         bodySmall: base.textTheme.bodySmall?.copyWith(
           fontWeight: FontWeight.w400, // Pretendard Regular
-          color: const Color(0xCCE2F2FF),
+          color: const Color(0xCC415469),
         ),
         labelLarge: base.textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w700, // Pretendard Bold
+          color: const Color(0xFF1D2630),
         ),
         labelSmall: base.textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w500, // Pretendard Medium
+          color: const Color(0xFF324357),
         ),
       ),
     );

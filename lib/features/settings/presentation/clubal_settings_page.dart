@@ -92,7 +92,7 @@ class _ClubalSettingsPageState extends State<ClubalSettingsPage> {
                       Text(
                         '설정',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: const Color(0xFFE9F6FF),
+                          color: const Color(0xFF1F2B38),
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -224,7 +224,7 @@ class _GoogleAuthButtonState extends State<_GoogleAuthButton> {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: const Color(0xFFF4FBFF),
+                    color: const Color(0xFF1F2B38),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -263,7 +263,7 @@ class _SettingRow extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: const Color(0xFFF3FAFF),
+                  color: const Color(0xFF1E2A38),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -272,7 +272,7 @@ class _SettingRow extends StatelessWidget {
                 subtitle,
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(color: const Color(0xCCE2F2FF)),
+                ).textTheme.bodySmall?.copyWith(color: const Color(0xCC3B4B5E)),
               ),
             ],
           ),

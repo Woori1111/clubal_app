@@ -1,6 +1,7 @@
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
+import 'package:clubal_app/features/matching/presentation/matching_tab_view.dart';
 import 'package:clubal_app/features/navigation/models/nav_tab.dart';
 import 'package:clubal_app/features/navigation/widgets/clubal_jelly_bottom_nav.dart';
 import 'package:clubal_app/features/settings/presentation/clubal_settings_page.dart';
@@ -29,6 +30,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
     final selected = _tabs[_selectedIndex];
 
     return Scaffold(
+      extendBody: true,
       body: Stack(
         children: [
           const ClubalBackground(),
@@ -39,11 +41,19 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
-                    child: Text(
-                      '클러버 Clubal',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
+                    child: selected.label == '매칭'
+                        ? const SizedBox.shrink()
+                        : Text(
+                            '클러버 Clubal',
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
                   ),
+                  if (selected.label == '매칭')
+                    PressedIconActionButton(
+                      icon: Icons.add_rounded,
+                      tooltip: '조각 방 만들기',
+                      onTap: () {},
+                    ),
                   if (selected.label == '메뉴')
                     PressedIconActionButton(
                       icon: Icons.settings_rounded,
@@ -60,42 +70,45 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
               ),
             ),
           ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 86, 24, 120),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 8),
-                  Text(
-                    '동성 친구들과 클럽 테이블비를 1/N으로,\n가볍게 매칭하고 안전하게 함께 가요.',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(height: 1.4),
-                  ),
-                  const Spacer(),
-                  GlassCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          selected.label,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _tabDescription(selected.label),
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: const Color(0xD9EAF6FF)),
-                        ),
-                      ],
+          if (selected.label == '매칭')
+            MatchingTabView(onAutoMatchTap: _noop)
+          else
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 86, 24, 120),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    Text(
+                      '동성 친구들과 클럽 테이블비를 1/N으로,\n가볍게 매칭하고 안전하게 함께 가요.',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(height: 1.4),
                     ),
-                  ),
-                ],
+                    const Spacer(),
+                    GlassCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            selected.label,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _tabDescription(selected.label),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: const Color(0xCC3B4B5E)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
       bottomNavigationBar: ClubalJellyBottomNav(
@@ -122,4 +135,6 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
         return '';
     }
   }
+
+  static void _noop() {}
 }

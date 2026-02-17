@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:clubal_app/features/navigation/models/nav_tab.dart';
@@ -19,164 +20,231 @@ class ClubalJellyBottomNav extends StatefulWidget {
   State<ClubalJellyBottomNav> createState() => _ClubalJellyBottomNavState();
 }
 
-class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
-  int? _interactionIndex;
-  double? _interactionDx;
-  bool _isInteracting = false;
-  double _travelDirection = 0;
+class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  final GlobalKey _gestureKey = GlobalKey();
+  double _fromT = 0.0;
+  double _toT = 0.0;
 
-  int _indexFromLocalDx(double dx, double width) {
-    final clampedDx = dx.clamp(0.0, width - 0.001);
-    final itemWidth = width / widget.tabs.length;
-    final index = (clampedDx / itemWidth).floor();
-    return index.clamp(0, widget.tabs.length - 1);
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 520),
+    )..addListener(() => setState(() {}));
+
+    _toT = _indexToT(widget.selectedIndex);
+    _fromT = _toT;
   }
 
-  double _centerDxForIndex(int index, double itemWidth) {
-    return (itemWidth * index) + (itemWidth / 2);
-  }
-
-  void _startInteraction(int index, double itemWidth) {
-    final previous = _interactionIndex ?? widget.selectedIndex;
-    final direction = (index - previous).toDouble().sign;
-    setState(() {
-      _interactionIndex = index;
-      _interactionDx = _centerDxForIndex(index, itemWidth);
-      _isInteracting = true;
-      _travelDirection = direction;
-    });
-    widget.onChanged(index);
-  }
-
-  void _updateInteractionByDx(double dx, double width) {
-    final index = _indexFromLocalDx(dx, width);
-    if (_interactionIndex == index && _isInteracting) {
-      return;
+  @override
+  void didUpdateWidget(covariant ClubalJellyBottomNav oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedIndex != widget.selectedIndex) {
+      _fromT = _currentT;
+      _toT = _indexToT(widget.selectedIndex);
+      _controller.forward(from: 0);
     }
-    final previous = _interactionIndex ?? widget.selectedIndex;
-    final direction = (index - previous).toDouble().sign;
-    setState(() {
-      _interactionIndex = index;
-      _interactionDx = dx.clamp(0.0, width);
-      _isInteracting = true;
-      _travelDirection = direction;
-    });
-    widget.onChanged(index);
   }
 
-  void _endInteraction() {
-    setState(() {
-      _isInteracting = false;
-      _interactionIndex = null;
-      _interactionDx = null;
-      _travelDirection = 0;
-    });
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  double _indexToT(int index) {
+    if (widget.tabs.length <= 1) {
+      return 0.5;
+    }
+    // Map to each tab's center position.
+    return (index + 0.5) / widget.tabs.length;
+  }
+
+  double get _currentT {
+    if (!_controller.isAnimating) {
+      return _toT;
+    }
+    final eased = Curves.easeOutCubic.transform(_controller.value);
+    return lerpDouble(_fromT, _toT, eased) ?? _toT;
+  }
+
+  int? _indexFromGlobalPosition(Offset globalPosition) {
+    final context = _gestureKey.currentContext;
+    if (context == null) {
+      return null;
+    }
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) {
+      return null;
+    }
+    final local = box.globalToLocal(globalPosition);
+    final width = box.size.width;
+    if (width <= 0) {
+      return null;
+    }
+    final itemWidth = width / widget.tabs.length;
+    final targetIndex = ((local.dx / itemWidth) - 0.5).round().clamp(
+      0,
+      widget.tabs.length - 1,
+    );
+    return targetIndex;
+  }
+
+  void _animateToIndex(int targetIndex) {
+    _controller.stop();
+    _fromT = _currentT;
+    _toT = _indexToT(targetIndex);
+    if (targetIndex != widget.selectedIndex) {
+      widget.onChanged(targetIndex);
+    }
+    _controller.forward(from: 0);
   }
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).padding.bottom;
-    const sidePadding = 8.0;
-    final activeIndex = _interactionIndex ?? widget.selectedIndex;
+    const navHeight = 70.0;
+    const sideInset = 8.0;
+    const outerRadius = 34.0;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 0, 16, 12 + bottomInset),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(34),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-          child: Container(
-            height: 74,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(34),
-              border: Border.all(color: const Color(0x55FFFFFF), width: 1.2),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0x4DF3FAFF), Color(0x33A7B7FF)],
-              ),
-            ),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final navWidth = constraints.maxWidth - (sidePadding * 2);
-                final itemWidth = navWidth / widget.tabs.length;
-                final lensWidth = itemWidth * 0.96;
-                final restingLensLeft =
-                    sidePadding +
-                    (itemWidth * activeIndex) +
-                    (itemWidth - lensWidth) / 2;
-                final dragLensLeft =
-                    sidePadding +
-                    ((_interactionDx ??
-                                _centerDxForIndex(activeIndex, itemWidth)) -
-                            (lensWidth / 2))
-                        .clamp(0.0, navWidth - lensWidth);
-                final lensLeft = _isInteracting
-                    ? dragLensLeft
-                    : restingLensLeft;
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),
+      child: SizedBox(
+        height: navHeight,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final navWidth = constraints.maxWidth - (sideInset * 2);
+            final itemWidth = navWidth / widget.tabs.length;
+            final blobWidth = itemWidth * 1.03;
+            final blobHeight = 58.0;
+            final blobLeft =
+                sideInset + (navWidth * _currentT) - (blobWidth / 2);
+            final pulse = math.sin(_controller.value * math.pi);
+            final blobScale = 1 + (pulse.abs() * 0.22);
+            final navScale = 1 + (pulse.abs() * 0.04);
 
-                return Stack(
-                  children: [
-                    AnimatedPositioned(
-                      duration: _isInteracting
-                          ? Duration.zero
-                          : const Duration(milliseconds: 520),
-                      curve: _isInteracting ? Curves.linear : Curves.elasticOut,
-                      left: lensLeft,
-                      top: 6,
-                      child: AnimatedScale(
-                        duration: const Duration(milliseconds: 160),
-                        curve: Curves.easeOutCubic,
-                        scale: _isInteracting ? 1.08 : 1.0,
-                        child: _NavLens(
-                          width: lensWidth,
-                          isInteracting: _isInteracting,
-                          travelDirection: _travelDirection,
-                        ),
-                      ),
-                    ),
-                    Positioned.fill(
-                      left: sidePadding,
-                      right: sidePadding,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onHorizontalDragStart: (details) =>
-                            _updateInteractionByDx(
-                              details.localPosition.dx,
-                              navWidth,
+            return Transform.scale(
+              scale: navScale,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(outerRadius),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(outerRadius),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0x26F3FAFF), Color(0x1AA7B7FF)],
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x26FFFFFF),
+                              blurRadius: 16,
+                              spreadRadius: 0.5,
+                              offset: Offset(0, 2),
                             ),
-                        onHorizontalDragUpdate: (details) =>
-                            _updateInteractionByDx(
-                              details.localPosition.dx,
-                              navWidth,
-                            ),
-                        onHorizontalDragEnd: (_) => _endInteraction(),
-                        onHorizontalDragCancel: _endInteraction,
-                        child: Row(
-                          children: [
-                            for (int i = 0; i < widget.tabs.length; i++)
-                              Expanded(
-                                child: _NavItemButton(
-                                  tab: widget.tabs[i],
-                                  selected: i == widget.selectedIndex,
-                                  onTapDown: () =>
-                                      _startInteraction(i, itemWidth),
-                                  onTap: () {
-                                    widget.onChanged(i);
-                                    _endInteraction();
-                                  },
-                                  onTapCancel: _endInteraction,
-                                  onTapUp: _endInteraction,
-                                ),
-                              ),
                           ],
                         ),
                       ),
                     ),
-                  ],
-                );
-              },
+                  ),
+                  Positioned(
+                    left: blobLeft,
+                    top: (navHeight - blobHeight) / 2,
+                    child: Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.diagonal3Values(blobScale, blobScale, 1),
+                      child: _FloatingGlassBlob(
+                        width: blobWidth,
+                        height: blobHeight,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: sideInset,
+                    right: sideInset,
+                    top: 0,
+                    bottom: 0,
+                    child: IgnorePointer(
+                      child: Row(
+                        children: [
+                          for (int i = 0; i < widget.tabs.length; i++)
+                            Expanded(
+                              child: _NavItemButton(
+                                tab: widget.tabs[i],
+                                selected: i == widget.selectedIndex,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    key: _gestureKey,
+                    left: sideInset,
+                    right: sideInset,
+                    top: 0,
+                    bottom: 0,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTapUp: (details) {
+                        final targetIndex = _indexFromGlobalPosition(
+                          details.globalPosition,
+                        );
+                        if (targetIndex == null) {
+                          return;
+                        }
+                        _animateToIndex(targetIndex);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _FloatingGlassBlob extends StatelessWidget {
+  const _FloatingGlassBlob({required this.width, required this.height});
+
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(height / 2),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(height / 2),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0x99FFFFFF), Color(0x55FFFFFF)],
             ),
+            border: Border.all(color: const Color(0x99FFFFFF), width: 1),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x2A000000),
+                blurRadius: 16,
+                spreadRadius: -6,
+                offset: Offset(0, 8),
+              ),
+            ],
           ),
         ),
       ),
@@ -185,188 +253,30 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
 }
 
 class _NavItemButton extends StatelessWidget {
-  const _NavItemButton({
-    required this.tab,
-    required this.selected,
-    required this.onTapDown,
-    required this.onTap,
-    required this.onTapUp,
-    required this.onTapCancel,
-  });
+  const _NavItemButton({required this.tab, required this.selected});
 
   final NavTab tab;
   final bool selected;
-  final VoidCallback onTapDown;
-  final VoidCallback onTap;
-  final VoidCallback onTapUp;
-  final VoidCallback onTapCancel;
 
   @override
   Widget build(BuildContext context) {
     final fgColor = selected
-        ? const Color(0xFFF5FCFF)
-        : const Color(0xB3DCEAFF);
-    return Material(
-      color: Colors.transparent,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => onTapDown(),
-        onTapUp: (_) => onTapUp(),
-        onTapCancel: onTapCancel,
-        onTap: onTap,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(tab.icon, color: fgColor, size: 21),
-              const SizedBox(height: 4),
-              SizedBox(
-                height: 14,
-                child: Center(
-                  child: Text(
-                    tab.label,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: fgColor,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                      height: 1.0,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavLens extends StatelessWidget {
-  const _NavLens({
-    required this.width,
-    required this.isInteracting,
-    required this.travelDirection,
-  });
-
-  final double width;
-  final bool isInteracting;
-  final double travelDirection;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!isInteracting) {
-      return Container(
-        width: width,
-        height: 60,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF9AE1FF), Color(0xFF69C6F6)],
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x5522B8FF),
-              blurRadius: 16,
-              spreadRadius: -8,
-              offset: Offset(0, 7),
+        ? const Color(0xFF243244)
+        : const Color(0xFF6C7786);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(tab.icon, color: fgColor, size: 21),
+          const SizedBox(height: 4),
+          Text(
+            tab.label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: fgColor,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             ),
-          ],
-        ),
-      );
-    }
-
-    final leadingBoost = travelDirection < 0 ? 1.0 : 0.56;
-    final trailingBoost = travelDirection > 0 ? 1.0 : 0.56;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(30),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          width: width,
-          height: 60,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            gradient: const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0x35FFFFFF), Color(0x10FFFFFF)],
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x30000000),
-                blurRadius: 18,
-                spreadRadius: -8,
-                offset: Offset(0, 8),
-              ),
-            ],
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                top: 2,
-                left: width * 0.18,
-                right: width * 0.18,
-                child: Container(
-                  height: 1.2,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(99),
-                    gradient: LinearGradient(
-                      colors: [
-                        const Color(0x00FFFFFF),
-                        Colors.white.withValues(alpha: 0.52),
-                        const Color(0x00FFFFFF),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: -8,
-                top: 8,
-                child: _LensEdgeGlow(size: 42, strength: leadingBoost),
-              ),
-              Positioned(
-                right: -8,
-                top: 8,
-                child: _LensEdgeGlow(size: 42, strength: trailingBoost),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LensEdgeGlow extends StatelessWidget {
-  const _LensEdgeGlow({required this.size, required this.strength});
-
-  final double size;
-  final double strength;
-
-  @override
-  Widget build(BuildContext context) {
-    final alpha = 0.42 * strength;
-    final coreAlpha = 0.34 * strength;
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            Colors.white.withValues(alpha: coreAlpha),
-            const Color(0x66DDF6FF).withValues(alpha: alpha),
-            Colors.transparent,
-          ],
-          stops: const [0.12, 0.52, 1.0],
-        ),
+        ],
       ),
     );
   }
