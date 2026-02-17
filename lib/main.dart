@@ -186,6 +186,7 @@ class ClubalJellyBottomNav extends StatefulWidget {
 class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
   int? _interactionIndex;
   bool _isInteracting = false;
+  double _travelDirection = 0; // -1: left, 1: right
 
   int _indexFromLocalDx(double dx, double width) {
     final clampedDx = dx.clamp(0.0, width - 0.001);
@@ -195,9 +196,12 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
   }
 
   void _startInteraction(int index) {
+    final previous = _interactionIndex ?? widget.selectedIndex;
+    final direction = (index - previous).toDouble().sign;
     setState(() {
       _interactionIndex = index;
       _isInteracting = true;
+      _travelDirection = direction;
     });
     widget.onChanged(index);
   }
@@ -207,9 +211,12 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
     if (_interactionIndex == index && _isInteracting) {
       return;
     }
+    final previous = _interactionIndex ?? widget.selectedIndex;
+    final direction = (index - previous).toDouble().sign;
     setState(() {
       _interactionIndex = index;
       _isInteracting = true;
+      _travelDirection = direction;
     });
     widget.onChanged(index);
   }
@@ -218,6 +225,7 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
     setState(() {
       _isInteracting = false;
       _interactionIndex = null;
+      _travelDirection = 0;
     });
   }
 
@@ -268,6 +276,7 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
                         child: _NavLens(
                           width: lensWidth,
                           isInteracting: _isInteracting,
+                          travelDirection: _travelDirection,
                         ),
                       ),
                     ),
@@ -380,41 +389,146 @@ class _NavItemButton extends StatelessWidget {
 }
 
 class _NavLens extends StatelessWidget {
-  const _NavLens({required this.width, required this.isInteracting});
+  const _NavLens({
+    required this.width,
+    required this.isInteracting,
+    required this.travelDirection,
+  });
 
   final double width;
+  final bool isInteracting;
+  final double travelDirection;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isInteracting) {
+      return Container(
+        width: width,
+        height: 60,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF9AE1FF), Color(0xFF69C6F6)],
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x5522B8FF),
+              blurRadius: 16,
+              spreadRadius: -8,
+              offset: Offset(0, 7),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final leadingBoost = travelDirection < 0 ? 1.0 : 0.56;
+    final trailingBoost = travelDirection > 0 ? 1.0 : 0.56;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(30),
+      child: BackdropFilter(
+        // 인터랙션 중에만 뒤 배경을 살짝 굴절/확산시키는 느낌.
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          width: width,
+          height: 60,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            // 외곽선 없이 중심은 투명에 가깝게 유지.
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0x35FFFFFF), Color(0x10FFFFFF)],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0x30000000),
+                blurRadius: 18,
+                spreadRadius: -8,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              // 상단에만 아주 얇은 광택.
+              Positioned(
+                top: 2,
+                left: width * 0.18,
+                right: width * 0.18,
+                child: Container(
+                  height: 1.2,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(99),
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0x00FFFFFF),
+                        Colors.white.withValues(alpha: 0.52),
+                        const Color(0x00FFFFFF),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // 왼쪽 끝 돋보기 하이라이트 (이동 방향에 따라 가변 강화).
+              Positioned(
+                left: -8,
+                top: 8,
+                child: _LensEdgeGlow(
+                  size: 42,
+                  strength: leadingBoost,
+                  isInteracting: true,
+                ),
+              ),
+              // 오른쪽 끝 돋보기 하이라이트 (이동 방향에 따라 가변 강화).
+              Positioned(
+                right: -8,
+                top: 8,
+                child: _LensEdgeGlow(
+                  size: 42,
+                  strength: trailingBoost,
+                  isInteracting: true,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LensEdgeGlow extends StatelessWidget {
+  const _LensEdgeGlow({
+    required this.size,
+    required this.strength,
+    required this.isInteracting,
+  });
+
+  final double size;
+  final double strength;
   final bool isInteracting;
 
   @override
   Widget build(BuildContext context) {
+    final alpha = (isInteracting ? 0.42 : 0.24) * strength;
+    final coreAlpha = (isInteracting ? 0.34 : 0.18) * strength;
     return Container(
-      width: width,
-      height: 60,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(
-          color: isInteracting
-              ? const Color(0xD2FFFFFF)
-              : const Color(0x8AFFFFFF),
-          width: isInteracting ? 1.8 : 1.1,
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            Colors.white.withValues(alpha: coreAlpha),
+            const Color(0x66DDF6FF).withValues(alpha: alpha),
+            Colors.transparent,
+          ],
+          stops: const [0.12, 0.52, 1.0],
         ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isInteracting
-              ? const [Color(0xC4FFFFFF), Color(0x5AD2F2FF)]
-              : const [Color(0xA0FFFFFF), Color(0x38D2F2FF)],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isInteracting
-                ? const Color(0xB322B8FF)
-                : const Color(0x8022B8FF),
-            blurRadius: isInteracting ? 24 : 20,
-            spreadRadius: -7,
-            offset: Offset(0, 8),
-          ),
-        ],
       ),
     );
   }
