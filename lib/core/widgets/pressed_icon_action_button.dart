@@ -52,18 +52,18 @@ class _PressedIconActionButtonState extends State<PressedIconActionButton> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: const Color(0x66FFFFFF),
+                      color: const Color(0x33445566),
                       width: 1,
                     ),
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0x4FFFFFFF), Color(0x269EBCFF)],
+                      colors: [Color(0xF6FFFFFF), Color(0xFFE9F0F7)],
                     ),
                   ),
                   child: Icon(
                     widget.icon,
-                    color: const Color(0xFFE9F6FF),
+                    color: const Color(0xFF2A394A),
                     size: 22,
                   ),
                 ),

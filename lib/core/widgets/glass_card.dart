@@ -18,11 +18,11 @@ class GlassCard extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: const Color(0x55FFFFFF), width: 1),
+            border: Border.all(color: const Color(0x33415366), width: 1),
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0x3AFFFFFF), Color(0x1F9EBCFF)],
+              colors: [Color(0xEEFFFFFF), Color(0xD9EEF3FA)],
             ),
           ),
           child: child,

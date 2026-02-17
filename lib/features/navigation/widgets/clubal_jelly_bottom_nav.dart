@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:clubal_app/features/navigation/models/nav_tab.dart';
@@ -22,8 +23,16 @@ class ClubalJellyBottomNav extends StatefulWidget {
 class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
   int? _interactionIndex;
   double? _interactionDx;
-  bool _isInteracting = false;
   double _travelDirection = 0;
+  double _motion = 0;
+  double _lastDx = 0;
+  int _lastMicros = 0;
+  bool _isInteracting = false;
+  bool _isTransitioning = false;
+  bool _releasePop = false;
+
+  Timer? _transitionTimer;
+  Timer? _releaseTimer;
 
   int _indexFromLocalDx(double dx, double width) {
     final clampedDx = dx.clamp(0.0, width - 0.001);
@@ -36,35 +45,91 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
     return (itemWidth * index) + (itemWidth / 2);
   }
 
-  void _startInteraction(int index, double itemWidth) {
-    final previous = _interactionIndex ?? widget.selectedIndex;
-    final direction = (index - previous).toDouble().sign;
+  void _startPress(double itemWidth) {
+    _transitionTimer?.cancel();
+    final center = _centerDxForIndex(widget.selectedIndex, itemWidth);
     setState(() {
-      _interactionIndex = index;
-      _interactionDx = _centerDxForIndex(index, itemWidth);
+      _interactionIndex = widget.selectedIndex;
+      _interactionDx = center;
+      _travelDirection = 0;
+      _motion = 0;
+      _lastDx = center;
+      _lastMicros = DateTime.now().microsecondsSinceEpoch;
       _isInteracting = true;
-      _travelDirection = direction;
+      _isTransitioning = false;
     });
-    widget.onChanged(index);
   }
 
-  void _updateInteractionByDx(double dx, double width) {
-    final index = _indexFromLocalDx(dx, width);
-    if (_interactionIndex == index && _isInteracting) {
+  void _startOrUpdateDrag(double dx, double width) {
+    final nextIndex = _indexFromLocalDx(dx, width);
+    final previous = _interactionIndex ?? widget.selectedIndex;
+    final direction = (nextIndex - previous).toDouble().sign;
+    final nowMicros = DateTime.now().microsecondsSinceEpoch;
+    final dtMicros = (nowMicros - _lastMicros).clamp(1, 200000);
+    final speed = (dx - _lastDx).abs() / (dtMicros / 1000); // px/ms
+    final targetMotion = (speed / 1.8).clamp(0.0, 1.0);
+
+    setState(() {
+      _interactionIndex = nextIndex;
+      _interactionDx = dx.clamp(0.0, width);
+      _travelDirection = direction;
+      _motion = lerpDouble(_motion, targetMotion, 0.42) ?? targetMotion;
+      _lastDx = dx;
+      _lastMicros = nowMicros;
+      _isInteracting = true;
+    });
+  }
+
+  void _startTransitionIfNeeded(int nextIndex) {
+    if (nextIndex == widget.selectedIndex) {
       return;
     }
-    final previous = _interactionIndex ?? widget.selectedIndex;
-    final direction = (index - previous).toDouble().sign;
-    setState(() {
-      _interactionIndex = index;
-      _interactionDx = dx.clamp(0.0, width);
-      _isInteracting = true;
-      _travelDirection = direction;
+    _transitionTimer?.cancel();
+    setState(() => _isTransitioning = true);
+    _transitionTimer = Timer(const Duration(milliseconds: 560), () {
+      if (mounted) {
+        setState(() => _isTransitioning = false);
+      }
     });
-    widget.onChanged(index);
   }
 
-  void _endInteraction() {
+  void _triggerReleaseJelly() {
+    _releaseTimer?.cancel();
+    setState(() => _releasePop = true);
+    _releaseTimer = Timer(const Duration(milliseconds: 150), () {
+      if (mounted) {
+        setState(() {
+          _releasePop = false;
+          _motion = 0;
+        });
+      }
+    });
+  }
+
+  void _endInteraction({bool shouldCommit = true}) {
+    final commitIndex = _interactionIndex ?? widget.selectedIndex;
+    if (shouldCommit) {
+      _startTransitionIfNeeded(commitIndex);
+      if (commitIndex != widget.selectedIndex) {
+        widget.onChanged(commitIndex);
+      }
+    }
+    _triggerReleaseJelly();
+    setState(() {
+      _isInteracting = false;
+      _interactionIndex = null;
+      _interactionDx = null;
+      _travelDirection = 0;
+    });
+  }
+
+  void _commitTap(TapUpDetails details, double navWidth) {
+    final index = _indexFromLocalDx(details.localPosition.dx, navWidth);
+    _startTransitionIfNeeded(index);
+    if (index != widget.selectedIndex) {
+      widget.onChanged(index);
+    }
+    _triggerReleaseJelly();
     setState(() {
       _isInteracting = false;
       _interactionIndex = null;
@@ -74,110 +139,126 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
   }
 
   @override
+  void dispose() {
+    _transitionTimer?.cancel();
+    _releaseTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    const sidePadding = 8.0;
+    const innerSidePadding = 8.0;
+    const barHeight = 74.0;
     final activeIndex = _interactionIndex ?? widget.selectedIndex;
+    final transparent = _isInteracting || _isTransitioning;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 0, 16, 12 + bottomInset),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(34),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-          child: Container(
-            height: 74,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(34),
-              border: Border.all(color: const Color(0x55FFFFFF), width: 1.2),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0x4DF3FAFF), Color(0x33A7B7FF)],
-              ),
-            ),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final navWidth = constraints.maxWidth - (sidePadding * 2);
-                final itemWidth = navWidth / widget.tabs.length;
-                final lensWidth = itemWidth * 0.96;
-                final restingLensLeft =
-                    sidePadding +
-                    (itemWidth * activeIndex) +
-                    (itemWidth - lensWidth) / 2;
-                final dragLensLeft =
-                    sidePadding +
-                    ((_interactionDx ??
-                                _centerDxForIndex(activeIndex, itemWidth)) -
-                            (lensWidth / 2))
-                        .clamp(0.0, navWidth - lensWidth);
-                final lensLeft = _isInteracting
-                    ? dragLensLeft
-                    : restingLensLeft;
+      child: SizedBox(
+        height: 96,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final navWidth = constraints.maxWidth - (innerSidePadding * 2);
+            final itemWidth = navWidth / widget.tabs.length;
+            final lensWidth = itemWidth * 0.96;
 
-                return Stack(
-                  children: [
-                    AnimatedPositioned(
-                      duration: _isInteracting
-                          ? Duration.zero
-                          : const Duration(milliseconds: 520),
-                      curve: _isInteracting ? Curves.linear : Curves.elasticOut,
-                      left: lensLeft,
-                      top: 6,
-                      child: AnimatedScale(
-                        duration: const Duration(milliseconds: 160),
-                        curve: Curves.easeOutCubic,
-                        scale: _isInteracting ? 1.08 : 1.0,
-                        child: _NavLens(
-                          width: lensWidth,
-                          isInteracting: _isInteracting,
-                          travelDirection: _travelDirection,
-                        ),
+            final centerDx =
+                _interactionDx ?? _centerDxForIndex(activeIndex, itemWidth);
+            final lensLeft =
+                innerSidePadding +
+                (centerDx - (lensWidth / 2)).clamp(0.0, navWidth - lensWidth);
+
+            final lensHeight = transparent ? 72.0 : 58.0;
+            final lensBottom = ((barHeight - lensHeight) / 2);
+            final stretchX = transparent
+                ? (1.0 + (0.18 * _motion) + (_releasePop ? 0.10 : 0.0))
+                : 1.0;
+            final squashY = transparent
+                ? (1.0 - (0.14 * _motion) - (_releasePop ? 0.08 : 0.0))
+                : 1.0;
+
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    height: barHeight,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(34),
+                      border: Border.all(
+                        color: const Color(0x55FFFFFF),
+                        width: 1.2,
+                      ),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0x4DF3FAFF), Color(0x33A7B7FF)],
                       ),
                     ),
-                    Positioned.fill(
-                      left: sidePadding,
-                      right: sidePadding,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onHorizontalDragStart: (details) =>
-                            _updateInteractionByDx(
-                              details.localPosition.dx,
-                              navWidth,
-                            ),
-                        onHorizontalDragUpdate: (details) =>
-                            _updateInteractionByDx(
-                              details.localPosition.dx,
-                              navWidth,
-                            ),
-                        onHorizontalDragEnd: (_) => _endInteraction(),
-                        onHorizontalDragCancel: _endInteraction,
-                        child: Row(
-                          children: [
-                            for (int i = 0; i < widget.tabs.length; i++)
-                              Expanded(
-                                child: _NavItemButton(
-                                  tab: widget.tabs[i],
-                                  selected: i == widget.selectedIndex,
-                                  onTapDown: () =>
-                                      _startInteraction(i, itemWidth),
-                                  onTap: () {
-                                    widget.onChanged(i);
-                                    _endInteraction();
-                                  },
-                                  onTapCancel: _endInteraction,
-                                  onTapUp: _endInteraction,
-                                ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: innerSidePadding,
+                      ),
+                      child: Row(
+                        children: [
+                          for (int i = 0; i < widget.tabs.length; i++)
+                            Expanded(
+                              child: _NavItemButton(
+                                tab: widget.tabs[i],
+                                selected: i == widget.selectedIndex,
                               ),
-                          ],
-                        ),
+                            ),
+                        ],
                       ),
                     ),
-                  ],
-                );
-              },
-            ),
-          ),
+                  ),
+                ),
+                AnimatedPositioned(
+                  duration: _isInteracting
+                      ? Duration.zero
+                      : const Duration(milliseconds: 560),
+                  curve: _isInteracting ? Curves.linear : Curves.elasticOut,
+                  left: lensLeft,
+                  bottom: lensBottom,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    curve: Curves.easeOutBack,
+                    transform: Matrix4.diagonal3Values(stretchX, squashY, 1),
+                    alignment: Alignment.center,
+                    child: _NavLens(
+                      width: lensWidth,
+                      height: lensHeight,
+                      isTransparent: transparent,
+                      travelDirection: _travelDirection,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: innerSidePadding,
+                  right: innerSidePadding,
+                  bottom: 0,
+                  height: barHeight,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTapDown: (_) => _startPress(itemWidth),
+                    onTapUp: (details) => _commitTap(details, navWidth),
+                    onTapCancel: () => _endInteraction(shouldCommit: false),
+                    onPanDown: (_) => _startPress(itemWidth),
+                    onPanStart: (details) =>
+                        _startOrUpdateDrag(details.localPosition.dx, navWidth),
+                    onPanUpdate: (details) =>
+                        _startOrUpdateDrag(details.localPosition.dx, navWidth),
+                    onPanEnd: (_) => _endInteraction(),
+                    onPanCancel: () => _endInteraction(),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -185,60 +266,37 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
 }
 
 class _NavItemButton extends StatelessWidget {
-  const _NavItemButton({
-    required this.tab,
-    required this.selected,
-    required this.onTapDown,
-    required this.onTap,
-    required this.onTapUp,
-    required this.onTapCancel,
-  });
+  const _NavItemButton({required this.tab, required this.selected});
 
   final NavTab tab;
   final bool selected;
-  final VoidCallback onTapDown;
-  final VoidCallback onTap;
-  final VoidCallback onTapUp;
-  final VoidCallback onTapCancel;
 
   @override
   Widget build(BuildContext context) {
     final fgColor = selected
-        ? const Color(0xFFF5FCFF)
-        : const Color(0xB3DCEAFF);
-    return Material(
-      color: Colors.transparent,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => onTapDown(),
-        onTapUp: (_) => onTapUp(),
-        onTapCancel: onTapCancel,
-        onTap: onTap,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(tab.icon, color: fgColor, size: 21),
-              const SizedBox(height: 4),
-              SizedBox(
-                height: 14,
-                child: Center(
-                  child: Text(
-                    tab.label,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: fgColor,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                      height: 1.0,
-                    ),
-                  ),
+        ? const Color(0xFF243244)
+        : const Color(0xFF6C7786);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(tab.icon, color: fgColor, size: 21),
+          const SizedBox(height: 4),
+          SizedBox(
+            height: 14,
+            child: Center(
+              child: Text(
+                tab.label,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: fgColor,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  height: 1.0,
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -247,96 +305,71 @@ class _NavItemButton extends StatelessWidget {
 class _NavLens extends StatelessWidget {
   const _NavLens({
     required this.width,
-    required this.isInteracting,
+    required this.height,
+    required this.isTransparent,
     required this.travelDirection,
   });
 
   final double width;
-  final bool isInteracting;
+  final double height;
+  final bool isTransparent;
   final double travelDirection;
 
   @override
   Widget build(BuildContext context) {
-    if (!isInteracting) {
+    if (!isTransparent) {
       return Container(
         width: width,
-        height: 60,
+        height: height,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(32),
           gradient: const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF9AE1FF), Color(0xFF69C6F6)],
+            colors: [Color(0xFFF4F7FB), Color(0xFFE8EDF4)],
           ),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x5522B8FF),
-              blurRadius: 16,
+              color: Color(0x14000000),
+              blurRadius: 10,
               spreadRadius: -8,
-              offset: Offset(0, 7),
+              offset: Offset(0, 5),
             ),
           ],
         ),
       );
     }
 
-    final leadingBoost = travelDirection < 0 ? 1.0 : 0.56;
-    final trailingBoost = travelDirection > 0 ? 1.0 : 0.56;
-
     return ClipRRect(
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(34),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          width: width,
-          height: 60,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            gradient: const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0x35FFFFFF), Color(0x10FFFFFF)],
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x30000000),
-                blurRadius: 18,
-                spreadRadius: -8,
-                offset: Offset(0, 8),
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: CustomPaint(
+          painter: _IridescentRingPainter(turn: travelDirection),
+          child: Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(34),
+              gradient: const RadialGradient(
+                center: Alignment.center,
+                radius: 1.0,
+                colors: [
+                  Color(0x00000000),
+                  Color(0x00000000),
+                  Color(0x2EFFFFFF),
+                ],
+                stops: [0.0, 0.78, 1.0],
               ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                top: 2,
-                left: width * 0.18,
-                right: width * 0.18,
-                child: Container(
-                  height: 1.2,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(99),
-                    gradient: LinearGradient(
-                      colors: [
-                        const Color(0x00FFFFFF),
-                        Colors.white.withValues(alpha: 0.52),
-                        const Color(0x00FFFFFF),
-                      ],
-                    ),
-                  ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x12000000),
+                  blurRadius: 14,
+                  spreadRadius: -8,
+                  offset: Offset(0, 6),
                 ),
-              ),
-              Positioned(
-                left: -8,
-                top: 8,
-                child: _LensEdgeGlow(size: 42, strength: leadingBoost),
-              ),
-              Positioned(
-                right: -8,
-                top: 8,
-                child: _LensEdgeGlow(size: 42, strength: trailingBoost),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -344,30 +377,38 @@ class _NavLens extends StatelessWidget {
   }
 }
 
-class _LensEdgeGlow extends StatelessWidget {
-  const _LensEdgeGlow({required this.size, required this.strength});
+class _IridescentRingPainter extends CustomPainter {
+  const _IridescentRingPainter({required this.turn});
 
-  final double size;
-  final double strength;
+  final double turn;
 
   @override
-  Widget build(BuildContext context) {
-    final alpha = 0.42 * strength;
-    final coreAlpha = 0.34 * strength;
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            Colors.white.withValues(alpha: coreAlpha),
-            const Color(0x66DDF6FF).withValues(alpha: alpha),
-            Colors.transparent,
-          ],
-          stops: const [0.12, 0.52, 1.0],
-        ),
-      ),
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(
+      rect.deflate(1.1),
+      const Radius.circular(34),
     );
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4
+      ..shader = SweepGradient(
+        transform: GradientRotation(turn * 0.35),
+        colors: const [
+          Color(0x66FF9DD4),
+          Color(0x66A5CBFF),
+          Color(0x66C6FFC7),
+          Color(0x66FFD7A2),
+          Color(0x66FF9DD4),
+        ],
+      ).createShader(rect);
+
+    canvas.drawRRect(rrect, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _IridescentRingPainter oldDelegate) {
+    return oldDelegate.turn != turn;
   }
 }

@@ -87,7 +87,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
                         Text(
                           _tabDescription(selected.label),
                           style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: const Color(0xD9EAF6FF)),
+                              ?.copyWith(color: const Color(0xCC3B4B5E)),
                         ),
                       ],
                     ),
