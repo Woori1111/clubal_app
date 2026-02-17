@@ -93,9 +93,9 @@ class _ClubalSettingsPageState extends State<ClubalSettingsPage> {
                       Text(
                         '설정',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: const Color(0xFFE9F6FF),
-                          fontWeight: FontWeight.w700,
-                        ),
+                              color: const Color(0xFFE9F6FF),
+                              fontWeight: FontWeight.w700,
+                            ),
                       ),
                     ],
                   ),
@@ -188,8 +188,8 @@ class _GoogleAuthButtonState extends State<_GoogleAuthButton> {
     final label = widget.busy
         ? '처리 중...'
         : widget.isLoggedIn
-        ? 'Google 로그아웃'
-        : 'Google로 로그인';
+            ? 'Google 로그아웃'
+            : 'Google로 로그인';
 
     return GestureDetector(
       onTapDown: widget.busy ? null : (_) => setState(() => _pressed = true),
@@ -233,9 +233,9 @@ class _GoogleAuthButtonState extends State<_GoogleAuthButton> {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: const Color(0xFFF4FBFF),
-                    fontWeight: FontWeight.w700,
-                  ),
+                        color: const Color(0xFFF4FBFF),
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
               ],
             ),
