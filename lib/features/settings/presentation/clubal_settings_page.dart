@@ -1,6 +1,7 @@
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
+import 'package:clubal_app/features/settings/presentation/notification_settings_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -109,9 +110,17 @@ class _ClubalSettingsPageState extends State<ClubalSettingsPage> {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const _SettingRow(
+                            _SettingRow(
                               title: '알림 설정',
                               subtitle: '매칭/채팅 알림 관리',
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) =>
+                                        const NotificationSettingsPage(),
+                                  ),
+                                );
+                              },
                             ),
                             const SizedBox(height: 14),
                             _SettingRow(
@@ -238,14 +247,21 @@ class _GoogleAuthButtonState extends State<_GoogleAuthButton> {
 }
 
 class _SettingRow extends StatelessWidget {
-  const _SettingRow({required this.title, required this.subtitle});
+  const _SettingRow({
+    required this.title,
+    required this.subtitle,
+    this.onTap,
+  });
 
   final String title;
   final String subtitle;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final isTappable = onTap != null;
+
+    Widget content = Row(
       children: [
         Container(
           width: 8,
@@ -263,21 +279,44 @@ class _SettingRow extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: const Color(0xFFF3FAFF),
-                  fontWeight: FontWeight.w600,
-                ),
+                      color: const Color(0xFFF3FAFF),
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(color: const Color(0xCCE2F2FF)),
+                ).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xCCE2F2FF),
+                    ),
               ),
             ],
           ),
         ),
+        if (isTappable) ...[
+          const SizedBox(width: 8),
+          const Icon(
+            Icons.chevron_right_rounded,
+            size: 20,
+            color: Color(0xB0E2F2FF),
+          ),
+        ],
       ],
+    );
+
+    if (!isTappable) {
+      return content;
+    }
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: content,
+      ),
     );
   }
 }
