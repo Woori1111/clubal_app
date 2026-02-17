@@ -1,20 +1,15 @@
 import 'dart:ui';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:clubal_app/firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await _initializeFirebaseSafely();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const ClubalApp());
-}
-
-Future<void> _initializeFirebaseSafely() async {
-  try {
-    await Firebase.initializeApp();
-  } catch (_) {
-    // Firebase 설정 파일이 아직 없는 초기 단계에서도 UI 개발은 가능하게 유지.
-  }
 }
 
 class ClubalApp extends StatelessWidget {
@@ -185,6 +180,7 @@ class ClubalJellyBottomNav extends StatefulWidget {
 
 class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
   int? _interactionIndex;
+  double? _interactionDx;
   bool _isInteracting = false;
   double _travelDirection = 0; // -1: left, 1: right
 
@@ -195,11 +191,16 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
     return index.clamp(0, widget.tabs.length - 1);
   }
 
-  void _startInteraction(int index) {
+  double _centerDxForIndex(int index, double itemWidth) {
+    return (itemWidth * index) + (itemWidth / 2);
+  }
+
+  void _startInteraction(int index, double itemWidth) {
     final previous = _interactionIndex ?? widget.selectedIndex;
     final direction = (index - previous).toDouble().sign;
     setState(() {
       _interactionIndex = index;
+      _interactionDx = _centerDxForIndex(index, itemWidth);
       _isInteracting = true;
       _travelDirection = direction;
     });
@@ -215,6 +216,7 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
     final direction = (index - previous).toDouble().sign;
     setState(() {
       _interactionIndex = index;
+      _interactionDx = dx.clamp(0.0, width);
       _isInteracting = true;
       _travelDirection = direction;
     });
@@ -225,6 +227,7 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
     setState(() {
       _isInteracting = false;
       _interactionIndex = null;
+      _interactionDx = null;
       _travelDirection = 0;
     });
   }
@@ -257,16 +260,27 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
                 final navWidth = constraints.maxWidth - (sidePadding * 2);
                 final itemWidth = navWidth / widget.tabs.length;
                 final lensWidth = itemWidth * 0.96;
-                final lensLeft =
+                final restingLensLeft =
                     sidePadding +
                     (itemWidth * activeIndex) +
                     (itemWidth - lensWidth) / 2;
+                final dragLensLeft =
+                    sidePadding +
+                    ((_interactionDx ??
+                                _centerDxForIndex(activeIndex, itemWidth)) -
+                            (lensWidth / 2))
+                        .clamp(0.0, navWidth - lensWidth);
+                final lensLeft = _isInteracting
+                    ? dragLensLeft
+                    : restingLensLeft;
 
                 return Stack(
                   children: [
                     AnimatedPositioned(
-                      duration: const Duration(milliseconds: 520),
-                      curve: Curves.elasticOut,
+                      duration: _isInteracting
+                          ? Duration.zero
+                          : const Duration(milliseconds: 520),
+                      curve: _isInteracting ? Curves.linear : Curves.elasticOut,
                       left: lensLeft,
                       top: 6,
                       child: AnimatedScale(
@@ -304,7 +318,8 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav> {
                                 child: _NavItemButton(
                                   tab: widget.tabs[i],
                                   selected: i == widget.selectedIndex,
-                                  onTapDown: () => _startInteraction(i),
+                                  onTapDown: () =>
+                                      _startInteraction(i, itemWidth),
                                   onTap: () {
                                     widget.onChanged(i);
                                     _endInteraction();
@@ -603,8 +618,70 @@ class _PressedIconActionButtonState extends State<_PressedIconActionButton> {
   }
 }
 
-class ClubalSettingsPage extends StatelessWidget {
+class ClubalSettingsPage extends StatefulWidget {
   const ClubalSettingsPage({super.key});
+
+  @override
+  State<ClubalSettingsPage> createState() => _ClubalSettingsPageState();
+}
+
+class _ClubalSettingsPageState extends State<ClubalSettingsPage> {
+  bool _isAuthBusy = false;
+  bool _googleInitialized = false;
+
+  Future<void> _ensureGoogleInitialized() async {
+    if (_googleInitialized) {
+      return;
+    }
+    await GoogleSignIn.instance.initialize();
+    _googleInitialized = true;
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isAuthBusy = true);
+    try {
+      await _ensureGoogleInitialized();
+      if (!GoogleSignIn.instance.supportsAuthenticate()) {
+        _showMessage('현재 플랫폼에서 Google 인증 버튼이 지원되지 않습니다.');
+        return;
+      }
+      final googleUser = await GoogleSignIn.instance.authenticate();
+      final authentication = googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        idToken: authentication.idToken,
+      );
+      await FirebaseAuth.instance.signInWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      _showMessage('로그인 실패: ${e.message ?? e.code}');
+    } catch (e) {
+      _showMessage('로그인 처리 중 오류가 발생했습니다: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isAuthBusy = false);
+      }
+    }
+  }
+
+  Future<void> _signOut() async {
+    setState(() => _isAuthBusy = true);
+    try {
+      await GoogleSignIn.instance.signOut();
+      await FirebaseAuth.instance.signOut();
+    } catch (e) {
+      _showMessage('로그아웃 처리 중 오류가 발생했습니다: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isAuthBusy = false);
+      }
+    }
+  }
+
+  void _showMessage(String text) {
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -636,17 +713,43 @@ class ClubalSettingsPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   _GlassCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        _SettingRow(title: '알림 설정', subtitle: '매칭/채팅 알림 관리'),
-                        SizedBox(height: 14),
-                        _SettingRow(title: '계정/인증', subtitle: '프로필 및 인증 상태 확인'),
-                        SizedBox(height: 14),
-                        _SettingRow(title: '결제/정산', subtitle: '1/N 결제 수단 및 내역'),
-                        SizedBox(height: 14),
-                        _SettingRow(title: '고객지원', subtitle: '문의 및 신고 접수'),
-                      ],
+                    child: StreamBuilder<User?>(
+                      stream: FirebaseAuth.instance.authStateChanges(),
+                      builder: (context, snapshot) {
+                        final user = snapshot.data;
+                        final isLoggedIn = user != null;
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _SettingRow(
+                              title: '알림 설정',
+                              subtitle: '매칭/채팅 알림 관리',
+                            ),
+                            const SizedBox(height: 14),
+                            _SettingRow(
+                              title: '계정/인증',
+                              subtitle: isLoggedIn
+                                  ? '연결 계정: ${user.email ?? user.displayName ?? user.uid}'
+                                  : '구글 로그인으로 계정을 연결해 주세요',
+                            ),
+                            const SizedBox(height: 12),
+                            _GoogleAuthButton(
+                              busy: _isAuthBusy,
+                              isLoggedIn: isLoggedIn,
+                              onSignIn: _signInWithGoogle,
+                              onSignOut: _signOut,
+                            ),
+                            const SizedBox(height: 14),
+                            _SettingRow(
+                              title: '결제/정산',
+                              subtitle: '1/N 결제 수단 및 내역',
+                            ),
+                            const SizedBox(height: 14),
+                            _SettingRow(title: '고객지원', subtitle: '문의 및 신고 접수'),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -654,6 +757,97 @@ class ClubalSettingsPage extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _GoogleAuthButton extends StatefulWidget {
+  const _GoogleAuthButton({
+    required this.busy,
+    required this.isLoggedIn,
+    required this.onSignIn,
+    required this.onSignOut,
+  });
+
+  final bool busy;
+  final bool isLoggedIn;
+  final VoidCallback onSignIn;
+  final VoidCallback onSignOut;
+
+  @override
+  State<_GoogleAuthButton> createState() => _GoogleAuthButtonState();
+}
+
+class _GoogleAuthButtonState extends State<_GoogleAuthButton> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _pressed ? 0.97 : 1.0;
+    final opacity = _pressed ? 0.78 : 1.0;
+    final label = widget.busy
+        ? '처리 중...'
+        : widget.isLoggedIn
+        ? 'Google 로그아웃'
+        : 'Google로 로그인';
+
+    return GestureDetector(
+      onTapDown: widget.busy ? null : (_) => setState(() => _pressed = true),
+      onTapUp: widget.busy ? null : (_) => setState(() => _pressed = false),
+      onTapCancel: widget.busy ? null : () => setState(() => _pressed = false),
+      onTap: widget.busy
+          ? null
+          : () => widget.isLoggedIn ? widget.onSignOut() : widget.onSignIn(),
+      child: AnimatedScale(
+        scale: scale,
+        duration: const Duration(milliseconds: 110),
+        curve: Curves.easeOutCubic,
+        child: AnimatedOpacity(
+          opacity: opacity,
+          duration: const Duration(milliseconds: 110),
+          curve: Curves.easeOutCubic,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                height: 48,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0x66FFFFFF), width: 1),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0x52FFFFFF), Color(0x269EBCFF)],
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (widget.busy)
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    else
+                      const Icon(Icons.g_mobiledata_rounded, size: 22),
+                    const SizedBox(width: 8),
+                    Text(
+                      label,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: const Color(0xFFF4FBFF),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

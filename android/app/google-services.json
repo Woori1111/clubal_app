@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "302365711592",
+    "project_id": "clubal",
+    "storage_bucket": "clubal.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:302365711592:android:2c153bc31f451146313d5d",
+        "android_client_info": {
+          "package_name": "com.changbal.clubal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "302365711592-8f60km0g0bghf44bpbkfo306jkmbjvt0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCPug7cNzIZvuIw0Mb5ny8CFCO42qgIUCk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "302365711592-8f60km0g0bghf44bpbkfo306jkmbjvt0.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "302365711592-4mehvo94eivr9h67plpfc1nd4nr268uu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.clubalApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:302365711592:android:196d5fd693faf568313d5d",
+        "android_client_info": {
+          "package_name": "com.example.clubal_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "302365711592-8f60km0g0bghf44bpbkfo306jkmbjvt0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCPug7cNzIZvuIw0Mb5ny8CFCO42qgIUCk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "302365711592-8f60km0g0bghf44bpbkfo306jkmbjvt0.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "302365711592-4mehvo94eivr9h67plpfc1nd4nr268uu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.clubalApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
