@@ -58,7 +58,8 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav>
     if (widget.tabs.length <= 1) {
       return 0.5;
     }
-    return index / (widget.tabs.length - 1);
+    // Map to each tab's center position.
+    return (index + 0.5) / widget.tabs.length;
   }
 
   double get _currentT {
