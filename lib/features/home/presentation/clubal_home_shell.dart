@@ -1,14 +1,23 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
 import 'package:clubal_app/features/home/widgets/post_card.dart';
+import 'package:clubal_app/features/matching/models/piece_room.dart';
+import 'package:clubal_app/features/matching/presentation/create_piece_room_page.dart';
+import 'package:clubal_app/features/matching/presentation/matching_tab_view.dart';
 import 'package:clubal_app/features/navigation/models/nav_tab.dart';
 import 'package:clubal_app/features/navigation/widgets/clubal_jelly_bottom_nav.dart';
 import 'package:clubal_app/features/navigation/widgets/clubal_top_tab_bar.dart';
+import 'package:clubal_app/features/notifications/presentation/past_notifications_page.dart';
+import 'package:clubal_app/features/profile/presentation/profile_detail_page.dart';
 import 'package:clubal_app/features/settings/presentation/clubal_settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+// iOS 네이티브 TabView → Flutter 탭 전환 채널
+const _navChannel = MethodChannel('com.clubal.app/navigation');
 
 class ClubalHomeShell extends StatefulWidget {
   const ClubalHomeShell({super.key});
@@ -19,7 +28,8 @@ class ClubalHomeShell extends StatefulWidget {
 
 class _ClubalHomeShellState extends State<ClubalHomeShell> {
   int _selectedIndex = 0;
-  int _topTabIndex = 0; // 0: 최신, 1: 인기
+  int _topTabIndex = 0;
+  final List<PieceRoom> _pieceRooms = [];
 
   final List<NavTab> _tabs = const [
     NavTab(label: '홈', icon: Icons.home_rounded),
@@ -30,192 +40,119 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    if (Platform.isIOS) {
+      _navChannel.setMethodCallHandler((call) async {
+        if (call.method == 'setTab') {
+          final index = call.arguments as int;
+          if (mounted) setState(() => _selectedIndex = index);
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    if (Platform.isIOS) _navChannel.setMethodCallHandler(null);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final selected = _tabs[_selectedIndex];
-
     final isIOS = Platform.isIOS;
 
     return Scaffold(
       extendBody: !isIOS,
       body: Stack(
         children: [
+          // 배경 (전체 화면)
           const ClubalBackground(),
-          // 상단 고정 탭 바 (커뮤니티 탭에서만 표시)
-          if (selected.label == '커뮤니티')
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                child: Column(
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Spacer(),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    ClubalTopTabBar(
+
+          // 메인 레이아웃: SafeArea > Column (헤더 → [탭바] → 컨텐츠)
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 헤더 바
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: (selected.label == '매칭' ||
+                                selected.label == '메뉴')
+                            ? const SizedBox.shrink()
+                            : Text(
+                                '클러버 Clubal',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall,
+                              ),
+                      ),
+                      if (selected.label == '매칭')
+                        PressedIconActionButton(
+                          icon: Icons.add_rounded,
+                          tooltip: '조각 방 만들기',
+                          onTap: _openCreatePieceRoom,
+                        ),
+                      if (selected.label == '메뉴')
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            PressedIconActionButton(
+                              icon: Icons.notifications_none_rounded,
+                              tooltip: '알림',
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) =>
+                                      const PastNotificationsPage(),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            PressedIconActionButton(
+                              icon: Icons.settings_rounded,
+                              tooltip: '설정',
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const ClubalSettingsPage(),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+
+                // 커뮤니티 탭 전용 최신/인기 탭 바
+                if (selected.label == '커뮤니티')
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+                    child: ClubalTopTabBar(
                       tabs: const ['최신', '인기'],
                       selectedIndex: _topTabIndex,
-                      onChanged: (index) => setState(() => _topTabIndex = index),
+                      onChanged: (index) =>
+                          setState(() => _topTabIndex = index),
                     ),
-                  ],
-                ),
-              ),
-            ),
-          // 메인 컨텐츠 영역
-          SafeArea(
-            child: Padding(
-<<<<<<< HEAD
-              padding: EdgeInsets.fromLTRB(24, 28, 24, isIOS ? 16 : 120),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: (selected.label == '매칭' || selected.label == '메뉴')
-                        ? const SizedBox.shrink()
-                        : Text(
-                            '클러버 Clubal',
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
                   ),
-                  if (selected.label == '매칭')
-                    PressedIconActionButton(
-                      icon: Icons.add_rounded,
-                      tooltip: '조각 방 만들기',
-                      onTap: _openCreatePieceRoom,
-                    ),
-                  if (selected.label == '메뉴')
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        PressedIconActionButton(
-                          icon: Icons.notifications_none_rounded,
-                          tooltip: '알림',
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => const PastNotificationsPage(),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        PressedIconActionButton(
-                          icon: Icons.settings_rounded,
-                          tooltip: '설정',
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => const ClubalSettingsPage(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                ],
-              ),
+
+                // 탭별 컨텐츠 (Expanded로 남은 공간 채움)
+                Expanded(child: _buildTabBody(selected.label)),
+              ],
             ),
           ),
-              padding: EdgeInsets.fromLTRB(
-                24,
-                selected.label == '커뮤니티' ? 120 : 28,
-                24,
-                120,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Spacer(),
-                  if (selected.label == '메뉴')
-                    PressedIconActionButton(
-                      icon: Icons.settings_rounded,
-                      tooltip: '설정',
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const ClubalSettingsPage(),
-                          ),
-                        );
-                      },
-                    ),
-                ],
-              ),
-            ),
-          ),
-          // 탭별 컨텐츠
-          if (selected.label == '커뮤니티')
-            SafeArea(
-              child: Builder(
-                builder: (context) {
-                  final mediaQuery = MediaQuery.of(context);
-                  final screenHeight = mediaQuery.size.height;
-                  final topPadding = mediaQuery.padding.top;
-                  final bottomPadding = mediaQuery.padding.bottom;
-                  
-                  final topOffset = 180.0; // 상단 탭 바 포함
-                  final availableHeight = screenHeight - topPadding - bottomPadding - topOffset - 120; // 하단 네비 제외
-                  
-                  // 카드 최소/최대 높이 (세로 길이 줄여 오버플로우 방지)
-                  final minCardHeight = availableHeight / 4.8;
-                  final maxCardHeight = availableHeight / 3.6;
-                  
-                  return Padding(
-                    padding: EdgeInsets.fromLTRB(24, topOffset, 24, 120),
-                    child: _buildTabContent(
-                      minCardHeight: minCardHeight,
-                      maxCardHeight: maxCardHeight,
-                      topTabIndex: _topTabIndex,
-                    ),
-                  );
-                },
-              ),
-            ),
-          // 글쓰기 플로팅 버튼 (커뮤니티 탭에서만 표시)
+
+          // 커뮤니티 글쓰기 플로팅 버튼
           if (selected.label == '커뮤니티')
             Positioned(
               right: 24,
-              bottom: 82, // 네비게이션 바 위
-              child: GestureDetector(
-                onTap: () {
-                  // 글쓰기 기능 추가 예정
-                },
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-                    child: Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: const Color(0x55FFFFFF), width: 1.2),
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFF9AE1FF), Color(0xFF69C6F6)],
-                        ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x5522B8FF),
-                            blurRadius: 16,
-                            spreadRadius: -8,
-                            offset: Offset(0, 7),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.edit_rounded,
-                        color: Color(0xFFF5FCFF),
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              bottom: 82,
+              child: _buildWriteFab(context),
             ),
->>>>>>> 3bf4017 (ttttk22)
         ],
       ),
       bottomNavigationBar: isIOS
@@ -228,14 +165,39 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
     );
   }
 
-  Widget _buildTabContent({
-    required double minCardHeight,
-    required double maxCardHeight,
-    required int topTabIndex,
-  }) {
-    if (topTabIndex == 0) {
-      // 최신 탭 - 글 카드 리스트
-      // 임시 데이터 (나중에 실제 데이터로 교체)
+  Widget _buildTabBody(String label) {
+    switch (label) {
+      case '홈':
+        return const Center(
+          child: Text(
+            '홈 화면 준비 중',
+            style: TextStyle(color: Color(0xFF8A9BAF), fontSize: 16),
+          ),
+        );
+      case '매칭':
+        return MatchingTabView(
+          rooms: _pieceRooms,
+          onAutoMatchTap: () {},
+          topPadding: 8,
+        );
+      case '채팅':
+        return const Center(
+          child: Text(
+            '채팅 준비 중',
+            style: TextStyle(color: Color(0xFF8A9BAF), fontSize: 16),
+          ),
+        );
+      case '커뮤니티':
+        return _buildCommunityContent();
+      case '메뉴':
+        return _buildMenuContent();
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildCommunityContent() {
+    if (_topTabIndex == 0) {
       final posts = [
         {
           'userName': '김민수',
@@ -272,55 +234,122 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
         },
       ];
 
-      return ListView.separated(
-        itemCount: posts.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final post = posts[index];
-          return PostCard(
-            userName: post['userName'] as String,
-            userProfileImageUrl: post['userProfileImageUrl'] as String?,
-            title: post['title'] as String,
-            location: post['location'] as String?,
-            date: post['date'] as String?,
-            viewCount: post['viewCount'] as int?,
-            likeCount: post['likeCount'] as int? ?? 0,
-            commentCount: post['commentCount'] as int? ?? 0,
-            imageUrl: post['imageUrl'] as String?,
-            minHeight: minCardHeight,
-            maxHeight: maxCardHeight,
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final availableHeight = constraints.maxHeight;
+          final minCardHeight = availableHeight / 4.8;
+          final maxCardHeight = availableHeight / 3.6;
+
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            itemCount: posts.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final post = posts[index];
+              return PostCard(
+                userName: post['userName'] as String,
+                userProfileImageUrl: post['userProfileImageUrl'] as String?,
+                title: post['title'] as String,
+                location: post['location'] as String?,
+                date: post['date'] as String?,
+                viewCount: post['viewCount'] as int?,
+                likeCount: post['likeCount'] as int? ?? 0,
+                commentCount: post['commentCount'] as int? ?? 0,
+                imageUrl: post['imageUrl'] as String?,
+                minHeight: minCardHeight,
+                maxHeight: maxCardHeight,
+              );
+            },
           );
         },
       );
-    } else {
-      // 인기 탭
-      return const Center(
-        child: Text(
-          '인기 컨텐츠',
-          style: TextStyle(color: Colors.white, fontSize: 18),
+    }
+    return const Center(
+      child: Text(
+        '인기 컨텐츠',
+        style: TextStyle(color: Color(0xFF8A9BAF), fontSize: 18),
+      ),
+    );
+  }
+
+  Widget _buildMenuContent() {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+      children: [
+        _MenuCard(
+          icon: Icons.person_rounded,
+          title: '내 프로필',
+          subtitle: '프로필 확인 및 수정',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const ProfileDetailPage(),
+            ),
+          ),
         ),
-      );
-    }
+        const SizedBox(height: 12),
+        _MenuCard(
+          icon: Icons.settings_rounded,
+          title: '설정',
+          subtitle: '알림·계정·결제 관리',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const ClubalSettingsPage(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _MenuCard(
+          icon: Icons.notifications_none_rounded,
+          title: '알림 내역',
+          subtitle: '지난 알림 확인',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const PastNotificationsPage(),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
-  String _tabDescription(String label) {
-    switch (label) {
-      case '홈':
-        return '오늘의 클럽 조각 현황과 추천 모임을 확인합니다.';
-      case '매칭':
-        return '함께 갈 인원을 찾고 1/N 조건을 맞춰 매칭합니다.';
-      case '채팅':
-        return '매칭된 인원과 입장 시간, 복장, 비용을 조율합니다.';
-      case '커뮤니티':
-        return '커뮤니티 활동과 소통을 확인합니다.';
-      case '메뉴':
-        return '내 프로필, 인증, 결제, 알림 설정을 관리합니다.';
-      default:
-        return '';
-    }
+  Widget _buildWriteFab(BuildContext context) {
+    return GestureDetector(
+      onTap: () {},
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              border:
+                  Border.all(color: const Color(0x55FFFFFF), width: 1.2),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF9AE1FF), Color(0xFF69C6F6)],
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x5522B8FF),
+                  blurRadius: 16,
+                  spreadRadius: -8,
+                  offset: Offset(0, 7),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.edit_rounded,
+              color: Color(0xFFF5FCFF),
+              size: 24,
+            ),
+          ),
+        ),
+      ),
+    );
   }
-
-  static void _noop() {}
 
   Future<void> _openCreatePieceRoom() async {
     final created = await Navigator.of(context).push<PieceRoom>(
@@ -328,9 +357,83 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
         builder: (_) => const CreatePieceRoomPage(),
       ),
     );
-    if (created == null) {
-      return;
-    }
+    if (created == null) return;
     setState(() => _pieceRooms.insert(0, created));
+  }
+}
+
+class _MenuCard extends StatelessWidget {
+  const _MenuCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0x2B3D5067), width: 1),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xD9FFFFFF), Color(0xCBEAF1FA)],
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 26, color: const Color(0xFF304255)),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall
+                            ?.copyWith(
+                              color: const Color(0xFF304255),
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: const Color(0xFF304255)),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: Color(0xFF304255),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

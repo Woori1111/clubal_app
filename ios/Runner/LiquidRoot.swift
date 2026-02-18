@@ -36,7 +36,7 @@ struct LiquidRoot: View {
         Color.clear
           .tabItem { Image(systemName: "bubble.fill");   Text("채팅") }.tag(2)
         Color.clear
-          .tabItem { Image(systemName: "sparkles");      Text("파티") }.tag(3)
+          .tabItem { Image(systemName: "sparkles");      Text("커뮤니티") }.tag(3)
         Color.clear
           .tabItem { Image(systemName: "line.3.horizontal"); Text("메뉴") }.tag(4)
       }

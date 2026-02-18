@@ -9,10 +9,12 @@ class MatchingTabView extends StatefulWidget {
     super.key,
     required this.onAutoMatchTap,
     required this.rooms,
+    this.topPadding = 86.0,
   });
 
   final VoidCallback onAutoMatchTap;
   final List<PieceRoom> rooms;
+  final double topPadding;
 
   @override
   State<MatchingTabView> createState() => _MatchingTabViewState();
@@ -37,7 +39,7 @@ class _MatchingTabViewState extends State<MatchingTabView> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 86, 14, 12),
+        padding: EdgeInsets.fromLTRB(14, widget.topPadding, 14, 12),
         child: Stack(
           children: [
             NotificationListener<UserScrollNotification>(
