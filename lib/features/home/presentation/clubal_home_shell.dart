@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:ui';
 
 import 'package:clubal_app/core/widgets/clubal_background.dart';
@@ -13,6 +12,7 @@ import 'package:clubal_app/features/navigation/widgets/clubal_top_tab_bar.dart';
 import 'package:clubal_app/features/notifications/presentation/past_notifications_page.dart';
 import 'package:clubal_app/features/profile/presentation/profile_detail_page.dart';
 import 'package:clubal_app/features/settings/presentation/clubal_settings_page.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -39,10 +39,13 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
     NavTab(label: '메뉴', icon: Icons.menu_rounded),
   ];
 
+  bool get _isIOSNative =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
   @override
   void initState() {
     super.initState();
-    if (Platform.isIOS) {
+    if (_isIOSNative) {
       _navChannel.setMethodCallHandler((call) async {
         if (call.method == 'setTab') {
           final index = call.arguments as int;
@@ -54,14 +57,14 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
 
   @override
   void dispose() {
-    if (Platform.isIOS) _navChannel.setMethodCallHandler(null);
+    if (_isIOSNative) _navChannel.setMethodCallHandler(null);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final selected = _tabs[_selectedIndex];
-    final isIOS = Platform.isIOS;
+    final isIOS = _isIOSNative;
 
     return Scaffold(
       extendBody: !isIOS,
@@ -155,13 +158,30 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
             ),
         ],
       ),
-      bottomNavigationBar: isIOS
-          ? null
-          : ClubalJellyBottomNav(
-              tabs: _tabs,
-              selectedIndex: _selectedIndex,
-              onChanged: (index) => setState(() => _selectedIndex = index),
-            ),
+      bottomNavigationBar: kIsWeb
+          // Web: 단순한 기본 네비게이션으로 안전하게 렌더링
+          ? BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
+              currentIndex: _selectedIndex,
+              onTap: (index) => setState(() => _selectedIndex = index),
+              items: [
+                for (final tab in _tabs)
+                  BottomNavigationBarItem(
+                    icon: Icon(tab.icon),
+                    label: tab.label,
+                  ),
+              ],
+            )
+          // iOS: 네이티브 탭바가 담당하므로 Flutter 쪽은 하단바 없음
+          : isIOS
+              ? null
+              // Android 등 나머지 플랫폼: 기존 젤리 네비게이션 유지
+              : ClubalJellyBottomNav(
+                  tabs: _tabs,
+                  selectedIndex: _selectedIndex,
+                  onChanged: (index) =>
+                      setState(() => _selectedIndex = index),
+                ),
     );
   }
 

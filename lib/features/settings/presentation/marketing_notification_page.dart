@@ -13,7 +13,9 @@ class MarketingNotificationPage extends StatefulWidget {
 }
 
 class _MarketingNotificationPageState extends State<MarketingNotificationPage> {
-  bool _marketing = false;
+  bool _consent = false;
+  bool _sms = false;
+  bool _appPush = false;
 
   @override
   Widget build(BuildContext context) {
@@ -46,11 +48,30 @@ class _MarketingNotificationPageState extends State<MarketingNotificationPage> {
                   ),
                   const SizedBox(height: 20),
                   GlassCard(
-                    child: _ToggleRow(
-                      label: '마케팅·광고성 알림',
-                      description: '이벤트, 혜택, 프로모션 소식을 받아요.',
-                      value: _marketing,
-                      onChanged: (v) => setState(() => _marketing = v),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _ToggleRow(
+                          label: '마케팅 목적 개인정보 수집·이용 동의',
+                          description: '마케팅 목적의 정보 수집·이용에 동의합니다.',
+                          value: _consent,
+                          onChanged: (v) => setState(() => _consent = v),
+                        ),
+                        const SizedBox(height: 16),
+                        _ToggleRow(
+                          label: 'SMS 알림',
+                          description: '이벤트, 혜택, 프로모션 소식을 문자로 받아요.',
+                          value: _sms,
+                          onChanged: (v) => setState(() => _sms = v),
+                        ),
+                        const SizedBox(height: 16),
+                        _ToggleRow(
+                          label: '마케팅·광고성 정보 앱 푸시',
+                          description: '앱 푸시로 마케팅/광고성 소식을 받아요.',
+                          value: _appPush,
+                          onChanged: (v) => setState(() => _appPush = v),
+                        ),
+                      ],
                     ),
                   ),
                 ],
