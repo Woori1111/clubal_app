@@ -64,7 +64,7 @@ class _PressedIconActionButtonState extends State<PressedIconActionButton> {
                   child: Icon(
                     widget.icon,
                     color: const Color(0xFFE9F6FF),
-                    size: 22,
+                    size: 26,
                   ),
                 ),
               ),

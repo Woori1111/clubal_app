@@ -220,7 +220,7 @@ class _NavItemButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(tab.icon, color: fgColor, size: 21),
+              Icon(tab.icon, color: fgColor, size: 26),
               const SizedBox(height: 4),
               SizedBox(
                 height: 14,
