@@ -10,7 +10,7 @@ class ClubalBackground extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF0F172B), Color(0xFF080A13)],
+          colors: [Color(0xFFF8FBFF), Color(0xFFEFF4FA)],
         ),
       ),
       child: Stack(
@@ -18,17 +18,17 @@ class ClubalBackground extends StatelessWidget {
           Positioned(
             left: -70,
             top: -40,
-            child: _GlowBubble(size: 230, color: Color(0xAA66C8FF)),
+            child: _GlowBubble(size: 230, color: Color(0x8066C8FF)),
           ),
           Positioned(
             right: -110,
             top: 220,
-            child: _GlowBubble(size: 280, color: Color(0x665E86FF)),
+            child: _GlowBubble(size: 280, color: Color(0x555E86FF)),
           ),
           Positioned(
             left: 40,
             bottom: 150,
-            child: _GlowBubble(size: 180, color: Color(0x885CFFD7)),
+            child: _GlowBubble(size: 180, color: Color(0x665CFFD7)),
           ),
         ],
       ),
