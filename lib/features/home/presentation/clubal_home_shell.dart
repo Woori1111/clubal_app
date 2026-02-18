@@ -2,8 +2,10 @@ import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
 import 'package:clubal_app/features/matching/presentation/matching_tab_view.dart';
+import 'package:clubal_app/features/notifications/presentation/past_notifications_page.dart';
 import 'package:clubal_app/features/navigation/models/nav_tab.dart';
 import 'package:clubal_app/features/navigation/widgets/clubal_jelly_bottom_nav.dart';
+import 'package:clubal_app/features/profile/presentation/profile_detail_page.dart';
 import 'package:clubal_app/features/settings/presentation/clubal_settings_page.dart';
 import 'package:flutter/material.dart';
 
@@ -55,16 +57,33 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
                       onTap: () {},
                     ),
                   if (selected.label == '메뉴')
-                    PressedIconActionButton(
-                      icon: Icons.settings_rounded,
-                      tooltip: '설정',
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const ClubalSettingsPage(),
-                          ),
-                        );
-                      },
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        PressedIconActionButton(
+                          icon: Icons.notifications_none_rounded,
+                          tooltip: '알림',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const PastNotificationsPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        PressedIconActionButton(
+                          icon: Icons.settings_rounded,
+                          tooltip: '설정',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const ClubalSettingsPage(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                 ],
               ),
@@ -91,47 +110,57 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
                             ),
                       ),
                       const SizedBox(height: 16),
-                      GlassCard(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 24,
-                            horizontal: 20,
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              CircleAvatar(
-                                radius: 32,
-                                backgroundColor:
-                                    Colors.white.withOpacity(0.25),
-                                child: const Icon(
-                                  Icons.person_rounded,
-                                  color: Color(0xFF243244),
-                                  size: 32,
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const ProfileDetailPage(),
+                            ),
+                          );
+                        },
+                        child: GlassCard(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 24,
+                              horizontal: 20,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                CircleAvatar(
+                                  radius: 32,
+                                  backgroundColor:
+                                      Colors.white.withOpacity(0.25),
+                                  child: const Icon(
+                                    Icons.person_rounded,
+                                    color: Color(0xFF243244),
+                                    size: 32,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                '주지훈',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '나는 주지훈 입니다. 1000만 영화배우입니다!!',
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: const Color(0xD9EAF6FF),
-                                      height: 1.4,
-                                    ),
-                              ),
-                            ],
+                                const SizedBox(height: 12),
+                                Text(
+                                  '주지훈',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '나는 주지훈 입니다. 1000만 영화배우입니다!!',
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: const Color(0xD9EAF6FF),
+                                        height: 1.4,
+                                      ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -139,66 +168,94 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
                       Row(
                         children: [
                           Expanded(
-                            child: GlassCard(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      '지난 매칭 기록',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleSmall
-                                          ?.copyWith(
-                                              fontWeight: FontWeight.w700),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      '아직 지난 매칭 기록이 없습니다.\n매칭이 완료되면 여기에 표시돼요.',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: const Color(0xD9EAF6FF),
-                                            height: 1.4,
+                            child: SizedBox(
+                              height: 122,
+                              child: GlassCard(
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    14,
+                                    14,
+                                    14,
+                                    12,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '지난 매칭 기록',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleSmall
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.w700),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Expanded(
+                                        child: Align(
+                                          alignment: Alignment.topLeft,
+                                          child: Text(
+                                            '아직 지난 매칭 기록이 없습니다.\n매칭이 완료되면 여기에 표시돼요.',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color:
+                                                      const Color(0xD9EAF6FF),
+                                                  height: 1.35,
+                                                ),
                                           ),
-                                    ),
-                                  ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: GlassCard(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      '예정된 모임',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleSmall
-                                          ?.copyWith(
-                                              fontWeight: FontWeight.w700),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      '예정된 모임이 없습니다.\n모임을 예약하면 이곳에서 확인할 수 있어요.',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: const Color(0xD9EAF6FF),
-                                            height: 1.4,
+                            child: SizedBox(
+                              height: 122,
+                              child: GlassCard(
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    14,
+                                    14,
+                                    14,
+                                    12,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '예정된 모임',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleSmall
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.w700),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Expanded(
+                                        child: Align(
+                                          alignment: Alignment.topLeft,
+                                          child: Text(
+                                            '예정된 모임이 없습니다.\n모임을 예약하면 이곳에서 확인할 수 있어요.',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color:
+                                                      const Color(0xD9EAF6FF),
+                                                  height: 1.35,
+                                                ),
                                           ),
-                                    ),
-                                  ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),

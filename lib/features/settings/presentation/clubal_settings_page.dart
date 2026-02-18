@@ -2,6 +2,7 @@ import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
 import 'package:clubal_app/features/settings/presentation/notification_settings_page.dart';
+import 'package:clubal_app/features/settings/presentation/settings_sub_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -93,7 +94,7 @@ class _ClubalSettingsPageState extends State<ClubalSettingsPage> {
                       Text(
                         '설정',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: const Color(0xFFE9F6FF),
+                              color: Colors.black,
                               fontWeight: FontWeight.w700,
                             ),
                       ),
@@ -137,14 +138,60 @@ class _ClubalSettingsPageState extends State<ClubalSettingsPage> {
                               onSignOut: _signOut,
                             ),
                             const SizedBox(height: 14),
-                            const _SettingRow(
-                              title: '결제/정산',
-                              subtitle: '1/N 결제 수단 및 내역',
+                            _SettingRow(
+                              title: '계정 관리',
+                              subtitle: '프로필·보안·연동 관리',
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => const SettingsSubPage(
+                                      title: '계정 관리',
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                             const SizedBox(height: 14),
-                            const _SettingRow(
+                            _SettingRow(
+                              title: '결제/정산',
+                              subtitle: '1/N 결제 수단 및 내역',
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => const SettingsSubPage(
+                                      title: '결제/정산',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 14),
+                            _SettingRow(
                               title: '고객지원',
                               subtitle: '문의 및 신고 접수',
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => const SettingsSubPage(
+                                      title: '고객지원',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 14),
+                            _SettingRow(
+                              title: '약관 및 정보',
+                              subtitle: '이용약관·개인정보처리방침',
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => const SettingsSubPage(
+                                      title: '약관 및 정보',
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         );
@@ -233,7 +280,7 @@ class _GoogleAuthButtonState extends State<_GoogleAuthButton> {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: const Color(0xFFF4FBFF),
+                        color: Colors.black,
                         fontWeight: FontWeight.w700,
                       ),
                 ),
@@ -279,7 +326,7 @@ class _SettingRow extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: const Color(0xFFF3FAFF),
+                      color: Colors.black,
                       fontWeight: FontWeight.w600,
                     ),
               ),
@@ -289,7 +336,7 @@ class _SettingRow extends StatelessWidget {
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xCCE2F2FF),
+                      color: Colors.black,
                     ),
               ),
             ],
@@ -300,7 +347,7 @@ class _SettingRow extends StatelessWidget {
           const Icon(
             Icons.chevron_right_rounded,
             size: 20,
-            color: Color(0xB0E2F2FF),
+            color: Colors.black,
           ),
         ],
       ],
