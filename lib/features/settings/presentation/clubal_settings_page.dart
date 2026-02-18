@@ -275,7 +275,7 @@ class _GoogleAuthButtonState extends State<_GoogleAuthButton> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 else
-                  const Icon(Icons.g_mobiledata_rounded, size: 22),
+                  const Icon(Icons.g_mobiledata_rounded, size: 26),
                 const SizedBox(width: 8),
                 Text(
                   label,

@@ -73,4 +73,13 @@ class DefaultFirebaseOptions {
         '302365711592-4mehvo94eivr9h67plpfc1nd4nr268uu.apps.googleusercontent.com',
     iosBundleId: 'com.example.clubalApp',
   );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCPug7cNzIZvuIw0Mb5ny8CFCO42qgIUCk',
+    appId: '1:302365711592:web:default',
+    messagingSenderId: '302365711592',
+    projectId: 'clubal',
+    authDomain: 'clubal.firebaseapp.com',
+    storageBucket: 'clubal.firebasestorage.app',
+  );
 }

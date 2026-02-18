@@ -1,15 +1,11 @@
-import 'dart:io';
+import 'dart:ui';
 
 import 'package:clubal_app/core/widgets/clubal_background.dart';
-import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
-import 'package:clubal_app/features/matching/models/piece_room.dart';
-import 'package:clubal_app/features/matching/presentation/create_piece_room_page.dart';
-import 'package:clubal_app/features/matching/presentation/matching_tab_view.dart';
-import 'package:clubal_app/features/notifications/presentation/past_notifications_page.dart';
+import 'package:clubal_app/features/home/widgets/post_card.dart';
 import 'package:clubal_app/features/navigation/models/nav_tab.dart';
 import 'package:clubal_app/features/navigation/widgets/clubal_jelly_bottom_nav.dart';
-import 'package:clubal_app/features/profile/presentation/profile_detail_page.dart';
+import 'package:clubal_app/features/navigation/widgets/clubal_top_tab_bar.dart';
 import 'package:clubal_app/features/settings/presentation/clubal_settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,120 +18,14 @@ class ClubalHomeShell extends StatefulWidget {
 }
 
 class _ClubalHomeShellState extends State<ClubalHomeShell> {
-  static const _navChannel = MethodChannel('com.clubal.app/navigation');
-
   int _selectedIndex = 0;
-  final List<PieceRoom> _pieceRooms = [
-    PieceRoom(
-      title: '네온밤의 조각 방',
-      currentMembers: 3,
-      maxMembers: 6,
-      creator: '민준',
-      location: '강남역',
-      meetingAt: DateTime(2026, 2, 20, 21),
-    ),
-    PieceRoom(
-      title: '파도소리의 조각 방',
-      currentMembers: 2,
-      maxMembers: 6,
-      creator: '지우',
-      location: '이태원',
-      meetingAt: DateTime(2026, 2, 21, 22),
-    ),
-    PieceRoom(
-      title: '보라빛의 조각 방',
-      currentMembers: 5,
-      maxMembers: 6,
-      creator: '수아',
-      location: '홍대입구',
-      meetingAt: DateTime(2026, 2, 22, 21),
-    ),
-    PieceRoom(
-      title: '달빛런의 조각 방',
-      currentMembers: 1,
-      maxMembers: 6,
-      creator: '현우',
-      location: '건대입구',
-      meetingAt: DateTime(2026, 2, 23, 20),
-    ),
-    PieceRoom(
-      title: '새벽무드의 조각 방',
-      currentMembers: 4,
-      maxMembers: 6,
-      creator: '서연',
-      location: '합정',
-      meetingAt: DateTime(2026, 2, 24, 23),
-    ),
-    PieceRoom(
-      title: '하이텐션의 조각 방',
-      currentMembers: 3,
-      maxMembers: 6,
-      creator: '도윤',
-      location: '잠실',
-      meetingAt: DateTime(2026, 2, 25, 21),
-    ),
-    PieceRoom(
-      title: '레트로밤의 조각 방',
-      currentMembers: 6,
-      maxMembers: 6,
-      creator: '예린',
-      location: '신촌',
-      meetingAt: DateTime(2026, 2, 26, 22),
-    ),
-    PieceRoom(
-      title: '바이브온의 조각 방',
-      currentMembers: 2,
-      maxMembers: 6,
-      creator: '태윤',
-      location: '성수',
-      meetingAt: DateTime(2026, 2, 27, 21),
-    ),
-    PieceRoom(
-      title: '시티라이트의 조각 방',
-      currentMembers: 4,
-      maxMembers: 6,
-      creator: '하은',
-      location: '청담',
-      meetingAt: DateTime(2026, 2, 28, 23),
-    ),
-    PieceRoom(
-      title: '핑크플로우의 조각 방',
-      currentMembers: 3,
-      maxMembers: 6,
-      creator: '유진',
-      location: '종로3가',
-      meetingAt: DateTime(2026, 3, 1, 20),
-    ),
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    if (Platform.isIOS) {
-      _navChannel.setMethodCallHandler(_handleNativeNavCall);
-    }
-  }
-
-  @override
-  void dispose() {
-    if (Platform.isIOS) {
-      _navChannel.setMethodCallHandler(null);
-    }
-    super.dispose();
-  }
-
-  Future<void> _handleNativeNavCall(MethodCall call) async {
-    if (call.method == 'setTab') {
-      final index = call.arguments as int;
-      if (mounted) setState(() => _selectedIndex = index);
-    }
-  }
+  int _topTabIndex = 0; // 0: 최신, 1: 인기
 
   final List<NavTab> _tabs = const [
     NavTab(label: '홈', icon: Icons.home_rounded),
     NavTab(label: '매칭', icon: Icons.people_alt_rounded),
     NavTab(label: '채팅', icon: Icons.chat_bubble_rounded),
-    NavTab(label: '파티', icon: Icons.celebration_rounded),
+    NavTab(label: '커뮤니티', icon: Icons.groups_rounded),
     NavTab(label: '메뉴', icon: Icons.menu_rounded),
   ];
 
@@ -150,8 +40,33 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
       body: Stack(
         children: [
           const ClubalBackground(),
+          // 상단 고정 탭 바 (커뮤니티 탭에서만 표시)
+          if (selected.label == '커뮤니티')
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                child: Column(
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Spacer(),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ClubalTopTabBar(
+                      tabs: const ['최신', '인기'],
+                      selectedIndex: _topTabIndex,
+                      onChanged: (index) => setState(() => _topTabIndex = index),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          // 메인 컨텐츠 영역
           SafeArea(
             child: Padding(
+<<<<<<< HEAD
               padding: EdgeInsets.fromLTRB(24, 28, 24, isIOS ? 16 : 120),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -203,216 +118,104 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
               ),
             ),
           ),
-          if (selected.label == '매칭')
-            MatchingTabView(onAutoMatchTap: _noop, rooms: _pieceRooms)
-          else
+              padding: EdgeInsets.fromLTRB(
+                24,
+                selected.label == '커뮤니티' ? 120 : 28,
+                24,
+                120,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Spacer(),
+                  if (selected.label == '메뉴')
+                    PressedIconActionButton(
+                      icon: Icons.settings_rounded,
+                      tooltip: '설정',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const ClubalSettingsPage(),
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ),
+          // 탭별 컨텐츠
+          if (selected.label == '커뮤니티')
             SafeArea(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(24, 86, 24, isIOS ? 12 : 120),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 8),
-                    if (selected.label == '메뉴') ...[
-                      Text(
-                        '프로필',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
-                            ?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                      ),
-                      const SizedBox(height: 16),
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const ProfileDetailPage(),
-                            ),
-                          );
-                        },
-                        child: GlassCard(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 24,
-                              horizontal: 20,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                CircleAvatar(
-                                  radius: 32,
-                                  backgroundColor:
-                                      Colors.white.withOpacity(0.25),
-                                  child: const Icon(
-                                    Icons.person_rounded,
-                                    color: Color(0xFF243244),
-                                    size: 32,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  '주지훈',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge
-                                      ?.copyWith(fontWeight: FontWeight.w700),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '나는 주지훈 입니다. 1000만 영화배우입니다!!',
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        color: const Color(0xD9EAF6FF),
-                                        height: 1.4,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
+              child: Builder(
+                builder: (context) {
+                  final mediaQuery = MediaQuery.of(context);
+                  final screenHeight = mediaQuery.size.height;
+                  final topPadding = mediaQuery.padding.top;
+                  final bottomPadding = mediaQuery.padding.bottom;
+                  
+                  final topOffset = 180.0; // 상단 탭 바 포함
+                  final availableHeight = screenHeight - topPadding - bottomPadding - topOffset - 120; // 하단 네비 제외
+                  
+                  // 카드 최소/최대 높이 (세로 길이 줄여 오버플로우 방지)
+                  final minCardHeight = availableHeight / 4.8;
+                  final maxCardHeight = availableHeight / 3.6;
+                  
+                  return Padding(
+                    padding: EdgeInsets.fromLTRB(24, topOffset, 24, 120),
+                    child: _buildTabContent(
+                      minCardHeight: minCardHeight,
+                      maxCardHeight: maxCardHeight,
+                      topTabIndex: _topTabIndex,
+                    ),
+                  );
+                },
+              ),
+            ),
+          // 글쓰기 플로팅 버튼 (커뮤니티 탭에서만 표시)
+          if (selected.label == '커뮤니티')
+            Positioned(
+              right: 24,
+              bottom: 82, // 네비게이션 바 위
+              child: GestureDetector(
+                onTap: () {
+                  // 글쓰기 기능 추가 예정
+                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(color: const Color(0x55FFFFFF), width: 1.2),
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF9AE1FF), Color(0xFF69C6F6)],
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 122,
-                              child: GlassCard(
-                                child: Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    14,
-                                    14,
-                                    14,
-                                    12,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '지난 매칭 기록',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleSmall
-                                            ?.copyWith(
-                                                fontWeight: FontWeight.w700),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Expanded(
-                                        child: Align(
-                                          alignment: Alignment.topLeft,
-                                          child: Text(
-                                            '아직 지난 매칭 기록이 없습니다.\n매칭이 완료되면 여기에 표시돼요.',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall
-                                                ?.copyWith(
-                                                  color:
-                                                      const Color(0xD9EAF6FF),
-                                                  height: 1.35,
-                                                ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: SizedBox(
-                              height: 122,
-                              child: GlassCard(
-                                child: Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    14,
-                                    14,
-                                    14,
-                                    12,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '예정된 모임',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleSmall
-                                            ?.copyWith(
-                                                fontWeight: FontWeight.w700),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Expanded(
-                                        child: Align(
-                                          alignment: Alignment.topLeft,
-                                          child: Text(
-                                            '예정된 모임이 없습니다.\n모임을 예약하면 이곳에서 확인할 수 있어요.',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall
-                                                ?.copyWith(
-                                                  color:
-                                                      const Color(0xD9EAF6FF),
-                                                  height: 1.35,
-                                                ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x5522B8FF),
+                            blurRadius: 16,
+                            spreadRadius: -8,
+                            offset: Offset(0, 7),
                           ),
                         ],
                       ),
-                      const Spacer(),
-                    ] else ...[
-                      Text(
-                        '동성 친구들과 클럽 테이블비를 1/N으로,\n가볍게 매칭하고 안전하게 함께 가요.',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(height: 1.4),
+                      child: const Icon(
+                        Icons.edit_rounded,
+                        color: Color(0xFFF5FCFF),
+                        size: 24,
                       ),
-                      const Spacer(),
-                      GlassCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              selected.label,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _tabDescription(selected.label),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                      color: const Color(0xD9EAF6FF)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
+                    ),
+                  ),
                 ),
               ),
             ),
+>>>>>>> 3bf4017 (ttttk22)
         ],
       ),
       bottomNavigationBar: isIOS
@@ -425,6 +228,81 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
     );
   }
 
+  Widget _buildTabContent({
+    required double minCardHeight,
+    required double maxCardHeight,
+    required int topTabIndex,
+  }) {
+    if (topTabIndex == 0) {
+      // 최신 탭 - 글 카드 리스트
+      // 임시 데이터 (나중에 실제 데이터로 교체)
+      final posts = [
+        {
+          'userName': '김민수',
+          'userProfileImageUrl': null,
+          'title': '오늘 클럽 가실 분 구해요!',
+          'location': '강남',
+          'date': '2시간 전',
+          'viewCount': 24,
+          'likeCount': 3,
+          'commentCount': 5,
+          'imageUrl': null,
+        },
+        {
+          'userName': '이지은',
+          'userProfileImageUrl': null,
+          'title': '주말에 함께 갈 사람 있나요? 정말 재밌는 클럽이에요!',
+          'location': '홍대',
+          'date': '5시간 전',
+          'viewCount': 48,
+          'likeCount': 7,
+          'commentCount': 12,
+          'imageUrl': 'https://picsum.photos/200/200?random=1',
+        },
+        {
+          'userName': '박준호',
+          'userProfileImageUrl': null,
+          'title': '클럽 테이블비 1/N으로 나눠요',
+          'location': '압구정',
+          'date': '1일 전',
+          'viewCount': 67,
+          'likeCount': 2,
+          'commentCount': 8,
+          'imageUrl': null,
+        },
+      ];
+
+      return ListView.separated(
+        itemCount: posts.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final post = posts[index];
+          return PostCard(
+            userName: post['userName'] as String,
+            userProfileImageUrl: post['userProfileImageUrl'] as String?,
+            title: post['title'] as String,
+            location: post['location'] as String?,
+            date: post['date'] as String?,
+            viewCount: post['viewCount'] as int?,
+            likeCount: post['likeCount'] as int? ?? 0,
+            commentCount: post['commentCount'] as int? ?? 0,
+            imageUrl: post['imageUrl'] as String?,
+            minHeight: minCardHeight,
+            maxHeight: maxCardHeight,
+          );
+        },
+      );
+    } else {
+      // 인기 탭
+      return const Center(
+        child: Text(
+          '인기 컨텐츠',
+          style: TextStyle(color: Colors.white, fontSize: 18),
+        ),
+      );
+    }
+  }
+
   String _tabDescription(String label) {
     switch (label) {
       case '홈':
@@ -433,8 +311,8 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
         return '함께 갈 인원을 찾고 1/N 조건을 맞춰 매칭합니다.';
       case '채팅':
         return '매칭된 인원과 입장 시간, 복장, 비용을 조율합니다.';
-      case '파티':
-        return '진행 중인 파티와 인기 클럽 일정을 탐색합니다.';
+      case '커뮤니티':
+        return '커뮤니티 활동과 소통을 확인합니다.';
       case '메뉴':
         return '내 프로필, 인증, 결제, 알림 설정을 관리합니다.';
       default:
