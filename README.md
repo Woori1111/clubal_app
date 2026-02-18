@@ -5,6 +5,7 @@
 ## 디자인 가이드
 
 - 팀/AI 공통 기준 문서: `DESIGN_GUIDE.md`
+- 리퀴드 글래스 시스템 문서: `docs/liquid_glass_design_system.md`
 - 핵심 키워드: `Liquid Lens`, `Droplet Geometry`, `Elastic Motion`
 
 ## 현재 기본 구현

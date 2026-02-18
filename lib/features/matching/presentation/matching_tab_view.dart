@@ -1,12 +1,18 @@
 import 'dart:ui';
 
+import 'package:clubal_app/features/matching/models/piece_room.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 class MatchingTabView extends StatefulWidget {
-  const MatchingTabView({super.key, required this.onAutoMatchTap});
+  const MatchingTabView({
+    super.key,
+    required this.onAutoMatchTap,
+    required this.rooms,
+  });
 
   final VoidCallback onAutoMatchTap;
+  final List<PieceRoom> rooms;
 
   @override
   State<MatchingTabView> createState() => _MatchingTabViewState();
@@ -14,21 +20,8 @@ class MatchingTabView extends StatefulWidget {
 
 class _MatchingTabViewState extends State<MatchingTabView> {
   bool _fabCompact = false;
-  static const Color _brandColor = Color(0xFF2ECEF2);
   static const List<String> _activeMatches = [];
   static const List<String> _completedMatches = [];
-  static const List<_DummyPieceRoom> _dummyRooms = [
-    _DummyPieceRoom(title: '네온밤의 조각 방', capacity: '3/6', creator: '민준', location: '강남역'),
-    _DummyPieceRoom(title: '파도소리의 조각 방', capacity: '2/6', creator: '지우', location: '이태원'),
-    _DummyPieceRoom(title: '보라빛의 조각 방', capacity: '5/6', creator: '수아', location: '홍대입구'),
-    _DummyPieceRoom(title: '달빛런의 조각 방', capacity: '1/6', creator: '현우', location: '건대입구'),
-    _DummyPieceRoom(title: '새벽무드의 조각 방', capacity: '4/6', creator: '서연', location: '합정'),
-    _DummyPieceRoom(title: '하이텐션의 조각 방', capacity: '3/6', creator: '도윤', location: '잠실'),
-    _DummyPieceRoom(title: '레트로밤의 조각 방', capacity: '6/6', creator: '예린', location: '신촌'),
-    _DummyPieceRoom(title: '바이브온의 조각 방', capacity: '2/6', creator: '태윤', location: '성수'),
-    _DummyPieceRoom(title: '시티라이트의 조각 방', capacity: '4/6', creator: '하은', location: '청담'),
-    _DummyPieceRoom(title: '핑크플로우의 조각 방', capacity: '3/6', creator: '유진', location: '종로3가'),
-  ];
 
   bool _handleScroll(UserScrollNotification notification) {
     if (notification.direction == ScrollDirection.reverse && !_fabCompact) {
@@ -72,7 +65,7 @@ class _MatchingTabViewState extends State<MatchingTabView> {
                     ],
                     const _SectionLabel(title: '조각 방 목록'),
                     const SizedBox(height: 12),
-                    ..._dummyRooms.map(
+                    ...widget.rooms.map(
                       (room) => Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: _PieceRoomListItem(room: room),
@@ -122,81 +115,82 @@ class _AutoMatchFabState extends State<_AutoMatchFab> {
   Widget build(BuildContext context) {
     final scale = _pressed ? 0.94 : 1.0;
     final opacity = _pressed ? 0.78 : 1.0;
+    final width = widget.compact ? 60.0 : 136.0;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(22),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: GestureDetector(
-          onTapDown: (_) => _setPressed(true),
-          onTapUp: (_) => _setPressed(false),
-          onTapCancel: () => _setPressed(false),
-          onTap: widget.onTap,
-          child: AnimatedScale(
-            duration: const Duration(milliseconds: 120),
-            curve: Curves.easeOutCubic,
-            scale: scale,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 120),
-              curve: Curves.easeOutCubic,
-              opacity: opacity,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 260),
-                curve: Curves.easeOutCubic,
-                  width: widget.compact ? 60 : 136,
-                height: 52,
-                padding: EdgeInsets.symmetric(
-                  horizontal: widget.compact ? 0 : 18,
-                ),
-                decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF80EBFF),
-                        _MatchingTabViewState._brandColor,
-                        Color(0xFF20BCDE),
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOutCubic,
+      scale: scale,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        opacity: opacity,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOutCubic,
+          width: width,
+          height: 52,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(26),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Material(
+                color: const Color(0x80FFFFFF),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(26),
+                  onTapDown: (_) => _setPressed(true),
+                  onTapUp: (_) => _setPressed(false),
+                  onTap: widget.onTap,
+                  onTapCancel: () => _setPressed(false),
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(26),
+                      border: Border.all(
+                        color: const Color(0x99FFFFFF),
+                        width: 1,
+                      ),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xB0FFFFFF), Color(0x80EAF2FA)],
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x12000000),
+                          blurRadius: 14,
+                          spreadRadius: -7,
+                          offset: Offset(0, 8),
+                        ),
                       ],
                     ),
-                  borderRadius: BorderRadius.circular(26),
-                    border: Border.all(
-                      color: const Color(0x73FFFFFF),
-                      width: 0.8,
+                    child: Center(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 220),
+                        switchInCurve: Curves.easeOutCubic,
+                        switchOutCurve: Curves.easeInCubic,
+                        transitionBuilder: (child, animation) => FadeTransition(
+                          opacity: animation,
+                          child: ScaleTransition(scale: animation, child: child),
+                        ),
+                        child: widget.compact
+                            ? const Icon(
+                                Icons.add_rounded,
+                                key: ValueKey('compact_plus'),
+                                color: Color(0xFF253445),
+                                size: 33,
+                                weight: 700,
+                              )
+                            : const Text(
+                                '자동매치',
+                                key: ValueKey('expanded_label'),
+                                style: TextStyle(
+                                  color: Color(0xFF253445),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 17,
+                                ),
+                              ),
+                      ),
                     ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x332ECEF2),
-                      blurRadius: 16,
-                      offset: Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: ScaleTransition(scale: animation, child: child),
-                    ),
-                    child: widget.compact
-                        ? const Icon(
-                            Icons.add_rounded,
-                            key: ValueKey('compact_plus'),
-                            color: Colors.white,
-                            size: 33,
-                            weight: 700,
-                          )
-                        : const Text(
-                            '자동매치',
-                            key: ValueKey('expanded_label'),
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 17,
-                            ),
-                          ),
                   ),
                 ),
               ),
@@ -318,24 +312,10 @@ class _InnerBlob extends StatelessWidget {
   }
 }
 
-class _DummyPieceRoom {
-  const _DummyPieceRoom({
-    required this.title,
-    required this.capacity,
-    required this.creator,
-    required this.location,
-  });
-
-  final String title;
-  final String capacity;
-  final String creator;
-  final String location;
-}
-
 class _PieceRoomListItem extends StatelessWidget {
   const _PieceRoomListItem({required this.room});
 
-  final _DummyPieceRoom room;
+  final PieceRoom room;
 
   @override
   Widget build(BuildContext context) {
@@ -353,7 +333,7 @@ class _PieceRoomListItem extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              _InfoChip(icon: Icons.group_rounded, text: room.capacity),
+              _InfoChip(icon: Icons.group_rounded, text: room.capacityLabel),
               const SizedBox(width: 8),
               _InfoChip(icon: Icons.person_rounded, text: room.creator),
               const SizedBox(width: 8),
