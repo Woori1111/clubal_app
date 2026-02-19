@@ -19,68 +19,11 @@ class ClubalSettingsPage extends StatefulWidget {
 }
 
 class _ClubalSettingsPageState extends State<ClubalSettingsPage> {
-  bool _isAuthBusy = false;
-  bool _googleInitialized = false;
   late final NotificationSettingsController _notificationController =
       NotificationSettingsController();
 
-  Future<void> _ensureGoogleInitialized() async {
-    if (_googleInitialized) {
-      return;
-    }
-    await GoogleSignIn.instance.initialize();
-    _googleInitialized = true;
-  }
-
-  Future<void> _signInWithGoogle() async {
-    setState(() => _isAuthBusy = true);
-    try {
-      await _ensureGoogleInitialized();
-      if (!GoogleSignIn.instance.supportsAuthenticate()) {
-        _showMessage('현재 플랫폼에서 Google 인증 버튼이 지원되지 않습니다.');
-        return;
-      }
-      final googleUser = await GoogleSignIn.instance.authenticate();
-      final authentication = googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        idToken: authentication.idToken,
-      );
-      await FirebaseAuth.instance.signInWithCredential(credential);
-    } on FirebaseAuthException catch (e) {
-      _showMessage('로그인 실패: ${e.message ?? e.code}');
-    } catch (e) {
-      _showMessage('로그인 처리 중 오류가 발생했습니다: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isAuthBusy = false);
-      }
-    }
-  }
-
-  Future<void> _signOut() async {
-    setState(() => _isAuthBusy = true);
-    try {
-      await GoogleSignIn.instance.signOut();
-      await FirebaseAuth.instance.signOut();
-    } catch (e) {
-      _showMessage('로그아웃 처리 중 오류가 발생했습니다: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isAuthBusy = false);
-      }
-    }
-  }
-
-  void _showMessage(String text) {
-    if (!mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
-  }
-
   @override
   Widget build(BuildContext context) {
-    final settings = _notificationController.settings;
 
     return Scaffold(
       body: Stack(
@@ -111,113 +54,9 @@ class _ClubalSettingsPageState extends State<ClubalSettingsPage> {
                   const SizedBox(height: 18),
                   Expanded(
                     child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          // 알림 설정 섹션
-                          GlassCard(
-                            child: _NotificationSettingsCard(
-                              settings: settings,
-                              onChanged: (value) {
-                                setState(
-                                  () => _notificationController.update(value),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          // 나머지 설정 카드
-                          GlassCard(
-                            child: StreamBuilder<User?>(
-                              stream: FirebaseAuth.instance.authStateChanges(),
-                              builder: (context, snapshot) {
-                                final user = snapshot.data;
-                                final isLoggedIn = user != null;
-
-                                return Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    _SettingRow(
-                                      title: '계정/인증',
-                                      subtitle: isLoggedIn
-                                          ? '연결 계정: ${user.email ?? user.displayName ?? user.uid}'
-                                          : '구글 로그인으로 계정을 연결해 주세요',
-                                    ),
-                                    const SizedBox(height: 12),
-                                    _GoogleAuthButton(
-                                      busy: _isAuthBusy,
-                                      isLoggedIn: isLoggedIn,
-                                      onSignIn: _signInWithGoogle,
-                                      onSignOut: _signOut,
-                                    ),
-                                    const SizedBox(height: 14),
-                                    _SettingRow(
-                                      title: '결제/정산',
-                                      subtitle: '1/N 결제 수단 및 내역',
-                                      onTap: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute<void>(
-                                            builder: (_) =>
-                                                const SettingsSubPage(
-                                              title: '결제/정산',
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    const SizedBox(height: 14),
-                                    _SettingRow(
-                                      title: '고객지원',
-                                      subtitle: '문의 및 신고 접수',
-                                      onTap: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute<void>(
-                                            builder: (_) =>
-                                                const SettingsSubPage(
-                                              title: '고객지원',
-                                              child: CustomerSupportBody(),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    const SizedBox(height: 14),
-                                    _SettingRow(
-                                      title: '약관 및 정보',
-                                      subtitle: '이용약관·개인정보처리방침',
-                                      onTap: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute<void>(
-                                            builder: (_) =>
-                                                const SettingsSubPage(
-                                              title: '약관 및 정보',
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    const SizedBox(height: 14),
-                                    _SettingRow(
-                                      title: '계정 관리',
-                                      subtitle: '프로필·보안·연동 관리',
-                                      onTap: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute<void>(
-                                            builder: (_) =>
-                                                const SettingsSubPage(
-                                              title: '계정 관리',
-                                              child: AccountManagementBody(),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
-                        ],
+                      child: InlineSettingsContent(
+                        controller: _notificationController,
+                        onNotificationSettingsChanged: () => setState(() {}),
                       ),
                     ),
                   ),
@@ -227,6 +66,176 @@ class _ClubalSettingsPageState extends State<ClubalSettingsPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 설정 화면 본문(알림 + 계정/기타). 메뉴 탭 프로필 아래에서도 동일 위젯 사용.
+class InlineSettingsContent extends StatefulWidget {
+  const InlineSettingsContent({
+    super.key,
+    required this.controller,
+    this.onNotificationSettingsChanged,
+  });
+
+  final NotificationSettingsController controller;
+  final VoidCallback? onNotificationSettingsChanged;
+
+  @override
+  State<InlineSettingsContent> createState() => _InlineSettingsContentState();
+}
+
+class _InlineSettingsContentState extends State<InlineSettingsContent> {
+  bool _isAuthBusy = false;
+  bool _googleInitialized = false;
+
+  Future<void> _ensureGoogleInitialized() async {
+    if (_googleInitialized) return;
+    await GoogleSignIn.instance.initialize();
+    _googleInitialized = true;
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isAuthBusy = true);
+    try {
+      await _ensureGoogleInitialized();
+      if (!GoogleSignIn.instance.supportsAuthenticate()) {
+        _showMessage('현재 플랫폼에서 Google 인증 버튼이 지원되지 않습니다.');
+        return;
+      }
+      final googleUser = await GoogleSignIn.instance.authenticate();
+      final authentication = googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        idToken: authentication.idToken,
+      );
+      await FirebaseAuth.instance.signInWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      _showMessage('로그인 실패: ${e.message ?? e.code}');
+    } catch (e) {
+      _showMessage('로그인 처리 중 오류가 발생했습니다: $e');
+    } finally {
+      if (mounted) setState(() => _isAuthBusy = false);
+    }
+  }
+
+  Future<void> _signOut() async {
+    setState(() => _isAuthBusy = true);
+    try {
+      await GoogleSignIn.instance.signOut();
+      await FirebaseAuth.instance.signOut();
+    } catch (e) {
+      _showMessage('로그아웃 처리 중 오류가 발생했습니다: $e');
+    } finally {
+      if (mounted) setState(() => _isAuthBusy = false);
+    }
+  }
+
+  void _showMessage(String text) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = widget.controller.settings;
+    return Column(
+      children: [
+        GlassCard(
+          child: _NotificationSettingsCard(
+            settings: settings,
+            onChanged: (value) {
+              widget.controller.update(value);
+              widget.onNotificationSettingsChanged?.call();
+            },
+          ),
+        ),
+        const SizedBox(height: 18),
+        GlassCard(
+          child: StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context, snapshot) {
+              final user = snapshot.data;
+              final isLoggedIn = user != null;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SettingRow(
+                    title: '계정/인증',
+                    subtitle: isLoggedIn
+                        ? '연결 계정: ${user.email ?? user.displayName ?? user.uid}'
+                        : '구글 로그인으로 계정을 연결해 주세요',
+                  ),
+                  const SizedBox(height: 12),
+                  _GoogleAuthButton(
+                    busy: _isAuthBusy,
+                    isLoggedIn: isLoggedIn,
+                    onSignIn: _signInWithGoogle,
+                    onSignOut: _signOut,
+                  ),
+                  const SizedBox(height: 14),
+                  _SettingRow(
+                    title: '결제/정산',
+                    subtitle: '1/N 결제 수단 및 내역',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const SettingsSubPage(
+                            title: '결제/정산',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  _SettingRow(
+                    title: '고객지원',
+                    subtitle: '문의 및 신고 접수',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const SettingsSubPage(
+                            title: '고객지원',
+                            child: CustomerSupportBody(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  _SettingRow(
+                    title: '약관 및 정보',
+                    subtitle: '이용약관·개인정보처리방침',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const SettingsSubPage(
+                            title: '약관 및 정보',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  _SettingRow(
+                    title: '계정 관리',
+                    subtitle: '프로필·보안·연동 관리',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const SettingsSubPage(
+                            title: '계정 관리',
+                            child: AccountManagementBody(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
