@@ -332,9 +332,7 @@ class _TabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fgColor = selected
-        ? const Color(0xFFF5FCFF)
-        : const Color(0xB3DCEAFF);
+    final fgColor = Colors.black;
     return Material(
       color: Colors.transparent,
       child: GestureDetector(

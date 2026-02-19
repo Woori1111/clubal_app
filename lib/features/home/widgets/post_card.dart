@@ -57,7 +57,7 @@ class _PostCardState extends State<PostCard> {
   Widget build(BuildContext context) {
     // 텍스트 줄 수 계산
     final textStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-      color: const Color(0xFFF5FCFF),
+      color: Colors.black,
       fontWeight: FontWeight.w500,
     ) ?? const TextStyle();
     
@@ -79,7 +79,6 @@ class _PostCardState extends State<PostCard> {
         child: Container(
           constraints: BoxConstraints(
             minHeight: shouldUseMinHeight ? safeMinHeight : 0,
-            maxHeight: widget.maxHeight ?? double.infinity,
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
@@ -100,10 +99,10 @@ class _PostCardState extends State<PostCard> {
   }
 
   Widget _buildFixedHeightLayout(BuildContext context) {
-    const detailStyle = TextStyle(color: Color(0xB3DCEAFF), fontSize: 12);
+    const detailStyle = TextStyle(color: Colors.black, fontSize: 12);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.max,
+      mainAxisSize: MainAxisSize.min,
       children: [
         // 프로필 영역
         Row(
@@ -123,14 +122,14 @@ class _PostCardState extends State<PostCard> {
                         errorBuilder: (context, error, stackTrace) {
                           return const Icon(
                             Icons.person_rounded,
-                            color: Color(0xB3DCEAFF),
+                            color: Colors.black,
                             size: 18,
                           );
                         },
                       )
                     : const Icon(
                         Icons.person_rounded,
-                        color: Color(0xB3DCEAFF),
+                        color: Colors.black,
                         size: 18,
                       ),
               ),
@@ -139,7 +138,7 @@ class _PostCardState extends State<PostCard> {
             Text(
               widget.userName,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFFE9F6FF),
+                color: Colors.black,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),
@@ -148,33 +147,211 @@ class _PostCardState extends State<PostCard> {
         ),
         const SizedBox(height: 8),
         // 제목 + 사진 (사진은 위쪽 정렬)
-        Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.title,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                    maxLines: null,
+                    overflow: TextOverflow.clip,
+                  ),
+                ],
+              ),
+            ),
+            if (widget.imageUrl != null) ...[
+              const SizedBox(width: 10),
+              Transform.translate(
+                offset: const Offset(0, -16),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: SizedBox(
+                    width: 108,
+                    height: 108,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0x33FFFFFF),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Image.network(
+                        widget.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.image_rounded,
+                            color: Colors.black,
+                            size: 32,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        // 하단: 좌측(위치/시간/조회수) + 우측(좋아요/댓글)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // 좌측: 위치, 시간, 조회수
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.location != null) ...[
+                  const Icon(Icons.location_on_rounded, size: 12, color: Colors.black),
+                  const SizedBox(width: 2),
+                  Text(widget.location!, style: detailStyle, overflow: TextOverflow.ellipsis),
+                  const SizedBox(width: 8),
+                ],
+                if (widget.date != null) ...[
+                  const Icon(Icons.calendar_today_rounded, size: 12, color: Colors.black),
+                  const SizedBox(width: 2),
+                  Text(widget.date!, style: detailStyle, overflow: TextOverflow.ellipsis),
+                  const SizedBox(width: 8),
+                ],
+                if (widget.viewCount != null) ...[
+                  const Icon(Icons.visibility_rounded, size: 12, color: Colors.black),
+                  const SizedBox(width: 2),
+                  Text('${widget.viewCount}', style: detailStyle),
+                ],
+              ],
+            ),
+            // 우측: 좋아요, 댓글
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: () => setState(() => _likeCount++),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.favorite_border_rounded,
+                        size: 18,
+                        color: Colors.black,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        '$_likeCount',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.black,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Flexible(
-                      child: Text(
-                        widget.title,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFFF5FCFF),
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
-                        ),
-                        maxLines: null,
-                        overflow: TextOverflow.clip,
+                    const Icon(
+                      Icons.chat_bubble_outline_rounded,
+                      size: 18,
+                      color: Colors.black,
+                    ),
+                    const SizedBox(width: 2),
+                    Text(
+                      '${widget.commentCount}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.black,
+                        fontSize: 12,
                       ),
                     ),
                   ],
                 ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFlexibleLayout(BuildContext context) {
+    const detailStyle = TextStyle(color: Colors.black, fontSize: 12);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            ClipOval(
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: const BoxDecoration(
+                  color: Color(0x33FFFFFF),
+                  shape: BoxShape.circle,
+                ),
+                child: widget.userProfileImageUrl != null
+                    ? Image.network(
+                        widget.userProfileImageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.person_rounded,
+                            color: Colors.black,
+                            size: 18,
+                          );
+                        },
+                      )
+                    : const Icon(
+                        Icons.person_rounded,
+                        color: Colors.black,
+                        size: 18,
+                      ),
               ),
-              if (widget.imageUrl != null) ...[
-                const SizedBox(width: 10),
-                ClipRRect(
+            ),
+            const SizedBox(width: 6),
+            Text(
+              widget.userName,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.title,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                    maxLines: null,
+                    overflow: TextOverflow.clip,
+                  ),
+                ],
+              ),
+            ),
+            if (widget.imageUrl != null) ...[
+              const SizedBox(width: 10),
+              Transform.translate(
+                offset: const Offset(0, -16),
+                child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: SizedBox(
                     width: 108,
@@ -198,10 +375,11 @@ class _PostCardState extends State<PostCard> {
                     ),
                   ),
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         ),
+        const SizedBox(height: 8),
         // 하단: 좌측(위치/시간/조회수) + 우측(좋아요/댓글)
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -211,19 +389,19 @@ class _PostCardState extends State<PostCard> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (widget.location != null) ...[
-                  const Icon(Icons.location_on_rounded, size: 12, color: Color(0xB3DCEAFF)),
+                  const Icon(Icons.location_on_rounded, size: 12, color: Colors.black),
                   const SizedBox(width: 2),
                   Text(widget.location!, style: detailStyle, overflow: TextOverflow.ellipsis),
                   const SizedBox(width: 8),
                 ],
                 if (widget.date != null) ...[
-                  const Icon(Icons.calendar_today_rounded, size: 12, color: Color(0xB3DCEAFF)),
+                  const Icon(Icons.calendar_today_rounded, size: 12, color: Colors.black),
                   const SizedBox(width: 2),
                   Text(widget.date!, style: detailStyle, overflow: TextOverflow.ellipsis),
                   const SizedBox(width: 8),
                 ],
                 if (widget.viewCount != null) ...[
-                  const Icon(Icons.visibility_rounded, size: 12, color: Color(0xB3DCEAFF)),
+                  const Icon(Icons.visibility_rounded, size: 12, color: Colors.black),
                   const SizedBox(width: 2),
                   Text('${widget.viewCount}', style: detailStyle),
                 ],
@@ -241,13 +419,13 @@ class _PostCardState extends State<PostCard> {
                       const Icon(
                         Icons.favorite_border_rounded,
                         size: 18,
-                        color: Color(0xB3DCEAFF),
+                        color: Colors.black,
                       ),
                       const SizedBox(width: 2),
                       Text(
                         '$_likeCount',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xB3DCEAFF),
+                          color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
@@ -261,190 +439,13 @@ class _PostCardState extends State<PostCard> {
                     const Icon(
                       Icons.chat_bubble_outline_rounded,
                       size: 18,
-                      color: Color(0xB3DCEAFF),
+                      color: Colors.black,
                     ),
                     const SizedBox(width: 2),
                     Text(
                       '${widget.commentCount}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xB3DCEAFF),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFlexibleLayout(BuildContext context) {
-    const detailStyle = TextStyle(color: Color(0xB3DCEAFF), fontSize: 12);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            ClipOval(
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: const BoxDecoration(
-                  color: Color(0x33FFFFFF),
-                  shape: BoxShape.circle,
-                ),
-                child: widget.userProfileImageUrl != null
-                    ? Image.network(
-                        widget.userProfileImageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.person_rounded,
-                            color: Color(0xB3DCEAFF),
-                            size: 18,
-                          );
-                        },
-                      )
-                    : const Icon(
-                        Icons.person_rounded,
-                        color: Color(0xB3DCEAFF),
-                        size: 18,
-                      ),
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              widget.userName,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFFE9F6FF),
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.title,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFFF5FCFF),
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                    ),
-                    maxLines: null,
-                    overflow: TextOverflow.clip,
-                  ),
-                ],
-              ),
-            ),
-            if (widget.imageUrl != null) ...[
-              const SizedBox(width: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: SizedBox(
-                  width: 108,
-                  height: 108,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0x33FFFFFF),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Image.network(
-                      widget.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.image_rounded,
-                          color: Color(0xB3DCEAFF),
-                          size: 32,
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 8),
-        // 하단: 좌측(위치/시간/조회수) + 우측(좋아요/댓글)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // 좌측: 위치, 시간, 조회수
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.location != null) ...[
-                  const Icon(Icons.location_on_rounded, size: 12, color: Color(0xB3DCEAFF)),
-                  const SizedBox(width: 2),
-                  Text(widget.location!, style: detailStyle, overflow: TextOverflow.ellipsis),
-                  const SizedBox(width: 8),
-                ],
-                if (widget.date != null) ...[
-                  const Icon(Icons.calendar_today_rounded, size: 12, color: Color(0xB3DCEAFF)),
-                  const SizedBox(width: 2),
-                  Text(widget.date!, style: detailStyle, overflow: TextOverflow.ellipsis),
-                  const SizedBox(width: 8),
-                ],
-                if (widget.viewCount != null) ...[
-                  const Icon(Icons.visibility_rounded, size: 12, color: Color(0xB3DCEAFF)),
-                  const SizedBox(width: 2),
-                  Text('${widget.viewCount}', style: detailStyle),
-                ],
-              ],
-            ),
-            // 우측: 좋아요, 댓글
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GestureDetector(
-                  onTap: () => setState(() => _likeCount++),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.favorite_border_rounded,
-                        size: 18,
-                        color: Color(0xB3DCEAFF),
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        '$_likeCount',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xB3DCEAFF),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.chat_bubble_outline_rounded,
-                      size: 18,
-                      color: Color(0xB3DCEAFF),
-                    ),
-                    const SizedBox(width: 2),
-                    Text(
-                      '${widget.commentCount}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xB3DCEAFF),
+                        color: Colors.black,
                         fontSize: 12,
                       ),
                     ),

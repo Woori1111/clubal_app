@@ -1,6 +1,8 @@
 import 'dart:ui';
 
 import 'package:clubal_app/core/theme/app_glass_styles.dart';
+import 'package:clubal_app/features/home/presentation/post_detail_page.dart';
+import 'package:clubal_app/features/home/presentation/write_post_page.dart';
 import 'package:clubal_app/features/home/widgets/post_card.dart';
 import 'package:clubal_app/features/navigation/widgets/clubal_top_tab_bar.dart';
 import 'package:flutter/material.dart';
@@ -38,7 +40,7 @@ class _CommunityTabViewState extends State<CommunityTabView> {
                   child: Text(
                     '인기 컨텐츠',
                     style: TextStyle(
-                      color: Color(0xFF8A9BAF),
+                      color: Colors.black,
                       fontSize: 18,
                     ),
                   ),
@@ -95,32 +97,43 @@ class _LatestPostsList extends StatelessWidget {
       },
     ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final availableHeight = constraints.maxHeight;
-        final minCardHeight = availableHeight / 4.8;
-        final maxCardHeight = availableHeight / 3.6;
-
-        return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-          itemCount: posts.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final post = posts[index];
-            return PostCard(
-              userName: post['userName'] as String,
-              userProfileImageUrl: post['userProfileImageUrl'] as String?,
-              title: post['title'] as String,
-              location: post['location'] as String?,
-              date: post['date'] as String?,
-              viewCount: post['viewCount'] as int?,
-              likeCount: post['likeCount'] as int? ?? 0,
-              commentCount: post['commentCount'] as int? ?? 0,
-              imageUrl: post['imageUrl'] as String?,
-              minHeight: minCardHeight,
-              maxHeight: maxCardHeight,
+    return ListView.separated(
+      physics: const ClampingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      itemCount: posts.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final post = posts[index];
+        return GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => PostDetailPage(
+                  userName: post['userName'] as String,
+                  userProfileImageUrl: post['userProfileImageUrl'] as String?,
+                  title: post['title'] as String,
+                  content: post['content'] as String?,
+                  location: post['location'] as String?,
+                  date: post['date'] as String?,
+                  viewCount: post['viewCount'] as int?,
+                  likeCount: post['likeCount'] as int? ?? 0,
+                  commentCount: post['commentCount'] as int? ?? 0,
+                  imageUrl: post['imageUrl'] as String?,
+                ),
+              ),
             );
           },
+          child: PostCard(
+            userName: post['userName'] as String,
+            userProfileImageUrl: post['userProfileImageUrl'] as String?,
+            title: post['title'] as String,
+            location: post['location'] as String?,
+            date: post['date'] as String?,
+            viewCount: post['viewCount'] as int?,
+            likeCount: post['likeCount'] as int? ?? 0,
+            commentCount: post['commentCount'] as int? ?? 0,
+            imageUrl: post['imageUrl'] as String?,
+          ),
         );
       },
     );
@@ -132,20 +145,31 @@ class _WriteFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {},
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: AppGlassStyles.card(radius: 28),
-            child: const Icon(
-              Icons.edit_rounded,
-              color: Color(0xFFF5FCFF),
-              size: 24,
+    return Transform.translate(
+      offset: const Offset(0, 4),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const WritePostPage(),
+            ),
+          );
+        },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: AppGlassStyles.card(radius: 28),
+              child: const Center(
+                child: Icon(
+                  Icons.edit_rounded,
+                  color: Colors.black,
+                  size: 24,
+                ),
+              ),
             ),
           ),
         ),
