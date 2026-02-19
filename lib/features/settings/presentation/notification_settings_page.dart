@@ -2,6 +2,7 @@ import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
 import 'package:clubal_app/features/settings/presentation/marketing_notification_page.dart';
+import 'package:clubal_app/features/settings/presentation/notification_settings_controller.dart';
 import 'package:flutter/material.dart';
 
 class NotificationSettingsPage extends StatefulWidget {
@@ -13,22 +14,13 @@ class NotificationSettingsPage extends StatefulWidget {
 }
 
 class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
-  // 새로운 알림
-  bool _chat = true;
-  bool _matching = true;
-  bool _sound = true;
-  bool _vibration = true;
-  // 커뮤니티
-  bool _postActivity = true;
-  bool _postLikes = true;
-  bool _commentsReplies = true;
-  bool _recommendedPosts = true;
-  // 추천 알림
-  bool _recommendation = true;
-  bool _promotion = false;
+  late final NotificationSettingsController _controller =
+      NotificationSettingsController();
 
   @override
   Widget build(BuildContext context) {
+    final settings = _controller.settings;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -58,7 +50,6 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    // 새로운 알림
                     Text(
                       '새로운 알림',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -73,32 +64,55 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                         children: [
                           _AnimatedToggleRow(
                             label: '채팅 알림',
-                            value: _chat,
-                            onChanged: (v) => setState(() => _chat = v),
+                            value: settings.chat,
+                            onChanged: (v) {
+                              setState(
+                                () => _controller.update(
+                                  settings.copyWith(chat: v),
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
                             label: '매칭 알림',
-                            value: _matching,
-                            onChanged: (v) => setState(() => _matching = v),
+                            value: settings.matching,
+                            onChanged: (v) {
+                              setState(
+                                () => _controller.update(
+                                  settings.copyWith(matching: v),
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
                             label: '소리',
-                            value: _sound,
-                            onChanged: (v) => setState(() => _sound = v),
+                            value: settings.sound,
+                            onChanged: (v) {
+                              setState(
+                                () => _controller.update(
+                                  settings.copyWith(sound: v),
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
                             label: '진동',
-                            value: _vibration,
-                            onChanged: (v) => setState(() => _vibration = v),
+                            value: settings.vibration,
+                            onChanged: (v) {
+                              setState(
+                                () => _controller.update(
+                                  settings.copyWith(vibration: v),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
-                    // 커뮤니티
                     Text(
                       '커뮤니티',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -113,34 +127,55 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                         children: [
                           _AnimatedToggleRow(
                             label: '게시물 및 활동',
-                            value: _postActivity,
-                            onChanged: (v) => setState(() => _postActivity = v),
+                            value: settings.postActivity,
+                            onChanged: (v) {
+                              setState(
+                                () => _controller.update(
+                                  settings.copyWith(postActivity: v),
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
                             label: '내 게시물에 좋아요',
-                            value: _postLikes,
-                            onChanged: (v) => setState(() => _postLikes = v),
+                            value: settings.postLikes,
+                            onChanged: (v) {
+                              setState(
+                                () => _controller.update(
+                                  settings.copyWith(postLikes: v),
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
                             label: '댓글과 답글',
-                            value: _commentsReplies,
-                            onChanged: (v) =>
-                                setState(() => _commentsReplies = v),
+                            value: settings.commentsReplies,
+                            onChanged: (v) {
+                              setState(
+                                () => _controller.update(
+                                  settings.copyWith(commentsReplies: v),
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
                             label: '추천 게시물',
-                            value: _recommendedPosts,
-                            onChanged: (v) =>
-                                setState(() => _recommendedPosts = v),
+                            value: settings.recommendedPosts,
+                            onChanged: (v) {
+                              setState(
+                                () => _controller.update(
+                                  settings.copyWith(recommendedPosts: v),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
-                    // 추천 알림
                     Text(
                       '추천 알림',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -155,21 +190,31 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                         children: [
                           _AnimatedToggleRow(
                             label: '정기 추천 알림',
-                            value: _recommendation,
-                            onChanged: (v) =>
-                                setState(() => _recommendation = v),
+                            value: settings.recommendation,
+                            onChanged: (v) {
+                              setState(
+                                () => _controller.update(
+                                  settings.copyWith(recommendation: v),
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
                             label: '각종 프로모션',
-                            value: _promotion,
-                            onChanged: (v) => setState(() => _promotion = v),
+                            value: settings.promotion,
+                            onChanged: (v) {
+                              setState(
+                                () => _controller.update(
+                                  settings.copyWith(promotion: v),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
-                    // 마케팅 광고성 알림 (단독, > 진입)
                     GlassCard(
                       child: _SettingRowWithArrow(
                         title: '마케팅·광고성 알림',
