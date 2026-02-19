@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:clubal_app/core/theme/app_glass_styles.dart';
 import 'package:flutter/material.dart';
 
 class GlassCard extends StatelessWidget {
@@ -16,18 +17,11 @@ class GlassCard extends StatelessWidget {
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: const Color(0x33415366), width: 1),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xEEFFFFFF), Color(0xD9EEF3FA)],
-            ),
-          ),
+          decoration: AppGlassStyles.card(radius: 28),
           child: child,
         ),
       ),
     );
   }
 }
+

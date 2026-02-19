@@ -99,36 +99,63 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav>
                   ),
                 ],
               ),
-              child: CustomPaint(
-                painter: const _RainbowLensBorderPainter(),
-                child: Row(
-                  children: [
-                    for (int i = 0; i < widget.tabs.length; i++)
-                      Expanded(
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            _bounceControllers[i].forward(from: 0);
-                            if (i != widget.selectedIndex) {
-                              widget.onChanged(i);
-                            }
-                          },
-                          child: AnimatedBuilder(
-                            animation: _scaleAnimations[i],
-                            builder: (context, _) => _LiquidGlassNavItem(
-                              tab: widget.tabs[i],
-                              isSelected: i == widget.selectedIndex,
-                              bounceScale: _scaleAnimations[i].value,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+              child: _JellyBottomNavContent(
+                tabs: widget.tabs,
+                selectedIndex: widget.selectedIndex,
+                scaleAnimations: _scaleAnimations,
+                bounceControllers: _bounceControllers,
+                onChanged: widget.onChanged,
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _JellyBottomNavContent extends StatelessWidget {
+  const _JellyBottomNavContent({
+    required this.tabs,
+    required this.selectedIndex,
+    required this.scaleAnimations,
+    required this.bounceControllers,
+    required this.onChanged,
+  });
+
+  final List<NavTab> tabs;
+  final int selectedIndex;
+  final List<Animation<double>> scaleAnimations;
+  final List<AnimationController> bounceControllers;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: const _RainbowLensBorderPainter(),
+      child: Row(
+        children: [
+          for (int i = 0; i < tabs.length; i++)
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  bounceControllers[i].forward(from: 0);
+                  if (i != selectedIndex) {
+                    onChanged(i);
+                  }
+                },
+                child: AnimatedBuilder(
+                  animation: scaleAnimations[i],
+                  builder: (context, _) => _LiquidGlassNavItem(
+                    tab: tabs[i],
+                    isSelected: i == selectedIndex,
+                    bounceScale: scaleAnimations[i].value,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

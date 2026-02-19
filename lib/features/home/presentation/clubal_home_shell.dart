@@ -1,18 +1,17 @@
-import 'dart:io';
-import 'dart:ui';
-
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
-import 'package:clubal_app/features/home/widgets/post_card.dart';
+import 'package:clubal_app/features/home/presentation/chat_tab_view.dart';
+import 'package:clubal_app/features/home/presentation/community_tab_view.dart';
+import 'package:clubal_app/features/home/presentation/home_tab_view.dart';
+import 'package:clubal_app/features/home/presentation/menu_tab_view.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
 import 'package:clubal_app/features/matching/presentation/create_piece_room_page.dart';
 import 'package:clubal_app/features/matching/presentation/matching_tab_view.dart';
 import 'package:clubal_app/features/navigation/models/nav_tab.dart';
 import 'package:clubal_app/features/navigation/widgets/clubal_jelly_bottom_nav.dart';
-import 'package:clubal_app/features/navigation/widgets/clubal_top_tab_bar.dart';
 import 'package:clubal_app/features/notifications/presentation/past_notifications_page.dart';
-import 'package:clubal_app/features/profile/presentation/profile_detail_page.dart';
 import 'package:clubal_app/features/settings/presentation/clubal_settings_page.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -28,7 +27,6 @@ class ClubalHomeShell extends StatefulWidget {
 
 class _ClubalHomeShellState extends State<ClubalHomeShell> {
   int _selectedIndex = 0;
-  int _topTabIndex = 0;
   final List<PieceRoom> _pieceRooms = [];
 
   final List<NavTab> _tabs = const [
@@ -39,10 +37,13 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
     NavTab(label: '메뉴', icon: Icons.menu_rounded),
   ];
 
+  bool get _isIOSNative =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
   @override
   void initState() {
     super.initState();
-    if (Platform.isIOS) {
+    if (_isIOSNative) {
       _navChannel.setMethodCallHandler((call) async {
         if (call.method == 'setTab') {
           final index = call.arguments as int;
@@ -54,14 +55,14 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
 
   @override
   void dispose() {
-    if (Platform.isIOS) _navChannel.setMethodCallHandler(null);
+    if (_isIOSNative) _navChannel.setMethodCallHandler(null);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final selected = _tabs[_selectedIndex];
-    final isIOS = Platform.isIOS;
+    final isIOS = _isIOSNative;
 
     return Scaffold(
       extendBody: !isIOS,
@@ -128,52 +129,44 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
                   ),
                 ),
 
-                // 커뮤니티 탭 전용 최신/인기 탭 바
-                if (selected.label == '커뮤니티')
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-                    child: ClubalTopTabBar(
-                      tabs: const ['최신', '인기'],
-                      selectedIndex: _topTabIndex,
-                      onChanged: (index) =>
-                          setState(() => _topTabIndex = index),
-                    ),
-                  ),
-
                 // 탭별 컨텐츠 (Expanded로 남은 공간 채움)
                 Expanded(child: _buildTabBody(selected.label)),
               ],
             ),
           ),
-
-          // 커뮤니티 글쓰기 플로팅 버튼
-          if (selected.label == '커뮤니티')
-            Positioned(
-              right: 24,
-              bottom: 82,
-              child: _buildWriteFab(context),
-            ),
         ],
       ),
-      bottomNavigationBar: isIOS
-          ? null
-          : ClubalJellyBottomNav(
-              tabs: _tabs,
-              selectedIndex: _selectedIndex,
-              onChanged: (index) => setState(() => _selectedIndex = index),
-            ),
+      bottomNavigationBar: kIsWeb
+          // Web: 단순한 기본 네비게이션으로 안전하게 렌더링
+          ? BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
+              currentIndex: _selectedIndex,
+              onTap: (index) => setState(() => _selectedIndex = index),
+              items: [
+                for (final tab in _tabs)
+                  BottomNavigationBarItem(
+                    icon: Icon(tab.icon),
+                    label: tab.label,
+                  ),
+              ],
+            )
+          // iOS: 네이티브 탭바가 담당하므로 Flutter 쪽은 하단바 없음
+          : isIOS
+              ? null
+              // Android 등 나머지 플랫폼: 기존 젤리 네비게이션 유지
+              : ClubalJellyBottomNav(
+                  tabs: _tabs,
+                  selectedIndex: _selectedIndex,
+                  onChanged: (index) =>
+                      setState(() => _selectedIndex = index),
+                ),
     );
   }
 
   Widget _buildTabBody(String label) {
     switch (label) {
       case '홈':
-        return const Center(
-          child: Text(
-            '홈 화면 준비 중',
-            style: TextStyle(color: Color(0xFF8A9BAF), fontSize: 16),
-          ),
-        );
+        return const HomeTabView();
       case '매칭':
         return MatchingTabView(
           rooms: _pieceRooms,
@@ -181,174 +174,14 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
           topPadding: 8,
         );
       case '채팅':
-        return const Center(
-          child: Text(
-            '채팅 준비 중',
-            style: TextStyle(color: Color(0xFF8A9BAF), fontSize: 16),
-          ),
-        );
+        return const ChatTabView();
       case '커뮤니티':
-        return _buildCommunityContent();
+        return const CommunityTabView();
       case '메뉴':
-        return _buildMenuContent();
+        return const MenuTabView();
       default:
         return const SizedBox.shrink();
     }
-  }
-
-  Widget _buildCommunityContent() {
-    if (_topTabIndex == 0) {
-      final posts = [
-        {
-          'userName': '김민수',
-          'userProfileImageUrl': null,
-          'title': '오늘 클럽 가실 분 구해요!',
-          'location': '강남',
-          'date': '2시간 전',
-          'viewCount': 24,
-          'likeCount': 3,
-          'commentCount': 5,
-          'imageUrl': null,
-        },
-        {
-          'userName': '이지은',
-          'userProfileImageUrl': null,
-          'title': '주말에 함께 갈 사람 있나요? 정말 재밌는 클럽이에요!',
-          'location': '홍대',
-          'date': '5시간 전',
-          'viewCount': 48,
-          'likeCount': 7,
-          'commentCount': 12,
-          'imageUrl': 'https://picsum.photos/200/200?random=1',
-        },
-        {
-          'userName': '박준호',
-          'userProfileImageUrl': null,
-          'title': '클럽 테이블비 1/N으로 나눠요',
-          'location': '압구정',
-          'date': '1일 전',
-          'viewCount': 67,
-          'likeCount': 2,
-          'commentCount': 8,
-          'imageUrl': null,
-        },
-      ];
-
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          final availableHeight = constraints.maxHeight;
-          final minCardHeight = availableHeight / 4.8;
-          final maxCardHeight = availableHeight / 3.6;
-
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-            itemCount: posts.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final post = posts[index];
-              return PostCard(
-                userName: post['userName'] as String,
-                userProfileImageUrl: post['userProfileImageUrl'] as String?,
-                title: post['title'] as String,
-                location: post['location'] as String?,
-                date: post['date'] as String?,
-                viewCount: post['viewCount'] as int?,
-                likeCount: post['likeCount'] as int? ?? 0,
-                commentCount: post['commentCount'] as int? ?? 0,
-                imageUrl: post['imageUrl'] as String?,
-                minHeight: minCardHeight,
-                maxHeight: maxCardHeight,
-              );
-            },
-          );
-        },
-      );
-    }
-    return const Center(
-      child: Text(
-        '인기 컨텐츠',
-        style: TextStyle(color: Color(0xFF8A9BAF), fontSize: 18),
-      ),
-    );
-  }
-
-  Widget _buildMenuContent() {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-      children: [
-        _MenuCard(
-          icon: Icons.person_rounded,
-          title: '내 프로필',
-          subtitle: '프로필 확인 및 수정',
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const ProfileDetailPage(),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        _MenuCard(
-          icon: Icons.settings_rounded,
-          title: '설정',
-          subtitle: '알림·계정·결제 관리',
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const ClubalSettingsPage(),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        _MenuCard(
-          icon: Icons.notifications_none_rounded,
-          title: '알림 내역',
-          subtitle: '지난 알림 확인',
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const PastNotificationsPage(),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWriteFab(BuildContext context) {
-    return GestureDetector(
-      onTap: () {},
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              border:
-                  Border.all(color: const Color(0x55FFFFFF), width: 1.2),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF9AE1FF), Color(0xFF69C6F6)],
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x5522B8FF),
-                  blurRadius: 16,
-                  spreadRadius: -8,
-                  offset: Offset(0, 7),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.edit_rounded,
-              color: Color(0xFFF5FCFF),
-              size: 24,
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> _openCreatePieceRoom() async {
@@ -359,81 +192,5 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
     );
     if (created == null) return;
     setState(() => _pieceRooms.insert(0, created));
-  }
-}
-
-class _MenuCard extends StatelessWidget {
-  const _MenuCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0x2B3D5067), width: 1),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xD9FFFFFF), Color(0xCBEAF1FA)],
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(icon, size: 26, color: const Color(0xFF304255)),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleSmall
-                            ?.copyWith(
-                              color: const Color(0xFF304255),
-                              fontWeight: FontWeight.w700,
-                            ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: const Color(0xFF304255)),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: Color(0xFF304255),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:clubal_app/core/theme/app_glass_styles.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -44,38 +45,45 @@ class _MatchingTabViewState extends State<MatchingTabView> {
           children: [
             NotificationListener<UserScrollNotification>(
               onNotification: _handleScroll,
-              child: SingleChildScrollView(
+              child: ListView.builder(
                 padding: const EdgeInsets.only(bottom: 170),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (_activeMatches.isNotEmpty) ...[
-                      const _SectionLabel(title: '매치 중'),
-                      const SizedBox(height: 8),
-                      const _BlobSectionCard(
-                        emptyMessage: '현재 진행 중인 매치가 없습니다.',
+                itemCount: _activeMatches.isNotEmpty ||
+                        _completedMatches.isNotEmpty ||
+                        widget.rooms.isNotEmpty
+                    ? 1
+                    : 0,
+                itemBuilder: (context, _) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_activeMatches.isNotEmpty) ...[
+                        const _SectionLabel(title: '매치 중'),
+                        const SizedBox(height: 8),
+                        const _BlobSectionCard(
+                          emptyMessage: '현재 진행 중인 매치가 없습니다.',
+                        ),
+                        const SizedBox(height: 14),
+                      ],
+                      if (_completedMatches.isNotEmpty) ...[
+                        const _SectionLabel(title: '매치 완료'),
+                        const SizedBox(height: 8),
+                        const _BlobSectionCard(
+                          emptyMessage: '완료된 매치 기록이 없습니다.',
+                        ),
+                        const SizedBox(height: 14),
+                      ],
+                      const _SectionLabel(title: '조각 방 목록'),
+                      const SizedBox(height: 12),
+                      ...widget.rooms.map(
+                        (room) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _PieceRoomListItem(room: room),
+                        ),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 16),
                     ],
-                    if (_completedMatches.isNotEmpty) ...[
-                      const _SectionLabel(title: '매치 완료'),
-                      const SizedBox(height: 8),
-                      const _BlobSectionCard(
-                        emptyMessage: '완료된 매치 기록이 없습니다.',
-                      ),
-                      const SizedBox(height: 14),
-                    ],
-                    const _SectionLabel(title: '조각 방 목록'),
-                    const SizedBox(height: 12),
-                    ...widget.rooms.map(
-                      (room) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _PieceRoomListItem(room: room),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
             Positioned(
@@ -266,23 +274,7 @@ class _BlobCard extends StatelessWidget {
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: const Color(0x2B3D5067), width: 1),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xD9FFFFFF), Color(0xCBEAF1FA)],
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x12000000),
-                blurRadius: 18,
-                spreadRadius: -10,
-                offset: Offset(0, 8),
-              ),
-            ],
-          ),
+          decoration: AppGlassStyles.card(radius: 30),
           child: child,
         ),
       ),
@@ -300,15 +292,7 @@ class _InnerBlob extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0x22485B72), width: 1),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xD7FFFFFF), Color(0xCDE9F0F8)],
-        ),
-      ),
+      decoration: AppGlassStyles.innerCard(radius: 18),
       child: child,
     );
   }
