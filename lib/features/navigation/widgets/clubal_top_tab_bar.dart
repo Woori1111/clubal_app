@@ -1,5 +1,5 @@
-import 'dart:ui';
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -186,74 +186,125 @@ class _ClubalTopTabBarState extends State<ClubalTopTabBar> {
                   ? restingLensLeft 
                   : lensLeft.clamp(0.0, navWidth);
 
-              return Stack(
-                children: [
-                  AnimatedPositioned(
-                    duration: _isInteracting
-                        ? Duration.zero
-                        : const Duration(milliseconds: 650),
-                    curve: _isInteracting 
-                        ? Curves.linear 
-                        : Curves.elasticOut,
-                    left: safeLensLeft,
-                    top: 4,
-                    child: AnimatedScale(
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeOutBack,
-                      scale: _isInteracting ? 1.08 : 1.0,
-                      child: _TabLens(
-                        width: lensWidth,
-                        isInteracting: _isInteracting,
-                        travelDirection: _travelDirection,
-                      ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    left: sidePadding,
-                    right: sidePadding,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onHorizontalDragStart: (details) =>
-                          _updateInteractionByDx(
-                            details.localPosition.dx,
-                            navWidth,
-                          ),
-                      onHorizontalDragUpdate: (details) =>
-                          _updateInteractionByDx(
-                            details.localPosition.dx,
-                            navWidth,
-                          ),
-                      onHorizontalDragEnd: (_) => _endInteraction(),
-                      onHorizontalDragCancel: _endInteraction,
-                      child: Row(
-                        children: [
-                          for (int i = 0; i < widget.tabs.length; i++)
-                            Expanded(
-                              child: _TabButton(
-                                label: widget.tabs[i],
-                                selected: i == widget.selectedIndex,
-                                pressScale: _buttonPressScale[i] ?? 1.0,
-                                fireAnimationKey: widget.tabs[i] == '인기' ? _fireAnimationKey : null,
-                                onTapDown: () =>
-                                    _startInteraction(i, itemWidth),
-                                onTap: () {
-                                  widget.onChanged(i);
-                                  _endInteraction();
-                                },
-                                onTapCancel: _endInteraction,
-                                onTapUp: _endInteraction,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+              return _ClubalTopTabBarContent(
+                sidePadding: sidePadding,
+                lensWidth: lensWidth,
+                navWidth: navWidth,
+                isInteracting: _isInteracting,
+                travelDirection: _travelDirection,
+                safeLensLeft: safeLensLeft,
+                tabs: widget.tabs,
+                selectedIndex: widget.selectedIndex,
+                interactionIndex: _interactionIndex,
+                buttonPressScale: _buttonPressScale,
+                fireAnimationKey: _fireAnimationKey,
+                onDragUpdateDx: (dx) => _updateInteractionByDx(dx, navWidth),
+                onDragEnd: _endInteraction,
+                onPressedTab: (i) => _startInteraction(i, itemWidth),
+                onTapTab: (i) {
+                  widget.onChanged(i);
+                  _endInteraction();
+                },
               );
             },
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ClubalTopTabBarContent extends StatelessWidget {
+  const _ClubalTopTabBarContent({
+    required this.sidePadding,
+    required this.lensWidth,
+    required this.navWidth,
+    required this.isInteracting,
+    required this.travelDirection,
+    required this.safeLensLeft,
+    required this.tabs,
+    required this.selectedIndex,
+    required this.interactionIndex,
+    required this.buttonPressScale,
+    required this.fireAnimationKey,
+    required this.onDragUpdateDx,
+    required this.onDragEnd,
+    required this.onPressedTab,
+    required this.onTapTab,
+  });
+
+  final double sidePadding;
+  final double lensWidth;
+  final double navWidth;
+  final bool isInteracting;
+  final double travelDirection;
+  final double safeLensLeft;
+  final List<String> tabs;
+  final int selectedIndex;
+  final int? interactionIndex;
+  final Map<int, double> buttonPressScale;
+  final int fireAnimationKey;
+  final ValueChanged<double> onDragUpdateDx;
+  final VoidCallback onDragEnd;
+  final ValueChanged<int> onPressedTab;
+  final ValueChanged<int> onTapTab;
+
+  @override
+  Widget build(BuildContext context) {
+    final lens = _TabLens(
+      width: lensWidth,
+      isInteracting: isInteracting,
+      travelDirection: travelDirection,
+    );
+
+    return Stack(
+      children: [
+        AnimatedPositioned(
+          duration: isInteracting
+              ? Duration.zero
+              : const Duration(milliseconds: 650),
+          curve: isInteracting ? Curves.linear : Curves.elasticOut,
+          left: safeLensLeft,
+          top: 4,
+          child: AnimatedScale(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutBack,
+            scale: isInteracting ? 1.08 : 1.0,
+            child: lens,
+          ),
+        ),
+        Positioned.fill(
+          left: sidePadding,
+          right: sidePadding,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragStart: (details) =>
+                onDragUpdateDx(details.localPosition.dx),
+            onHorizontalDragUpdate: (details) =>
+                onDragUpdateDx(details.localPosition.dx),
+            onHorizontalDragEnd: (_) => onDragEnd(),
+            onHorizontalDragCancel: onDragEnd,
+            child: Row(
+              children: [
+                for (int i = 0; i < tabs.length; i++)
+                  Expanded(
+                    child: _TabButton(
+                      label: tabs[i],
+                      selected: i == selectedIndex,
+                      pressScale: buttonPressScale[i] ?? 1.0,
+                      fireAnimationKey:
+                          tabs[i] == '인기' ? fireAnimationKey : null,
+                      onTapDown: () => onPressedTab(i),
+                      onTap: () => onTapTab(i),
+                      onTapCancel: onDragEnd,
+                      onTapUp: onDragEnd,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
