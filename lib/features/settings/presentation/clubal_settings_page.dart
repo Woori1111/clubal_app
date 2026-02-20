@@ -1,10 +1,9 @@
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
-import 'package:clubal_app/features/settings/models/notification_settings.dart';
 import 'package:clubal_app/features/settings/presentation/account_management_pages.dart';
 import 'package:clubal_app/features/settings/presentation/customer_support_pages.dart';
-import 'package:clubal_app/features/settings/presentation/marketing_notification_page.dart';
+import 'package:clubal_app/features/settings/presentation/notification_settings_page.dart';
 import 'package:clubal_app/features/settings/presentation/notification_settings_controller.dart';
 import 'package:clubal_app/features/settings/presentation/settings_sub_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -137,19 +136,8 @@ class _InlineSettingsContentState extends State<InlineSettingsContent> {
 
   @override
   Widget build(BuildContext context) {
-    final settings = widget.controller.settings;
     return Column(
       children: [
-        GlassCard(
-          child: _NotificationSettingsCard(
-            settings: settings,
-            onChanged: (value) {
-              widget.controller.update(value);
-              widget.onNotificationSettingsChanged?.call();
-            },
-          ),
-        ),
-        const SizedBox(height: 18),
         GlassCard(
           child: StreamBuilder<User?>(
             stream: FirebaseAuth.instance.authStateChanges(),
@@ -159,6 +147,17 @@ class _InlineSettingsContentState extends State<InlineSettingsContent> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _SettingRowWithArrow(
+                    title: '알림 설정',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const NotificationSettingsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 14),
                   _SettingRow(
                     title: '계정/인증',
                     subtitle: isLoggedIn
@@ -396,178 +395,6 @@ class _SettingRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: content,
       ),
-    );
-  }
-}
-
-/// 설정 메인 화면 내 알림 설정 카드
-class _NotificationSettingsCard extends StatelessWidget {
-  const _NotificationSettingsCard({
-    required this.settings,
-    required this.onChanged,
-  });
-
-  final NotificationSettings settings;
-  final ValueChanged<NotificationSettings> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            '알림 설정',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w700,
-                ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        // 새로운 알림 카드
-        GlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '새로운 알림',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              _AnimatedToggleRow(
-                label: '채팅 알림',
-                value: settings.chat,
-                onChanged: (v) => onChanged(
-                  settings.copyWith(chat: v),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _AnimatedToggleRow(
-                label: '매칭 알림',
-                value: settings.matching,
-                onChanged: (v) => onChanged(
-                  settings.copyWith(matching: v),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _AnimatedToggleRow(
-                label: '소리',
-                value: settings.sound,
-                onChanged: (v) => onChanged(
-                  settings.copyWith(sound: v),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _AnimatedToggleRow(
-                label: '진동',
-                value: settings.vibration,
-                onChanged: (v) => onChanged(
-                  settings.copyWith(vibration: v),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        // 커뮤니티 카드
-        GlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '커뮤니티',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              _AnimatedToggleRow(
-                label: '게시물 및 활동',
-                value: settings.postActivity,
-                onChanged: (v) => onChanged(
-                  settings.copyWith(postActivity: v),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _AnimatedToggleRow(
-                label: '내 게시물에 좋아요',
-                value: settings.postLikes,
-                onChanged: (v) => onChanged(
-                  settings.copyWith(postLikes: v),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _AnimatedToggleRow(
-                label: '댓글과 답글',
-                value: settings.commentsReplies,
-                onChanged: (v) => onChanged(
-                  settings.copyWith(commentsReplies: v),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _AnimatedToggleRow(
-                label: '추천 게시물',
-                value: settings.recommendedPosts,
-                onChanged: (v) => onChanged(
-                  settings.copyWith(recommendedPosts: v),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        // 추천 알림 카드
-        GlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '추천 알림',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              _AnimatedToggleRow(
-                label: '정기 추천 알림',
-                value: settings.recommendation,
-                onChanged: (v) => onChanged(
-                  settings.copyWith(recommendation: v),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _AnimatedToggleRow(
-                label: '각종 프로모션',
-                value: settings.promotion,
-                onChanged: (v) => onChanged(
-                  settings.copyWith(promotion: v),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        // 마케팅·광고성 알림 카드
-        GlassCard(
-          child: _SettingRowWithArrow(
-            title: '마케팅·광고성 알림',
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const MarketingNotificationPage(),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
     );
   }
 }

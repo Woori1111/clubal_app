@@ -2,6 +2,15 @@ import 'dart:async';
 
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
+import 'package:clubal_app/features/settings/presentation/account_management_pages.dart';
+import 'package:clubal_app/features/settings/presentation/customer_support_pages.dart';
+import 'package:clubal_app/features/settings/presentation/marketing_notification_page.dart';
+import 'package:clubal_app/features/settings/presentation/notification_settings_page.dart';
+import 'package:clubal_app/features/settings/presentation/settings_sub_page.dart';
+import 'package:clubal_app/features/settings/presentation/clubal_settings_page.dart';
+import 'package:clubal_app/features/settings/presentation/faq_page.dart';
+import 'package:clubal_app/features/settings/presentation/bug_report_page.dart';
+import 'package:clubal_app/features/settings/presentation/suggestion_page.dart';
 import 'package:flutter/material.dart';
 
 /// 요즘 앱처럼 상단 검색바 + 실시간(디바운스) 필터링 검색 화면
@@ -225,22 +234,61 @@ class _SearchResultsList extends StatelessWidget {
 
   final String query;
 
-  static const List<Map<String, String>> _sampleItems = [
-    {'title': '주지훈', 'subtitle': '프로필'},
-    {'title': '클럽 알파', 'subtitle': '모임'},
-    {'title': '주말 등산 모임', 'subtitle': '게시물'},
-    {'title': '맛집 공유', 'subtitle': '게시물'},
-    {'title': '영화 동호회', 'subtitle': '모임'},
+  static const List<Map<String, dynamic>> _sampleItems = [
+    {'title': '주지훈', 'subtitle': '프로필', 'keywords': <String>['주지훈', '프로필']},
+    {'title': '클럽 알파', 'subtitle': '모임', 'keywords': <String>['클럽', '알파', '모임']},
+    {'title': '주말 등산 모임', 'subtitle': '게시물', 'keywords': <String>['주말', '등산', '모임', '게시물']},
+    {'title': '맛집 공유', 'subtitle': '게시물', 'keywords': <String>['맛집', '공유', '게시물']},
+    {'title': '영화 동호회', 'subtitle': '모임', 'keywords': <String>['영화', '동호회', '모임']},
+    {'title': '알림 설정', 'subtitle': '설정', 'type': 'setting', 'target': 'notification', 'keywords': <String>['알림', '설정']},
+    {'title': '채팅 알림', 'subtitle': '알림 상세', 'type': 'setting', 'target': 'notification', 'highlight': 'chat', 'keywords': <String>['채팅', '알림']},
+    {'title': '매칭 알림', 'subtitle': '알림 상세', 'type': 'setting', 'target': 'notification', 'highlight': 'matching', 'keywords': <String>['매칭', '알림']},
+    {'title': '소리', 'subtitle': '알림 상세', 'type': 'setting', 'target': 'notification', 'highlight': 'sound', 'keywords': <String>['소리', '알림']},
+    {'title': '진동', 'subtitle': '알림 상세', 'type': 'setting', 'target': 'notification', 'highlight': 'vibration', 'keywords': <String>['진동', '알림']},
+    {'title': '게시물 및 활동', 'subtitle': '알림 상세', 'type': 'setting', 'target': 'notification', 'highlight': 'postActivity', 'keywords': <String>['게시물', '활동', '알림']},
+    {'title': '내 게시물에 좋아요', 'subtitle': '알림 상세', 'type': 'setting', 'target': 'notification', 'highlight': 'postLikes', 'keywords': <String>['게시물', '좋아요', '알림']},
+    {'title': '댓글과 답글', 'subtitle': '알림 상세', 'type': 'setting', 'target': 'notification', 'highlight': 'commentsReplies', 'keywords': <String>['댓글', '답글', '알림']},
+    {'title': '추천 게시물', 'subtitle': '알림 상세', 'type': 'setting', 'target': 'notification', 'highlight': 'recommendedPosts', 'keywords': <String>['추천', '게시물', '알림']},
+    {'title': '정기 추천 알림', 'subtitle': '알림 상세', 'type': 'setting', 'target': 'notification', 'highlight': 'recommendation', 'keywords': <String>['정기', '추천', '알림']},
+    {'title': '각종 프로모션', 'subtitle': '알림 상세', 'type': 'setting', 'target': 'notification', 'highlight': 'promotion', 'keywords': <String>['프로모션', '알림']},
+    {'title': '마케팅·광고성 알림', 'subtitle': '알림 상세', 'type': 'setting', 'target': 'marketing', 'keywords': <String>['마케팅', '광고', '알림']},
+    {'title': '계정/인증', 'subtitle': '설정', 'type': 'setting', 'target': 'account_auth', 'keywords': <String>['계정', '인증', '설정']},
+    {'title': '결제/정산', 'subtitle': '설정', 'type': 'setting', 'target': 'payment', 'keywords': <String>['결제', '정산', '설정']},
+    {'title': '고객지원', 'subtitle': '설정', 'type': 'setting', 'target': 'support', 'keywords': <String>['고객지원', '설정']},
+    {'title': '약관 및 정보', 'subtitle': '설정', 'type': 'setting', 'target': 'terms', 'keywords': <String>['약관', '정보', '설정']},
+    {'title': '계정 관리', 'subtitle': '설정', 'type': 'setting', 'target': 'account_manage', 'keywords': <String>['계정', '관리', '설정']},
+    {'title': '계정 비활성화', 'subtitle': '계정 관리 상세', 'type': 'setting', 'target': 'account_manage', 'highlight': 'deactivate', 'keywords': <String>['계정', '비활성화', '중지']},
+    {'title': '이전 계정 찾기', 'subtitle': '계정 관리 상세', 'type': 'setting', 'target': 'previous_account', 'keywords': <String>['이전', '계정', '찾기']},
+    {'title': '계정 삭제', 'subtitle': '계정 관리 상세', 'type': 'setting', 'target': 'delete_account', 'keywords': <String>['계정', '삭제', '탈퇴']},
+    {'title': '로그아웃', 'subtitle': '계정/인증 상세', 'type': 'setting', 'target': 'account_auth', 'highlight': 'logout', 'keywords': <String>['로그아웃']},
+    {'title': '고객센터', 'subtitle': '고객지원 상세', 'type': 'setting', 'target': 'support', 'highlight': 'center', 'keywords': <String>['고객센터', '문의', '상담']},
+    {'title': '개선할 점', 'subtitle': '고객지원 상세', 'type': 'setting', 'target': 'support', 'highlight': 'feedback', 'keywords': <String>['개선', '의견', '서비스']},
+    {'title': '제보하기', 'subtitle': '고객지원 상세', 'type': 'setting', 'target': 'support', 'highlight': 'report', 'keywords': <String>['제보', '버그', '신고']},
+    {'title': '가장 많이 하는 질문', 'subtitle': '고객지원 상세', 'type': 'setting', 'target': 'support', 'highlight': 'faq', 'keywords': <String>['질문', 'FAQ', '자주']},
   ];
 
   @override
   Widget build(BuildContext context) {
     final lower = query.toLowerCase();
-    final filtered = _sampleItems
-        .where((e) =>
-            e['title']!.toLowerCase().contains(lower) ||
-            (e['subtitle']?.toLowerCase().contains(lower) ?? false))
-        .toList();
+    final queryTokens = lower.split(' ').where((s) => s.isNotEmpty).toList();
+
+    final filtered = _sampleItems.where((e) {
+      final keywords = (e['keywords'] as List<String>?) ?? [];
+      final title = (e['title'] as String).toLowerCase();
+      final subtitle = (e['subtitle'] as String).toLowerCase();
+
+      bool matchesAll = true;
+      for (final token in queryTokens) {
+        bool matchesToken = title.contains(token) || 
+                            subtitle.contains(token) || 
+                            keywords.any((k) => k.toLowerCase().contains(token));
+        if (!matchesToken) {
+          matchesAll = false;
+          break;
+        }
+      }
+      return matchesAll;
+    }).toList();
 
     if (filtered.isEmpty) {
       return Center(
@@ -275,7 +323,77 @@ class _SearchResultsList extends StatelessWidget {
             color: Colors.white.withOpacity(0.5),
             borderRadius: BorderRadius.circular(16),
             child: InkWell(
-              onTap: () {},
+              onTap: () {
+                if (item['type'] == 'setting') {
+                  final target = item['target'];
+                  final highlight = item['highlight'];
+                  if (target == 'notification') {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => NotificationSettingsPage(highlightItem: highlight),
+                    ));
+                  } else if (target == 'marketing') {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const MarketingNotificationPage(),
+                    ));
+                  } else if (target == 'payment') {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const SettingsSubPage(title: '결제/정산'),
+                    ));
+                  } else if (target == 'support') {
+                    if (highlight == 'faq') {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const FaqPage(),
+                      ));
+                    } else if (highlight == 'center') {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const SimpleSupportPage(
+                          title: '고객센터',
+                          description: '고객센터로 문의를 남길 수 있는 화면입니다.',
+                        ),
+                      ));
+                    } else if (highlight == 'feedback') {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const SuggestionPage(),
+                      ));
+                    } else if (highlight == 'report') {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const BugReportPage(),
+                      ));
+                    } else {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const SettingsSubPage(
+                          title: '고객지원',
+                          child: CustomerSupportBody(),
+                        ),
+                      ));
+                    }
+                  } else if (target == 'terms') {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const SettingsSubPage(title: '약관 및 정보'),
+                    ));
+                  } else if (target == 'account_manage') {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const SettingsSubPage(
+                        title: '계정 관리',
+                        child: AccountManagementBody(),
+                      ),
+                    ));
+                  } else if (target == 'previous_account') {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const PreviousAccountFindPage(),
+                    ));
+                  } else if (target == 'delete_account') {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const AccountDeletePage(),
+                    ));
+                  } else {
+                    // default to settings page
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const ClubalSettingsPage(),
+                    ));
+                  }
+                }
+              },
               borderRadius: BorderRadius.circular(16),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -285,11 +403,13 @@ class _SearchResultsList extends StatelessWidget {
                 child: Row(
                   children: [
                     Icon(
-                      item['subtitle'] == '프로필'
-                          ? Icons.person_rounded
-                          : item['subtitle'] == '모임'
-                              ? Icons.groups_rounded
-                              : Icons.article_rounded,
+                      item['type'] == 'setting'
+                          ? Icons.settings_rounded
+                          : item['subtitle'] == '프로필'
+                              ? Icons.person_rounded
+                              : item['subtitle'] == '모임'
+                                  ? Icons.groups_rounded
+                                  : Icons.article_rounded,
                       color: const Color(0xFF304255),
                       size: 24,
                     ),

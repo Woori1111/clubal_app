@@ -6,7 +6,9 @@ import 'package:clubal_app/features/settings/presentation/notification_settings_
 import 'package:flutter/material.dart';
 
 class NotificationSettingsPage extends StatefulWidget {
-  const NotificationSettingsPage({super.key});
+  const NotificationSettingsPage({super.key, this.highlightItem});
+
+  final String? highlightItem;
 
   @override
   State<NotificationSettingsPage> createState() =>
@@ -16,6 +18,43 @@ class NotificationSettingsPage extends StatefulWidget {
 class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   late final NotificationSettingsController _controller =
       NotificationSettingsController();
+  final ScrollController _scrollController = ScrollController();
+  final Map<String, GlobalKey> _itemKeys = {
+    'chat': GlobalKey(),
+    'matching': GlobalKey(),
+    'sound': GlobalKey(),
+    'vibration': GlobalKey(),
+    'postActivity': GlobalKey(),
+    'postLikes': GlobalKey(),
+    'commentsReplies': GlobalKey(),
+    'recommendedPosts': GlobalKey(),
+    'recommendation': GlobalKey(),
+    'promotion': GlobalKey(),
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.highlightItem != null && _itemKeys.containsKey(widget.highlightItem)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final key = _itemKeys[widget.highlightItem];
+        if (key != null && key.currentContext != null) {
+          Scrollable.ensureVisible(
+            key.currentContext!,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+            alignment: 0.5,
+          );
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +68,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
               child: SingleChildScrollView(
+                controller: _scrollController,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -63,6 +103,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _AnimatedToggleRow(
+                            key: _itemKeys['chat'],
                             label: '채팅 알림',
                             value: settings.chat,
                             onChanged: (v) {
@@ -75,6 +116,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
+                            key: _itemKeys['matching'],
                             label: '매칭 알림',
                             value: settings.matching,
                             onChanged: (v) {
@@ -87,6 +129,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
+                            key: _itemKeys['sound'],
                             label: '소리',
                             value: settings.sound,
                             onChanged: (v) {
@@ -99,6 +142,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
+                            key: _itemKeys['vibration'],
                             label: '진동',
                             value: settings.vibration,
                             onChanged: (v) {
@@ -126,6 +170,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _AnimatedToggleRow(
+                            key: _itemKeys['postActivity'],
                             label: '게시물 및 활동',
                             value: settings.postActivity,
                             onChanged: (v) {
@@ -138,6 +183,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
+                            key: _itemKeys['postLikes'],
                             label: '내 게시물에 좋아요',
                             value: settings.postLikes,
                             onChanged: (v) {
@@ -150,6 +196,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
+                            key: _itemKeys['commentsReplies'],
                             label: '댓글과 답글',
                             value: settings.commentsReplies,
                             onChanged: (v) {
@@ -162,6 +209,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
+                            key: _itemKeys['recommendedPosts'],
                             label: '추천 게시물',
                             value: settings.recommendedPosts,
                             onChanged: (v) {
@@ -189,6 +237,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _AnimatedToggleRow(
+                            key: _itemKeys['recommendation'],
                             label: '정기 추천 알림',
                             value: settings.recommendation,
                             onChanged: (v) {
@@ -201,6 +250,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
+                            key: _itemKeys['promotion'],
                             label: '각종 프로모션',
                             value: settings.promotion,
                             onChanged: (v) {
@@ -280,6 +330,7 @@ class _SettingRowWithArrow extends StatelessWidget {
 
 class _AnimatedToggleRow extends StatefulWidget {
   const _AnimatedToggleRow({
+    super.key,
     required this.label,
     required this.value,
     required this.onChanged,
