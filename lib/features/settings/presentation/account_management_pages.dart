@@ -1,3 +1,4 @@
+import 'package:clubal_app/core/utils/app_dialogs.dart';
 import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:flutter/material.dart';
 
@@ -285,9 +286,7 @@ class _PreviousAccountFindPageState extends State<PreviousAccountFindPage> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('제출이 완료되었습니다.')),
-    );
+    showMessageDialog(context, message: '제출이 완료되었습니다.');
   }
 
   @override
@@ -493,11 +492,7 @@ class AccountDeletePage extends StatelessWidget {
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('계정 삭제 요청이 접수되었습니다.'),
-                      ),
-                    );
+                    showMessageDialog(context, message: '계정 삭제 요청이 접수되었습니다.');
                   },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(

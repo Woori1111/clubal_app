@@ -9,6 +9,7 @@ class BouncingLikeButton extends StatefulWidget {
     this.iconSize = 18.0,
     this.textSize = 12.0,
     this.defaultColor = Colors.black,
+    this.coloredWhenLiked = true,
   });
 
   final bool isLiked;
@@ -17,6 +18,8 @@ class BouncingLikeButton extends StatefulWidget {
   final double iconSize;
   final double textSize;
   final Color defaultColor;
+  /// false면 좋아요 상태에서도 defaultColor만 사용 (커뮤니티 등 색 없이 표시)
+  final bool coloredWhenLiked;
 
   @override
   State<BouncingLikeButton> createState() => _BouncingLikeButtonState();
@@ -64,7 +67,9 @@ class _BouncingLikeButtonState extends State<BouncingLikeButton>
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.isLiked ? Colors.redAccent : widget.defaultColor;
+    final color = (widget.coloredWhenLiked && widget.isLiked)
+        ? Colors.redAccent
+        : widget.defaultColor;
 
     return GestureDetector(
       onTap: widget.onTap,

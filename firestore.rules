@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 커뮤니티 게시글 - 읽기/쓰기 허용 (개발용)
+    // 프로덕션에서는 request.auth != null 등으로 제한 권장
+    match /community_posts/{postId} {
+      allow read, write: if true;
+      // 댓글
+      match /comments/{commentId} {
+        allow read, write: if true;
+      }
+      // 좋아요 (문서 기반)
+      match /likes/{userId} {
+        allow read, write: if true;
+      }
+    }
+  }
+}

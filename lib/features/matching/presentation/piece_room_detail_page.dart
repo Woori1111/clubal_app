@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:clubal_app/core/utils/app_dialogs.dart';
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
 import 'package:flutter/material.dart';
@@ -45,10 +46,7 @@ class PieceRoomDetailPage extends StatelessWidget {
                       if (isMyRoom)
                         IconButton(
                           onPressed: () {
-                            // 편집 기능 모의
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('편집 기능은 준비 중입니다.')),
-                            );
+                            showMessageDialog(context, message: '편집 기능은 준비 중입니다.');
                           },
                           icon: const Icon(Icons.edit_rounded),
                         ),
@@ -137,9 +135,7 @@ class PieceRoomDetailPage extends StatelessWidget {
                                 ),
                                 child: InkWell(
                                   onTap: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('상태가 변경되었습니다.')),
-                                    );
+                                    showMessageDialog(context, message: '상태가 변경되었습니다.');
                                   },
                                   child: const Padding(
                                     padding: EdgeInsets.symmetric(vertical: 16),
@@ -173,9 +169,7 @@ class PieceRoomDetailPage extends StatelessWidget {
                                 ),
                                 child: InkWell(
                                   onTap: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('방이 삭제되었습니다.')),
-                                    );
+                                    showMessageDialog(context, message: '방이 삭제되었습니다.');
                                     Navigator.of(context).pop();
                                   },
                                   child: const Padding(

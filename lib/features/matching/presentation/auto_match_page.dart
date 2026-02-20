@@ -1,3 +1,4 @@
+import 'package:clubal_app/core/utils/app_dialogs.dart';
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
 import 'package:clubal_app/features/matching/presentation/create_piece_room_page.dart';
@@ -52,9 +53,7 @@ class _AutoMatchPageState extends State<AutoMatchPage> {
 
   void _submit() {
     if (_selectedPlace.isEmpty || _selectedDate.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('장소와 날짜를 선택해주세요.')),
-      );
+      showMessageDialog(context, message: '장소와 날짜를 선택해주세요.', isError: true);
       return;
     }
 

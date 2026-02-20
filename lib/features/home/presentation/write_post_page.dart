@@ -1,9 +1,10 @@
 import 'dart:ui';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:clubal_app/core/firestore/community_post_service.dart';
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
+import 'package:clubal_app/core/theme/app_glass_styles.dart';
+import 'package:clubal_app/core/utils/app_dialogs.dart';
 import 'package:flutter/material.dart';
 
 class WritePostPage extends StatefulWidget {
@@ -18,6 +19,7 @@ class _WritePostPageState extends State<WritePostPage> {
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
+  bool _isSubmitting = false;
   // 위치 정보는 아이콘을 통해 선택하도록 변경할 수 있으나, 일단 유지하거나 숨길 수 있습니다. 
   // 여기서는 아이콘으로 모의 처리하고 컨트롤러는 유지하겠습니다.
   final TextEditingController _locationController = TextEditingController();
@@ -36,45 +38,50 @@ class _WritePostPageState extends State<WritePostPage> {
     final location = _locationController.text.trim();
     
     if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('제목을 입력해주세요')),
-      );
+      showMessageDialog(context, message: '제목을 입력해주세요', isError: true);
       return;
     }
 
     if (content.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('내용을 입력해주세요')),
-      );
+      showMessageDialog(context, message: '내용을 입력해주세요', isError: true);
       return;
     }
 
+    if (_isSubmitting) return;
+    setState(() => _isSubmitting = true);
+
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      await FirebaseFirestore.instance.collection('community_posts').add({
-        'userName': user?.displayName ?? '익명',
-        'userProfileImageUrl': user?.photoURL,
-        'title': title,
-        'content': content,
-        'location': location.isEmpty ? null : location,
-        'date': '방금 전', // UI 표시용
-        'createdAt': FieldValue.serverTimestamp(),
-        'viewCount': 0,
-        'likeCount': 0,
-        'commentCount': 0,
-        'imageUrl': null,
-        'likedBy': [],
-      });
+      final service = CommunityPostService();
+      await service.createPost(
+        title: title,
+        content: content,
+        location: location.isEmpty ? null : location,
+      );
       if (mounted) {
         Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('저장 실패: $e')),
-        );
+        setState(() => _isSubmitting = false);
+        final msg = _parseFirestoreError(e);
+        showMessageDialog(context, message: msg, isError: true);
       }
     }
+  }
+
+  /// Firestore 오류 메시지를 사용자에게 보기 좋게 변환
+  String _parseFirestoreError(Object e) {
+    final s = e.toString().toLowerCase();
+    if (s.contains('permission-denied') || s.contains('permission_denied')) {
+      return '권한이 없습니다. Firestore 보안 규칙을 확인하세요.\n(프로젝트 루트에서 firebase deploy --only firestore:rules 실행)';
+    }
+    if (s.contains('unavailable') || s.contains('network')) {
+      return '네트워크 연결을 확인해주세요.';
+    }
+    if (s.contains('unauthenticated')) {
+      return '로그인이 필요할 수 있습니다.';
+    }
+    return '저장 실패: $e';
   }
 
   @override
@@ -110,8 +117,8 @@ class _WritePostPageState extends State<WritePostPage> {
                       ),
                       const Spacer(),
                       _PillButton(
-                        label: '작성하기',
-                        enabled: hasContent,
+                        label: _isSubmitting ? '등록 중...' : '작성하기',
+                        enabled: hasContent && !_isSubmitting,
                         onTap: _submit,
                         brandColor: _brandColor,
                       ),
@@ -161,10 +168,9 @@ class _WritePostPageState extends State<WritePostPage> {
                   // 하단 아이콘 섹션
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0x66FFFFFF),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0x33FFFFFF), width: 1.2),
+                    decoration: AppGlassStyles.card(
+                      radius: 20,
+                      isDark: Theme.of(context).brightness == Brightness.dark,
                     ),
                     child: Row(
                       children: [
@@ -172,9 +178,7 @@ class _WritePostPageState extends State<WritePostPage> {
                           icon: Icons.photo_camera_rounded,
                           tooltip: '사진 첨부',
                           onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('사진 첨부 기능은 준비 중입니다.')),
-                            );
+                            showMessageDialog(context, message: '사진 첨부 기능은 준비 중입니다.');
                           },
                         ),
                         const SizedBox(width: 16),
@@ -182,9 +186,7 @@ class _WritePostPageState extends State<WritePostPage> {
                           icon: Icons.location_on_rounded,
                           tooltip: '위치 추가',
                           onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('위치 추가 기능은 준비 중입니다.')),
-                            );
+                            showMessageDialog(context, message: '위치 추가 기능은 준비 중입니다.');
                           },
                         ),
                       ],
@@ -235,14 +237,9 @@ class _SectionCard extends StatelessWidget {
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0x2F3F5468), width: 1),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xDFFFFFFF), Color(0xCCEAF2FA)],
-            ),
+          decoration: AppGlassStyles.card(
+            radius: 24,
+            isDark: Theme.of(context).brightness == Brightness.dark,
           ),
           child: content,
         ),

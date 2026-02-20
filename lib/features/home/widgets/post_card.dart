@@ -1,6 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:clubal_app/core/widgets/bouncing_like_button.dart';
+import 'package:clubal_app/core/widgets/relative_time_widget.dart';
 
 class PostCard extends StatefulWidget {
   const PostCard({
@@ -12,10 +14,15 @@ class PostCard extends StatefulWidget {
     this.maxHeight,
     this.location,
     this.date,
+    this.createdAt,
     this.viewCount,
     this.likeCount = 0,
     this.commentCount = 0,
     this.imageUrl,
+    this.isLiked = false,
+    this.onLikeTap,
+    this.likeButtonColoredWhenLiked = true,
+    this.likeButtonEnabled = true,
   });
 
   final String userName;
@@ -25,10 +32,17 @@ class PostCard extends StatefulWidget {
   final double? maxHeight;
   final String? location;
   final String? date;
+  final DateTime? createdAt;
   final int? viewCount;
   final int likeCount;
   final int commentCount;
   final String? imageUrl;
+  final bool isLiked;
+  final VoidCallback? onLikeTap;
+  /// false면 하트를 항상 기본 색으로만 표시 (커뮤니티 리스트용)
+  final bool likeButtonColoredWhenLiked;
+  /// false면 하트 탭 비활성화 (커뮤니티 리스트용)
+  final bool likeButtonEnabled;
 
   @override
   State<PostCard> createState() => _PostCardState();
@@ -226,7 +240,12 @@ class _PostCardState extends State<PostCard> {
                   Text(widget.location!, style: detailStyle, overflow: TextOverflow.ellipsis),
                   const SizedBox(width: 8),
                 ],
-                if (widget.date != null) ...[
+                if (widget.createdAt != null) ...[
+                  Icon(Icons.calendar_today_rounded, size: 12, color: caption),
+                  const SizedBox(width: 2),
+                  RelativeTimeWidget(dateTime: widget.createdAt!, style: detailStyle),
+                  const SizedBox(width: 8),
+                ] else if (widget.date != null) ...[
                   Icon(Icons.calendar_today_rounded, size: 12, color: caption),
                   const SizedBox(width: 2),
                   Text(widget.date!, style: detailStyle, overflow: TextOverflow.ellipsis),
@@ -243,27 +262,7 @@ class _PostCardState extends State<PostCard> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                GestureDetector(
-                  onTap: () => setState(() => _likeCount++),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.favorite_border_rounded,
-                        size: 18,
-                        color: caption,
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        '$_likeCount',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildLikeWidget(caption),
                 const SizedBox(width: 10),
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -288,6 +287,49 @@ class _PostCardState extends State<PostCard> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildLikeWidget(Color caption) {
+    final style = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+      fontSize: 12,
+    ) ?? TextStyle(color: caption, fontSize: 12);
+    if (!widget.likeButtonEnabled) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            widget.isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+            size: 18,
+            color: caption,
+          ),
+          const SizedBox(width: 2),
+          Text('${widget.likeCount}', style: style),
+        ],
+      );
+    }
+    if (widget.onLikeTap != null) {
+      return BouncingLikeButton(
+        isLiked: widget.isLiked,
+        likeCount: widget.likeCount,
+        onTap: widget.onLikeTap!,
+        iconSize: 18,
+        textSize: 12,
+        defaultColor: caption,
+        coloredWhenLiked: widget.likeButtonColoredWhenLiked,
+      );
+    }
+    return GestureDetector(
+      onTap: () => setState(() => _likeCount++),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.favorite_border_rounded, size: 18, color: caption),
+          const SizedBox(width: 2),
+          Text('$_likeCount', style: style),
+        ],
+      ),
     );
   }
 
@@ -404,7 +446,12 @@ class _PostCardState extends State<PostCard> {
                   Text(widget.location!, style: detailStyle, overflow: TextOverflow.ellipsis),
                   const SizedBox(width: 8),
                 ],
-                if (widget.date != null) ...[
+                if (widget.createdAt != null) ...[
+                  Icon(Icons.calendar_today_rounded, size: 12, color: caption),
+                  const SizedBox(width: 2),
+                  RelativeTimeWidget(dateTime: widget.createdAt!, style: detailStyle),
+                  const SizedBox(width: 8),
+                ] else if (widget.date != null) ...[
                   Icon(Icons.calendar_today_rounded, size: 12, color: caption),
                   const SizedBox(width: 2),
                   Text(widget.date!, style: detailStyle, overflow: TextOverflow.ellipsis),
@@ -421,27 +468,7 @@ class _PostCardState extends State<PostCard> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                GestureDetector(
-                  onTap: () => setState(() => _likeCount++),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.favorite_border_rounded,
-                        size: 18,
-                        color: caption,
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        '$_likeCount',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildLikeWidget(caption),
                 const SizedBox(width: 10),
                 Row(
                   mainAxisSize: MainAxisSize.min,
