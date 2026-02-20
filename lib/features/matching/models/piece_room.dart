@@ -25,6 +25,14 @@ class PieceRoom {
 
   String get capacityLabel => '$currentMembers/$maxMembers';
 
+  /// 화면에 표시할 장소: 지역명, 클럽이름만. "A · B · C" 형태면 "A, C"로, 이미 "지역, 클럽"이면 그대로.
+  String get locationDisplay {
+    final parts = location.split(' · ').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    if (parts.length >= 3) return '${parts.first}, ${parts.last}';
+    if (parts.length == 2) return parts.join(', ');
+    return location;
+  }
+
   /// 꽉 찼거나 모집완료 상태면 true
   bool get isFullOrClosed => isRecruitmentClosed || currentMembers >= maxMembers;
 

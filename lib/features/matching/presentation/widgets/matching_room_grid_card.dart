@@ -134,7 +134,7 @@ class MatchingRoomGridCard extends StatelessWidget {
     final timeStr = '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
     return [
       _GridItem(Icons.group_rounded, room.capacityLabel),
-      _GridItem(Icons.place_rounded, room.location),
+      _GridItem(Icons.place_rounded, room.locationDisplay),
       _GridItem(Icons.calendar_today_rounded, dateStr),
       _GridItem(Icons.schedule_rounded, timeStr),
     ];

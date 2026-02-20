@@ -135,6 +135,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
     final isIOS = _isIOSNative;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       extendBody: !isIOS,
       body: Stack(
         children: [
@@ -167,28 +168,36 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
                               ),
                       ),
                       if (selected.label == '매칭')
-                        LongPressConfirmButton(
-                          onTap: _openCreatePieceRoom,
-                          baseWidth: 44,
-                          baseHeight: 44,
-                          background: ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                              child: Container(
-                                width: 44,
-                                height: 44,
-                                decoration: AppGlassStyles.card(
-                                  radius: 14,
-                                  isDark: Theme.of(context).brightness == Brightness.dark,
+                        SizedBox(
+                          width: 52,
+                          height: 52,
+                          child: OverflowBox(
+                            maxWidth: 52 * 1.15,
+                            maxHeight: 52 * 1.15,
+                            alignment: Alignment.center,
+                            child: LongPressConfirmButton(
+                              onTap: _openCreatePieceRoom,
+                              baseWidth: 52,
+                              baseHeight: 52,
+                              background: ClipOval(
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                                  child: Container(
+                                    width: 52,
+                                    height: 52,
+                                    decoration: AppGlassStyles.card(
+                                      radius: 26,
+                                      isDark: Theme.of(context).brightness == Brightness.dark,
+                                    ),
+                                  ),
                                 ),
                               ),
+                              content: Icon(
+                                Icons.add_rounded,
+                                color: Theme.of(context).colorScheme.onSurface,
+                                size: 28,
+                              ),
                             ),
-                          ),
-                          content: Icon(
-                            Icons.add_rounded,
-                            color: Theme.of(context).colorScheme.onSurface,
-                            size: 26,
                           ),
                         ),
                       if (selected.label == '메뉴')
@@ -269,17 +278,20 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
           // iOS: 네이티브 탭바가 담당하므로 Flutter 쪽은 하단바 없음
           : isIOS
               ? null
-              // Android 등 나머지 플랫폼: 기존 젤리 네비게이션 유지
-              : ClubalJellyBottomNav(
-                  tabs: _tabs,
-                  selectedIndex: _selectedIndex,
-                  onChanged: (index) {
-                    if (index == _selectedIndex) {
-                      _scrollToTopOfTab(index);
-                    } else {
-                      setState(() => _selectedIndex = index);
-                    }
-                  },
+              // Android 등 나머지 플랫폼: 기존 젤리 네비게이션 유지 (배경 투명으로 하단 여백에 body 배경 비침)
+              : Material(
+                  color: Colors.transparent,
+                  child: ClubalJellyBottomNav(
+                    tabs: _tabs,
+                    selectedIndex: _selectedIndex,
+                    onChanged: (index) {
+                      if (index == _selectedIndex) {
+                        _scrollToTopOfTab(index);
+                      } else {
+                        setState(() => _selectedIndex = index);
+                      }
+                    },
+                  ),
                 ),
     );
   }
@@ -291,7 +303,17 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
         : null;
     switch (label) {
       case '홈':
-        return const HomeTabView();
+        return HomeTabView(
+          scrollController: scrollController,
+          onMatchTap: () {
+            setState(() => _selectedIndex = 1);
+            if (_isIOSNative) _navChannel.invokeMethod('setTab', 1);
+          },
+          onChatTap: () {
+            setState(() => _selectedIndex = 2);
+            if (_isIOSNative) _navChannel.invokeMethod('setTab', 2);
+          },
+        );
       case '매칭':
         return MatchingTabView(
           rooms: _pieceRooms,

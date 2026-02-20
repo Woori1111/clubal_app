@@ -4,6 +4,7 @@ import 'package:clubal_app/core/theme/app_colors.dart';
 import 'package:clubal_app/core/theme/app_glass_styles.dart';
 import 'package:clubal_app/core/widgets/liquid_pressable.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
+import 'package:clubal_app/features/matching/presentation/dialogs/matching_info_dialog.dart';
 import 'package:clubal_app/features/matching/presentation/widgets/matching_page_scaffold.dart';
 import 'package:flutter/material.dart';
 
@@ -61,9 +62,7 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
                 onTap: () {
                   setState(() => _room = _room.copyWith(isRecruitmentClosed: false));
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('모집중으로 변경되었습니다.')),
-                  );
+                  showMatchingInfoDialog(context, message: '모집중으로 변경되었습니다.');
                 },
               ),
               const SizedBox(height: 8),
@@ -75,9 +74,7 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
                 onTap: () {
                   setState(() => _room = _room.copyWith(isRecruitmentClosed: true));
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('모집완료로 변경되었습니다.')),
-                  );
+                  showMatchingInfoDialog(context, message: '모집완료로 변경되었습니다.');
                 },
               ),
             ],
@@ -102,9 +99,7 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
       appBarTrailing: isMyRoom
           ? IconButton(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('편집 기능은 준비 중입니다.')),
-                );
+                showMatchingInfoDialog(context, message: '편집 기능은 준비 중입니다.');
               },
               icon: Icon(Icons.edit_rounded, color: onSurface),
             )
@@ -158,7 +153,7 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _LocationCard(location: room.location),
+                  _LocationCard(location: room.locationDisplay),
                   const SizedBox(height: 24),
                   Divider(height: 1, color: outlineVariant),
                   const SizedBox(height: 24),
@@ -214,10 +209,21 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
                   Expanded(
                     child: LiquidPressable(
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('방이 삭제되었습니다.')),
+                        showMatchingConfirmDialog(
+                          context,
+                          title: '삭제 확인',
+                          message: '정말 이 조각 방을 삭제하시겠습니까?',
+                          confirmLabel: '삭제',
+                          cancelLabel: '취소',
+                          destructive: true,
+                          onConfirm: () {
+                            showMatchingInfoDialog(
+                              context,
+                              message: '방이 삭제되었습니다.',
+                              onConfirm: () => Navigator.of(context).pop(),
+                            );
+                          },
                         );
-                        Navigator.of(context).pop();
                       },
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),

@@ -83,7 +83,7 @@ class MatchingRoomListItem extends StatelessWidget {
             const SizedBox(height: 10),
             _MatchingInfoChip(
               icon: Icons.place_rounded,
-              text: room.location,
+              text: room.locationDisplay,
               expanded: true,
             ),
           ],

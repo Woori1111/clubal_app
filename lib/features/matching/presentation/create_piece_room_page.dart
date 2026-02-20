@@ -128,14 +128,14 @@ class _CreatePieceRoomPageState extends State<CreatePieceRoomPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTitleField(context, onSurface, onSurfaceVariant),
-                  const SizedBox(height: 16),
-                  _buildMemberStepper(context, onSurface),
+                  _buildTitleSection(context, onSurface, onSurfaceVariant),
                   const SizedBox(height: 20),
+                  _buildMemberStepper(context, onSurface, onSurfaceVariant),
+                  const SizedBox(height: 12),
                   Divider(height: 1, thickness: 2, color: outlineVariant),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
                   _buildOptionChips(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
                   _buildContentField(context, onSurface, onSurfaceVariant, outlineVariant),
                   const SizedBox(height: 40),
                 ],
@@ -155,42 +155,62 @@ class _CreatePieceRoomPageState extends State<CreatePieceRoomPage> {
     );
   }
 
-  Widget _buildTitleField(
+  Widget _buildTitleSection(
     BuildContext context,
     Color onSurface,
     Color onSurfaceVariant,
   ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: TextField(
-        controller: _titleController,
-        maxLength: 15,
-        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: onSurface),
-        decoration: InputDecoration(
-          hintText: '제목을 입력하세요 (최대 15자)',
-          hintStyle: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: onSurfaceVariant.withValues(alpha: 0.7),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '제목',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          border: InputBorder.none,
-          counterText: '',
-        ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _titleController,
+            maxLength: 15,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: onSurface),
+            decoration: InputDecoration(
+              hintText: '제목을 입력하세요 (최대 15자)',
+              hintStyle: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: onSurfaceVariant.withValues(alpha: 0.6),
+              ),
+              border: InputBorder.none,
+              counterText: '',
+              isDense: true,
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildMemberStepper(BuildContext context, Color onSurface) {
+  Widget _buildMemberStepper(
+    BuildContext context,
+    Color onSurface,
+    Color onSurfaceVariant,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
           Text(
             '인원수',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: onSurface,
-                ),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const Spacer(),
           ArrowCircleButton(
@@ -203,9 +223,9 @@ class _CreatePieceRoomPageState extends State<CreatePieceRoomPage> {
               child: Text(
                 '$_memberCount',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: onSurface,
-                    ),
+                  fontWeight: FontWeight.w700,
+                  color: onSurface,
+                ),
               ),
             ),
           ),
@@ -241,19 +261,39 @@ class _CreatePieceRoomPageState extends State<CreatePieceRoomPage> {
     Color outlineVariant,
   ) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: outlineVariant, width: 1)),
       ),
-      child: TextField(
-        controller: _contentController,
-        maxLines: 12,
-        style: TextStyle(fontSize: 15, color: onSurface, height: 1.5),
-        decoration: InputDecoration(
-          hintText: '내용을 자유롭게 입력하세요...',
-          hintStyle: TextStyle(color: onSurfaceVariant.withValues(alpha: 0.8)),
-          border: InputBorder.none,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+            child: Text(
+              '내용',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+            child: TextField(
+              controller: _contentController,
+              maxLines: 12,
+              style: TextStyle(fontSize: 15, color: onSurface, height: 1.5),
+              decoration: InputDecoration(
+                hintText: '내용을 자유롭게 입력하세요...',
+                hintStyle: TextStyle(color: onSurfaceVariant.withValues(alpha: 0.8)),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

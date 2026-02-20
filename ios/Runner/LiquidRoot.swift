@@ -26,16 +26,18 @@ struct LiquidRoot: View {
       FlutterViewRepresentable(viewController: flutterViewController)
         .ignoresSafeArea()
 
-      // 탭바는 항상 뷰 계층에 유지하고 opacity로만 숨김 → 다시 보일 때 재생성되지 않아 흰색 깜빡임 방지
+      // 탭바는 항상 뷰 계층에 유지, opacity로만 숨김. 오버레이 배경은 투명(Flutter가 보이도록).
       NativeTabBarOverlay(
         selectedTab: $selectedTab,
         navChannel: navChannel
       )
+      .background(Color.clear)
       .ignoresSafeArea(edges: .bottom)
       .opacity(isTabBarVisible ? 1 : 0)
       .allowsHitTesting(isTabBarVisible)
       .animation(.easeOut(duration: 0.2), value: isTabBarVisible)
     }
+    .background(Color.black)
     .onAppear {
       navChannel.setMethodCallHandler { call, result in
         if call.method == "setTabBarVisible" {
@@ -49,6 +51,11 @@ struct LiquidRoot: View {
               bottom: visible ? 49 : 0, 
               right: 0
             )
+          }
+          result(nil)
+        } else if call.method == "setTab" {
+          if let index = call.arguments as? Int, (0..<5).contains(index) {
+            selectedTab = index
           }
           result(nil)
         }
@@ -86,8 +93,9 @@ final class NativeTabBarViewController: UIViewController, UITabBarDelegate {
   required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
   override func loadView() {
-    // 빈 공간 터치는 무시하고 탭바 터치만 받는 커스텀 뷰
-    view = PassThroughView()
+    let passThrough = PassThroughView()
+    passThrough.backgroundColor = .clear
+    view = passThrough
   }
 
   override func viewDidLoad() {
@@ -95,6 +103,11 @@ final class NativeTabBarViewController: UIViewController, UITabBarDelegate {
     view.backgroundColor = .clear
 
     tabBar = UITabBar()
+    // 첫 프레임부터 흰 배경이 나오지 않도록 즉시 투명/다크 처리 (앱에 화이트 테마 없음)
+    tabBar.backgroundColor = .clear
+    tabBar.barTintColor = .clear
+    tabBar.backgroundImage = UIImage()
+    tabBar.shadowImage = UIImage()
     tabBar.translatesAutoresizingMaskIntoConstraints = false
     tabBar.delegate = self
     view.addSubview(tabBar)
@@ -143,10 +156,13 @@ final class NativeTabBarViewController: UIViewController, UITabBarDelegate {
     let appearance = UITabBarAppearance()
     appearance.configureWithTransparentBackground()
     
-    // 블러 효과 (리퀴드 글래스)
-    appearance.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterial)
-    // 흰색 반투명 오버레이
-    appearance.backgroundColor = UIColor.white.withAlphaComponent(0.22)
+    // 다크 전용 앱이므로 블러·배경 모두 다크 계열로 설정해 흰색 깜빡임 제거
+    if #available(iOS 13.0, *) {
+      appearance.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
+    } else {
+      appearance.backgroundEffect = UIBlurEffect(style: .dark)
+    }
+    appearance.backgroundColor = UIColor.black.withAlphaComponent(0.25)
     
     // 전역 틴트 설정 (활성: 하얀색 계열, 비활성: 회색 계열)
     let selectedColor = UIColor(red: 230.0/255.0, green: 237.0/255.0, blue: 243.0/255.0, alpha: 1.0)
@@ -171,6 +187,17 @@ final class NativeTabBarViewController: UIViewController, UITabBarDelegate {
     
     tabBar.tintColor = selectedColor
     tabBar.unselectedItemTintColor = unselectedColor
+  }
+
+  override func viewDidLayoutSubviews() {
+    super.viewDidLayoutSubviews()
+    // UITabBar 내부 _UIBarBackground 등이 한 프레임 흰색으로 그려지는 것 방지
+    for sub in tabBar.subviews {
+      if String(describing: type(of: sub)).contains("BarBackground") {
+        sub.backgroundColor = .clear
+        sub.layer.backgroundColor = UIColor.clear.cgColor
+      }
+    }
   }
 
   func updateSelectedTab(_ index: Int) {

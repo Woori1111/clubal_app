@@ -1,5 +1,6 @@
 import 'package:clubal_app/features/matching/models/piece_room.dart';
 import 'package:clubal_app/features/matching/presentation/dialogs/app_date_picker_dialog.dart';
+import 'package:clubal_app/features/matching/presentation/dialogs/matching_info_dialog.dart';
 import 'package:clubal_app/features/matching/presentation/place/place_selection.dart';
 import 'package:clubal_app/features/matching/presentation/place/place_selection_page.dart';
 import 'package:clubal_app/features/matching/presentation/widgets/confirm_button.dart';
@@ -49,9 +50,7 @@ class _AutoMatchPageState extends State<AutoMatchPage> {
 
   void _submit() {
     if (_selectedPlace.isEmpty || _selectedDate.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('장소와 날짜를 선택해주세요.')),
-      );
+      showMatchingInfoDialog(context, message: '장소와 날짜를 선택해주세요.');
       return;
     }
     final room = PieceRoom(

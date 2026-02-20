@@ -21,9 +21,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     flutterVC.additionalSafeAreaInsets = UIEdgeInsets(top: 0, left: 0, bottom: 49, right: 0)
 
     let hostingController = UIHostingController(rootView: LiquidRoot(flutterViewController: flutterVC, engine: engine))
-    hostingController.view.backgroundColor = .clear
+    // 다른 화면 갔다 나올 때 흰색 깜빡임 방지 — 앱에 화이트 테마 없으므로 루트를 검정으로 고정
+    hostingController.view.backgroundColor = .black
+    hostingController.view.layer.backgroundColor = UIColor.black.cgColor
 
     let window = UIWindow(windowScene: windowScene)
+    window.backgroundColor = .black
     window.rootViewController = hostingController
     self.window = window
     window.makeKeyAndVisible()
