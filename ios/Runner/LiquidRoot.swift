@@ -26,15 +26,15 @@ struct LiquidRoot: View {
       FlutterViewRepresentable(viewController: flutterViewController)
         .ignoresSafeArea()
 
-      if isTabBarVisible {
-        // 네이티브 애플 기본 탭바 오버레이
-        NativeTabBarOverlay(
-          selectedTab: $selectedTab,
-          navChannel: navChannel
-        )
-        .ignoresSafeArea(edges: .bottom) // 탭바 배경이 하단 기기 끝까지 채워지도록 함
-        .transition(.opacity.combined(with: .move(edge: .bottom)))
-      }
+      // 탭바는 항상 뷰 계층에 유지하고 opacity로만 숨김 → 다시 보일 때 재생성되지 않아 흰색 깜빡임 방지
+      NativeTabBarOverlay(
+        selectedTab: $selectedTab,
+        navChannel: navChannel
+      )
+      .ignoresSafeArea(edges: .bottom)
+      .opacity(isTabBarVisible ? 1 : 0)
+      .allowsHitTesting(isTabBarVisible)
+      .animation(.easeOut(duration: 0.2), value: isTabBarVisible)
     }
     .onAppear {
       navChannel.setMethodCallHandler { call, result in

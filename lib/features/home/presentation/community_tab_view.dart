@@ -5,7 +5,9 @@ import 'package:clubal_app/features/navigation/widgets/clubal_top_tab_bar.dart';
 import 'package:flutter/material.dart';
 
 class CommunityTabView extends StatefulWidget {
-  const CommunityTabView({super.key});
+  const CommunityTabView({super.key, this.scrollController});
+
+  final ScrollController? scrollController;
 
   @override
   State<CommunityTabView> createState() => _CommunityTabViewState();
@@ -31,7 +33,7 @@ class _CommunityTabViewState extends State<CommunityTabView> {
           child: Stack(
             children: [
               if (_topTabIndex == 0)
-                _LatestPostsList()
+                _LatestPostsList(scrollController: widget.scrollController)
               else
                 Center(
                   child: Text(
@@ -56,6 +58,10 @@ class _CommunityTabViewState extends State<CommunityTabView> {
 }
 
 class _LatestPostsList extends StatelessWidget {
+  const _LatestPostsList({this.scrollController});
+
+  final ScrollController? scrollController;
+
   @override
   Widget build(BuildContext context) {
     final posts = [
@@ -95,6 +101,7 @@ class _LatestPostsList extends StatelessWidget {
     ];
 
     return ListView.separated(
+      controller: scrollController,
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
       itemCount: posts.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),

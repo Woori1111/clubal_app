@@ -1,10 +1,13 @@
 import 'dart:ui';
 
-import 'package:clubal_app/core/widgets/clubal_background.dart';
+import 'package:clubal_app/core/theme/app_colors.dart';
+import 'package:clubal_app/core/theme/app_glass_styles.dart';
+import 'package:clubal_app/core/widgets/liquid_pressable.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
+import 'package:clubal_app/features/matching/presentation/widgets/matching_page_scaffold.dart';
 import 'package:flutter/material.dart';
 
-class PieceRoomDetailPage extends StatelessWidget {
+class PieceRoomDetailPage extends StatefulWidget {
   const PieceRoomDetailPage({
     super.key,
     required this.room,
@@ -15,132 +18,180 @@ class PieceRoomDetailPage extends StatelessWidget {
   final bool isMyRoom;
 
   @override
+  State<PieceRoomDetailPage> createState() => _PieceRoomDetailPageState();
+}
+
+class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
+  late PieceRoom _room;
+
+  @override
+  void initState() {
+    super.initState();
+    _room = widget.room;
+  }
+
+  Future<void> _showRecruitmentStatusSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => SafeArea(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '모집 상태 선택',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                tileColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                leading: const Icon(Icons.check_circle_rounded, color: AppColors.success),
+                title: const Text('모집중'),
+                onTap: () {
+                  setState(() => _room = _room.copyWith(isRecruitmentClosed: false));
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('모집중으로 변경되었습니다.')),
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                tileColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                leading: const Icon(Icons.cancel_rounded, color: AppColors.failure),
+                title: const Text('모집완료'),
+                onTap: () {
+                  setState(() => _room = _room.copyWith(isRecruitmentClosed: true));
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('모집완료로 변경되었습니다.')),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
+    final colorScheme = Theme.of(context).colorScheme;
+    final onSurface = colorScheme.onSurface;
+    final onSurfaceVariant = colorScheme.onSurfaceVariant;
+    final outlineVariant = colorScheme.outlineVariant;
+    final room = _room;
+    final isMyRoom = widget.isMyRoom;
+
+    return MatchingPageScaffold(
+      title: '조각 상세',
+      bottomPadding: isMyRoom ? 24 : 18,
+      appBarTrailing: isMyRoom
+          ? IconButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('편집 기능은 준비 중입니다.')),
+                );
+              },
+              icon: Icon(Icons.edit_rounded, color: onSurface),
+            )
+          : null,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const ClubalBackground(),
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 헤더
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          '조각 상세',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
-                      ),
-                      if (isMyRoom)
-                        IconButton(
-                          onPressed: () {
-                            // 편집 기능 모의
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('편집 기능은 준비 중입니다.')),
-                            );
-                          },
-                          icon: const Icon(Icons.edit_rounded),
-                        ),
-                    ],
-                  ),
-                ),
-                
-                // 내용
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          room.title,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF253445),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            const Icon(Icons.person_rounded, size: 20, color: Color(0xFF4B5D73)),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${room.creator} 님',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF4B5D73),
-                              ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: const Color(0x334B5D73),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                room.capacityLabel,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF253445),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        const Divider(height: 1, color: Color(0x334B5D73)),
-                        const SizedBox(height: 24),
-                        Text(
-                          room.description ?? '',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            height: 1.6,
-                            color: Color(0xFF253445),
-                          ),
-                        ),
-                      ],
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    room.title,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: onSurface,
                     ),
                   ),
-                ),
-
-                // 하단 버튼들 (내 방일 경우)
-                if (isMyRoom)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: const Color(0x332ECEF2),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0xFF2ECEF2), width: 1.5),
-                                ),
-                                child: InkWell(
-                                  onTap: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('상태가 변경되었습니다.')),
-                                    );
-                                  },
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Icon(Icons.person_rounded, size: 20, color: onSurfaceVariant),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${room.creator} 님',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: onSurfaceVariant,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: outlineVariant.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          room.capacityLabel,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _LocationCard(location: room.location),
+                  const SizedBox(height: 24),
+                  Divider(height: 1, color: outlineVariant),
+                  const SizedBox(height: 24),
+                  Text(
+                    room.description ?? '',
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.6,
+                      color: onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (isMyRoom)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              child: Row(
+                children: [
+                  Expanded(
+                          child: LiquidPressable(
+                            onTap: _showRecruitmentStatusSheet,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0x332ECEF2),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: const Color(0xFF2ECEF2), width: 1.5),
+                                  ),
                                   child: const Padding(
                                     padding: EdgeInsets.symmetric(vertical: 16),
                                     child: Center(
@@ -157,49 +208,82 @@ class PieceRoomDetailPage extends StatelessWidget {
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: const Color(0xD9FF5E5E),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0x66FFFFFF), width: 1.5),
-                                ),
-                                child: InkWell(
-                                  onTap: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('방이 삭제되었습니다.')),
-                                    );
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 16),
-                                    child: Center(
-                                      child: Text(
-                                        '삭제',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: LiquidPressable(
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('방이 삭제되었습니다.')),
+                        );
+                        Navigator.of(context).pop();
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xD9FF5E5E),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: const Color(0x66FFFFFF), width: 1.5),
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Center(
+                                child: Text(
+                                  '삭제',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-              ],
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LocationCard extends StatelessWidget {
+  const _LocationCard({required this.location});
+
+  final String location;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final onSurfaceVariant = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: AppGlassStyles.innerCard(
+        radius: 12,
+        isDark: isDark,
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.place_rounded, size: 20, color: onSurfaceVariant),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              location,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

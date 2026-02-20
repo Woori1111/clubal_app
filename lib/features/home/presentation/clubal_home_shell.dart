@@ -1,4 +1,8 @@
+import 'dart:ui';
+
+import 'package:clubal_app/core/theme/app_glass_styles.dart';
 import 'package:clubal_app/core/widgets/clubal_background.dart';
+import 'package:clubal_app/core/widgets/long_press_confirm_button.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
 import 'package:clubal_app/features/home/presentation/chat_tab_view.dart';
 import 'package:clubal_app/features/home/presentation/community_tab_view.dart';
@@ -29,7 +33,11 @@ class ClubalHomeShell extends StatefulWidget {
 
 class _ClubalHomeShellState extends State<ClubalHomeShell> {
   int _selectedIndex = 0;
-  
+
+  /// 탭별 스크롤 컨트롤러 (같은 탭 다시 탭 시 맨 위로 스크롤용)
+  late final List<ScrollController> _scrollControllers =
+      List.generate(5, (_) => ScrollController());
+
   final List<PieceRoom> _pieceRooms = [
     PieceRoom(
       title: '불금 강남 클럽 조각 구해요',
@@ -90,15 +98,34 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
       _navChannel.setMethodCallHandler((call) async {
         if (call.method == 'setTab') {
           final index = call.arguments as int;
-          if (mounted) setState(() => _selectedIndex = index);
+          if (!mounted) return;
+          if (index == _selectedIndex) {
+            _scrollToTopOfTab(index);
+          } else {
+            setState(() => _selectedIndex = index);
+          }
         }
       });
+    }
+  }
+
+  void _scrollToTopOfTab(int index) {
+    final controller = _scrollControllers[index];
+    if (controller.hasClients) {
+      controller.animateTo(
+        0,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
     }
   }
 
   @override
   void dispose() {
     if (_isIOSNative) _navChannel.setMethodCallHandler(null);
+    for (final c in _scrollControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -140,10 +167,29 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
                               ),
                       ),
                       if (selected.label == '매칭')
-                        PressedIconActionButton(
-                          icon: Icons.add_rounded,
-                          tooltip: '조각 방 만들기',
+                        LongPressConfirmButton(
                           onTap: _openCreatePieceRoom,
+                          baseWidth: 44,
+                          baseHeight: 44,
+                          background: ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: AppGlassStyles.card(
+                                  radius: 14,
+                                  isDark: Theme.of(context).brightness == Brightness.dark,
+                                ),
+                              ),
+                            ),
+                          ),
+                          content: Icon(
+                            Icons.add_rounded,
+                            color: Theme.of(context).colorScheme.onSurface,
+                            size: 26,
+                          ),
                         ),
                       if (selected.label == '메뉴')
                         Row(
@@ -205,7 +251,13 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
           ? BottomNavigationBar(
               type: BottomNavigationBarType.fixed,
               currentIndex: _selectedIndex,
-              onTap: (index) => setState(() => _selectedIndex = index),
+              onTap: (index) {
+                if (index == _selectedIndex) {
+                  _scrollToTopOfTab(index);
+                } else {
+                  setState(() => _selectedIndex = index);
+                }
+              },
               items: [
                 for (final tab in _tabs)
                   BottomNavigationBarItem(
@@ -221,13 +273,22 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
               : ClubalJellyBottomNav(
                   tabs: _tabs,
                   selectedIndex: _selectedIndex,
-                  onChanged: (index) =>
-                      setState(() => _selectedIndex = index),
+                  onChanged: (index) {
+                    if (index == _selectedIndex) {
+                      _scrollToTopOfTab(index);
+                    } else {
+                      setState(() => _selectedIndex = index);
+                    }
+                  },
                 ),
     );
   }
 
   Widget _buildTabBody(String label) {
+    final index = _tabs.indexWhere((t) => t.label == label);
+    final scrollController = index >= 0 && index < _scrollControllers.length
+        ? _scrollControllers[index]
+        : null;
     switch (label) {
       case '홈':
         return const HomeTabView();
@@ -238,13 +299,14 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
           activeMatches: _activeMatches,
           onAutoMatchTap: _openAutoMatch,
           topPadding: 8,
+          scrollController: scrollController,
         );
       case '채팅':
         return const ChatTabView();
       case '커뮤니티':
-        return const CommunityTabView();
+        return CommunityTabView(scrollController: scrollController);
       case '메뉴':
-        return const MenuTabView();
+        return MenuTabView(scrollController: scrollController);
       default:
         return const SizedBox.shrink();
     }

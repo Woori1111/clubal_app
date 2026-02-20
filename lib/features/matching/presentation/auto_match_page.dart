@@ -1,6 +1,10 @@
-import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
-import 'package:clubal_app/features/matching/presentation/create_piece_room_page.dart';
+import 'package:clubal_app/features/matching/presentation/dialogs/app_date_picker_dialog.dart';
+import 'package:clubal_app/features/matching/presentation/place/place_selection.dart';
+import 'package:clubal_app/features/matching/presentation/place/place_selection_page.dart';
+import 'package:clubal_app/features/matching/presentation/widgets/confirm_button.dart';
+import 'package:clubal_app/features/matching/presentation/widgets/matching_page_scaffold.dart';
+import 'package:clubal_app/features/matching/presentation/widgets/option_chip.dart';
 import 'package:flutter/material.dart';
 
 class AutoMatchPage extends StatefulWidget {
@@ -20,34 +24,27 @@ class _AutoMatchPageState extends State<AutoMatchPage> {
     final now = DateTime.now();
     final minDate = DateTime(now.year, now.month, now.day, now.hour);
     final maxDate = minDate.add(const Duration(days: 365));
-
-    final picked = await showModalBottomSheet<DateTime>(
+    final picked = await showDialog<DateTime>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return DatePickerBottomSheet(
-          initialDate: minDate,
-          minDate: minDate,
-          maxDate: maxDate,
-        );
-      },
+      builder: (_) => AppDatePickerDialog(
+        initialDate: minDate,
+        minDate: minDate,
+        maxDate: maxDate,
+      ),
     );
-    if (picked != null) {
-      final text = '${picked.month}월 ${picked.day}일 ${picked.hour.toString().padLeft(2, '0')}시';
-      setState(() => _selectedDate = text);
+    if (picked != null && mounted) {
+      setState(() {
+        _selectedDate =
+            '${picked.month}월 ${picked.day}일 ${picked.hour.toString().padLeft(2, '0')}시';
+      });
     }
   }
 
   Future<void> _onTapPlace() async {
     final result = await Navigator.of(context).push<PlaceSelection>(
-      MaterialPageRoute<PlaceSelection>(
-        builder: (_) => const PlaceSelectionPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const PlaceSelectionPage()),
     );
-    if (result != null) {
-      setState(() => _selectedPlace = result.displayLabel);
-    }
+    if (result != null && mounted) setState(() => _selectedPlace = result.displayLabel);
   }
 
   void _submit() {
@@ -57,14 +54,13 @@ class _AutoMatchPageState extends State<AutoMatchPage> {
       );
       return;
     }
-
     final room = PieceRoom(
       title: '자동 매칭 중...',
       currentMembers: 1,
       maxMembers: 4,
       creator: '유저별명',
       location: _selectedPlace,
-      meetingAt: DateTime.now(), // dummy
+      meetingAt: DateTime.now(),
       description: '$_selectedDate 자동 매칭 중인 조각입니다.',
     );
     Navigator.of(context).pop(room);
@@ -72,84 +68,59 @@ class _AutoMatchPageState extends State<AutoMatchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+
+    return MatchingPageScaffold(
+      title: '자동 매치',
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const ClubalBackground(),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(0, 16, 0, 18),
+          const SizedBox(height: 32),
+          Expanded(
+            child: SingleChildScrollView(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      '어디서 언제 놀까요?',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: onSurface,
+                          ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
                       children: [
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                        OptionChip(
+                          icon: Icons.place_rounded,
+                          label: _selectedPlace.isEmpty ? '장소 선택' : _selectedPlace,
+                          onTap: _onTapPlace,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '자동 매치',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
+                        OptionChip(
+                          icon: Icons.calendar_today_rounded,
+                          label: _selectedDate.isEmpty ? '날짜 선택' : _selectedDate,
+                          onTap: _onTapDate,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Text(
-                              '어디서 언제 놀까요?',
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    color: const Color(0xFF253445),
-                                  ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: [
-                                OptionChip(
-                                  icon: Icons.place_rounded,
-                                  label: _selectedPlace.isEmpty ? '장소 선택' : _selectedPlace,
-                                  onTap: _onTapPlace,
-                                ),
-                                OptionChip(
-                                  icon: Icons.calendar_today_rounded,
-                                  label: _selectedDate.isEmpty ? '날짜 선택' : _selectedDate,
-                                  onTap: _onTapDate,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: ConfirmButton(
-                      enabled: _selectedPlace.isNotEmpty && _selectedDate.isNotEmpty,
-                      onTap: _submit,
-                      brandColor: _brandColor,
-                    ),
-                  ),
                 ],
               ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: ConfirmButton(
+              enabled: _selectedPlace.isNotEmpty && _selectedDate.isNotEmpty,
+              onTap: _submit,
+              brandColor: _brandColor,
             ),
           ),
         ],

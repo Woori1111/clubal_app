@@ -8,7 +8,9 @@ import 'package:clubal_app/features/settings/presentation/notification_settings_
 import 'package:flutter/material.dart';
 
 class MenuTabView extends StatefulWidget {
-  const MenuTabView({super.key});
+  const MenuTabView({super.key, this.scrollController});
+
+  final ScrollController? scrollController;
 
   @override
   State<MenuTabView> createState() => _MenuTabViewState();
@@ -24,6 +26,7 @@ class _MenuTabViewState extends State<MenuTabView> {
     final profile = controller.profile;
 
     return ListView(
+      controller: widget.scrollController,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       children: [
         Text(
