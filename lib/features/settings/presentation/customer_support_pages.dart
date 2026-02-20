@@ -2,6 +2,7 @@ import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/features/settings/presentation/faq_page.dart';
 import 'package:clubal_app/features/settings/presentation/bug_report_page.dart';
 import 'package:clubal_app/features/settings/presentation/suggestion_page.dart';
+import 'package:clubal_app/features/settings/presentation/one_on_one_support_page.dart';
 import 'package:flutter/material.dart';
 
 /// 고객지원 메인 목록 (고객센터, 개선할 점, 제보하기, 가장 많이 하는 질문)
@@ -38,27 +39,28 @@ class CustomerSupportBody extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          GlassCard(
-            child: Column(
-              children: const [
-                _SupportRow(
-                  title: '가장 많이 하는 질문',
-                  subtitle: '자주 묻는 질문(FAQ)을 모아봤어요',
+          Row(
+            children: [
+              Expanded(
+                child: _SupportGridCard(
+                  title: '자주 묻는 질문',
+                  subtitle: '가장 많이 하는 질문을 모아봤어요',
                   icon: Icons.question_answer_rounded,
-                  targetPage: FaqPage(),
+                  iconColor: const Color(0xFF5AB6FF),
+                  targetPage: const FaqPage(),
                 ),
-                SizedBox(height: 14),
-                _SupportRow(
-                  title: '1:1 문의 (고객센터)',
-                  subtitle: '앱 이용과 관련된 상세한 상담을 받아요',
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: _SupportGridCard(
+                  title: '1:1 문의하기',
+                  subtitle: '상세한 상담이 필요하신가요?',
                   icon: Icons.headset_mic_rounded,
-                  targetPage: SimpleSupportPage(
-                    title: '1:1 문의',
-                    description: '고객센터로 1:1 문의를 남길 수 있는 화면입니다.',
-                  ),
+                  iconColor: const Color(0xFFA17FFF),
+                  targetPage: const OneOnOneSupportPage(),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -113,7 +115,7 @@ class _SupportGridCard extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: const Color(0xFF243244),
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w800,
                     ),
               ),
@@ -121,7 +123,7 @@ class _SupportGridCard extends StatelessWidget {
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF5C6B7A),
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                       height: 1.3,
                     ),
               ),
