@@ -11,6 +11,7 @@ import 'package:clubal_app/features/matching/presentation/matching_tab_view.dart
 import 'package:clubal_app/features/navigation/models/nav_tab.dart';
 import 'package:clubal_app/features/navigation/widgets/clubal_jelly_bottom_nav.dart';
 import 'package:clubal_app/features/notifications/presentation/past_notifications_page.dart';
+import 'package:clubal_app/features/search/presentation/search_page.dart';
 import 'package:clubal_app/features/settings/presentation/clubal_settings_page.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
@@ -144,6 +145,16 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            PressedIconActionButton(
+                              icon: Icons.search_rounded,
+                              tooltip: '검색',
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const SearchPage(),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
                             PressedIconActionButton(
                               icon: Icons.notifications_none_rounded,
                               tooltip: '알림',
