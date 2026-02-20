@@ -10,6 +10,7 @@ struct LiquidRoot: View {
   private let navChannel: FlutterMethodChannel
 
   @State private var selectedTab = 0
+  @State private var isTabBarVisible = true
 
   init(flutterViewController: FlutterViewController, engine: FlutterEngine) {
     self.flutterViewController = flutterViewController
@@ -25,12 +26,33 @@ struct LiquidRoot: View {
       FlutterViewRepresentable(viewController: flutterViewController)
         .ignoresSafeArea()
 
-      // 네이티브 애플 기본 탭바 오버레이
-      NativeTabBarOverlay(
-        selectedTab: $selectedTab,
-        navChannel: navChannel
-      )
-      .ignoresSafeArea(edges: .bottom) // 탭바 배경이 하단 기기 끝까지 채워지도록 함
+      if isTabBarVisible {
+        // 네이티브 애플 기본 탭바 오버레이
+        NativeTabBarOverlay(
+          selectedTab: $selectedTab,
+          navChannel: navChannel
+        )
+        .ignoresSafeArea(edges: .bottom) // 탭바 배경이 하단 기기 끝까지 채워지도록 함
+        .transition(.opacity.combined(with: .move(edge: .bottom)))
+      }
+    }
+    .onAppear {
+      navChannel.setMethodCallHandler { call, result in
+        if call.method == "setTabBarVisible" {
+          if let visible = call.arguments as? Bool {
+            withAnimation(.easeOut(duration: 0.2)) {
+              isTabBarVisible = visible
+            }
+            flutterViewController.additionalSafeAreaInsets = UIEdgeInsets(
+              top: 0, 
+              left: 0, 
+              bottom: visible ? 49 : 0, 
+              right: 0
+            )
+          }
+          result(nil)
+        }
+      }
     }
   }
 }
@@ -98,13 +120,22 @@ final class NativeTabBarViewController: UIViewController, UITabBarDelegate {
     ]
     
     let cfg = UIImage.SymbolConfiguration(pointSize: 12, weight: .regular)
+    let black = UIColor(red: 28.0/255.0, green: 28.0/255.0, blue: 30.0/255.0, alpha: 1.0)
+    let gray = UIColor(red: 160.0/255.0, green: 160.0/255.0, blue: 165.0/255.0, alpha: 1.0)
     
     tabBar.items = items.enumerated().map { i, item in
-      let img = UIImage(systemName: item.icon, withConfiguration: cfg)?
-        .withRenderingMode(.alwaysTemplate)
-      return UITabBarItem(title: item.title, image: img, tag: i)
+      let baseImg = UIImage(systemName: item.icon, withConfiguration: cfg)
+      
+      // iOS 버전에 관계없이 확실하게 색상을 강제하기 위해 Original 렌더링 사용
+      let unselectedImg = baseImg?.withTintColor(gray, renderingMode: .alwaysOriginal)
+      let selectedImg = baseImg?.withTintColor(black, renderingMode: .alwaysOriginal)
+      
+      let tabItem = UITabBarItem(title: item.title, image: unselectedImg, tag: i)
+      tabItem.selectedImage = selectedImg
+      return tabItem
     }
     
+    // 초기 탭 설정
     tabBar.selectedItem = tabBar.items?.first
   }
 
@@ -117,32 +148,45 @@ final class NativeTabBarViewController: UIViewController, UITabBarDelegate {
     // 흰색 반투명 오버레이
     appearance.backgroundColor = UIColor.white.withAlphaComponent(0.22)
     
-    // 아이콘 및 텍스트 색상
-    let black = UIColor(red: 28/255, green: 28/255, blue: 30/255, alpha: 1)
-    let gray = UIColor(red: 160/255, green: 160/255, blue: 165/255, alpha: 1)
+    // 전역 틴트 설정 (활성: 검정, 비활성: 회색)
+    let black = UIColor(red: 28.0/255.0, green: 28.0/255.0, blue: 30.0/255.0, alpha: 1.0)
+    let gray = UIColor(red: 160.0/255.0, green: 160.0/255.0, blue: 165.0/255.0, alpha: 1.0)
     
-    appearance.stackedLayoutAppearance.normal.iconColor = gray
-    appearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: gray]
-    appearance.stackedLayoutAppearance.selected.iconColor = black
-    appearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: black]
+    // 아이콘과 텍스트 색상을 확실하게 적용하기 위한 ItemAppearance 생성
+    let itemAppearance = UITabBarItemAppearance()
+    itemAppearance.normal.iconColor = gray
+    itemAppearance.normal.titleTextAttributes = [.foregroundColor: gray]
+    itemAppearance.selected.iconColor = black
+    itemAppearance.selected.titleTextAttributes = [.foregroundColor: black]
+    
+    appearance.stackedLayoutAppearance = itemAppearance
+    appearance.inlineLayoutAppearance = itemAppearance
+    appearance.compactInlineLayoutAppearance = itemAppearance
 
     tabBar.standardAppearance = appearance
-    tabBar.scrollEdgeAppearance = appearance
+    if #available(iOS 15.0, *) {
+      tabBar.scrollEdgeAppearance = appearance
+    }
     tabBar.isTranslucent = true
-
+    
     tabBar.tintColor = black
     tabBar.unselectedItemTintColor = gray
   }
 
   func updateSelectedTab(_ index: Int) {
     guard let items = tabBar.items, items.indices.contains(index) else { return }
-    tabBar.selectedItem = items[index]
+    if tabBar.selectedItem != items[index] {
+      tabBar.selectedItem = items[index]
+    }
   }
 
   // MARK: - UITabBarDelegate
   func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
     let index = item.tag
-    selectedTabBinding.wrappedValue = index
+    // SwiftUI 상태 업데이트를 메인 스레드 비동기 큐에 태워서 충돌 방지
+    DispatchQueue.main.async { [weak self] in
+      self?.selectedTabBinding.wrappedValue = index
+    }
     navChannel.invokeMethod("setTab", arguments: index)
   }
 }
