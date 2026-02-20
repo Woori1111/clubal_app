@@ -34,7 +34,7 @@ class _PressedIconActionButtonState extends State<PressedIconActionButton> {
         onTapUp: (_) => setState(() => _pressed = false),
         onTapCancel: () => setState(() => _pressed = false),
         onTap: widget.onTap,
-        child: AnimatedScale(
+        child: AnimatedScale(https://github.com/Woori1111/clubal_app/pull/11/conflict?name=lib%252Fcore%252Fwidgets%252Fpressed_icon_action_button.dart&ancestor_oid=05f20b2ecf6f62e1fbb4fa929d697f73e924e5c3&base_oid=f5123de4940febbd0f35e83414ab950a4675df7d&head_oid=a168a3d0ac37489ab597e962299bd743eebe92f8
           scale: scale,
           duration: const Duration(milliseconds: 120),
           curve: Curves.easeOutCubic,
@@ -43,22 +43,18 @@ class _PressedIconActionButtonState extends State<PressedIconActionButton> {
             duration: const Duration(milliseconds: 120),
             curve: Curves.easeOutCubic,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(14),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                 child: Container(
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(14),
+                    color: const Color(0x66FFFFFF),
                     border: Border.all(
-                      color: const Color(0x66FFFFFF),
+                      color: const Color(0x4DFFFFFF),
                       width: 1,
-                    ),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0x4FFFFFFF), Color(0x269EBCFF)],
                     ),
                   ),
                   child: Icon(

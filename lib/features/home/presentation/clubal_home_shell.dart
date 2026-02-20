@@ -7,7 +7,12 @@ import 'package:clubal_app/features/navigation/models/nav_tab.dart';
 import 'package:clubal_app/features/navigation/widgets/clubal_jelly_bottom_nav.dart';
 import 'package:clubal_app/features/navigation/widgets/clubal_top_tab_bar.dart';
 import 'package:clubal_app/features/settings/presentation/clubal_settings_page.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+// iOS 네이티브 TabView → Flutter 탭 전환 채널
+const _navChannel = MethodChannel('com.clubal.app/navigation');
 
 class ClubalHomeShell extends StatefulWidget {
   const ClubalHomeShell({super.key});
@@ -28,13 +33,38 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
     NavTab(label: '메뉴', icon: Icons.menu_rounded),
   ];
 
+  bool get _isIOSNative =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isIOSNative) {
+      _navChannel.setMethodCallHandler((call) async {
+        if (call.method == 'setTab') {
+          final index = call.arguments as int;
+          if (mounted) setState(() => _selectedIndex = index);
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_isIOSNative) _navChannel.setMethodCallHandler(null);
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final selected = _tabs[_selectedIndex];
+    final isIOS = _isIOSNative;
 
     return Scaffold(
+      extendBody: !isIOS,
       body: Stack(
         children: [
+          // 배경 (전체 화면)
           const ClubalBackground(),
           // 상단 고정 탭 바 (커뮤니티 탭에서만 표시)
           if (selected.label == '커뮤니티')
@@ -161,11 +191,30 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
             ),
         ],
       ),
-      bottomNavigationBar: ClubalJellyBottomNav(
-        tabs: _tabs,
-        selectedIndex: _selectedIndex,
-        onChanged: (index) => setState(() => _selectedIndex = index),
-      ),
+      bottomNavigationBar: kIsWeb
+          // Web: 단순한 기본 네비게이션으로 안전하게 렌더링
+          ? BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
+              currentIndex: _selectedIndex,
+              onTap: (index) => setState(() => _selectedIndex = index),
+              items: [
+                for (final tab in _tabs)
+                  BottomNavigationBarItem(
+                    icon: Icon(tab.icon),
+                    label: tab.label,
+                  ),
+              ],
+            )
+          // iOS: 네이티브 탭바가 담당하므로 Flutter 쪽은 하단바 없음
+          : isIOS
+              ? null
+              // Android 등 나머지 플랫폼: 기존 젤리 네비게이션 유지
+              : ClubalJellyBottomNav(
+                  tabs: _tabs,
+                  selectedIndex: _selectedIndex,
+                  onChanged: (index) =>
+                      setState(() => _selectedIndex = index),
+                ),
     );
   }
 
@@ -247,17 +296,47 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
   String _tabDescription(String label) {
     switch (label) {
       case '홈':
-        return '오늘의 클럽 조각 현황과 추천 모임을 확인합니다.';
+        return const HomeTabView();
       case '매칭':
-        return '함께 갈 인원을 찾고 1/N 조건을 맞춰 매칭합니다.';
+        return MatchingTabView(
+          rooms: _pieceRooms,
+          myRooms: _myPieceRooms,
+          activeMatches: _activeMatches,
+          onAutoMatchTap: _openAutoMatch,
+          topPadding: 8,
+        );
       case '채팅':
         return '매칭된 인원과 입장 시간, 복장, 비용을 조율합니다.';
       case '커뮤니티':
         return '커뮤니티 활동과 소통을 확인합니다.';
       case '메뉴':
-        return '내 프로필, 인증, 결제, 알림 설정을 관리합니다.';
+        return const MenuTabView();
       default:
-        return '';
+        return const SizedBox.shrink();
     }
+  }
+
+  Future<void> _openCreatePieceRoom() async {
+    if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', false);
+    final created = await Navigator.of(context).push<PieceRoom>(
+      MaterialPageRoute<PieceRoom>(
+        builder: (_) => const CreatePieceRoomPage(),
+      ),
+    );
+    if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
+    if (created == null) return;
+    setState(() => _myPieceRooms.insert(0, created));
+  }
+
+  Future<void> _openAutoMatch() async {
+    if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', false);
+    final created = await Navigator.of(context).push<PieceRoom>(
+      MaterialPageRoute<PieceRoom>(
+        builder: (_) => const AutoMatchPage(),
+      ),
+    );
+    if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
+    if (created == null) return;
+    setState(() => _activeMatches.insert(0, created));
   }
 }

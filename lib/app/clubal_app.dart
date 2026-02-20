@@ -1,5 +1,6 @@
 import 'package:clubal_app/core/theme/app_theme.dart';
 import 'package:clubal_app/features/home/presentation/clubal_home_shell.dart';
+import 'package:clubal_app/features/profile/presentation/user_profile_scope.dart';
 import 'package:flutter/material.dart';
 
 class ClubalApp extends StatelessWidget {
@@ -7,11 +8,14 @@ class ClubalApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '클러버 Clubal',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark(),
-      home: const ClubalHomeShell(),
+    return UserProfileScope(
+      controller: UserProfileController(),
+      child: MaterialApp(
+        title: '클러버 Clubal',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light(),
+        home: const ClubalHomeShell(),
+      ),
     );
   }
 }

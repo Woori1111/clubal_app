@@ -1,6 +1,11 @@
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
+import 'package:clubal_app/features/settings/presentation/account_management_pages.dart';
+import 'package:clubal_app/features/settings/presentation/customer_support_pages.dart';
+import 'package:clubal_app/features/settings/presentation/notification_settings_page.dart';
+import 'package:clubal_app/features/settings/presentation/notification_settings_controller.dart';
+import 'package:clubal_app/features/settings/presentation/settings_sub_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -13,13 +18,78 @@ class ClubalSettingsPage extends StatefulWidget {
 }
 
 class _ClubalSettingsPageState extends State<ClubalSettingsPage> {
+  late final NotificationSettingsController _notificationController =
+      NotificationSettingsController();
+
+  @override
+  Widget build(BuildContext context) {
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          const ClubalBackground(),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      PressedIconActionButton(
+                        icon: Icons.arrow_back_rounded,
+                        tooltip: '뒤로가기',
+                        onTap: () => Navigator.of(context).pop(),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        '설정',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: InlineSettingsContent(
+                        controller: _notificationController,
+                        onNotificationSettingsChanged: () => setState(() {}),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 설정 화면 본문(알림 + 계정/기타). 메뉴 탭 프로필 아래에서도 동일 위젯 사용.
+class InlineSettingsContent extends StatefulWidget {
+  const InlineSettingsContent({
+    super.key,
+    required this.controller,
+    this.onNotificationSettingsChanged,
+  });
+
+  final NotificationSettingsController controller;
+  final VoidCallback? onNotificationSettingsChanged;
+
+  @override
+  State<InlineSettingsContent> createState() => _InlineSettingsContentState();
+}
+
+class _InlineSettingsContentState extends State<InlineSettingsContent> {
   bool _isAuthBusy = false;
   bool _googleInitialized = false;
 
   Future<void> _ensureGoogleInitialized() async {
-    if (_googleInitialized) {
-      return;
-    }
+    if (_googleInitialized) return;
     await GoogleSignIn.instance.initialize();
     _googleInitialized = true;
   }
@@ -43,9 +113,7 @@ class _ClubalSettingsPageState extends State<ClubalSettingsPage> {
     } catch (e) {
       _showMessage('로그인 처리 중 오류가 발생했습니다: $e');
     } finally {
-      if (mounted) {
-        setState(() => _isAuthBusy = false);
-      }
+      if (mounted) setState(() => _isAuthBusy = false);
     }
   }
 
@@ -57,97 +125,116 @@ class _ClubalSettingsPageState extends State<ClubalSettingsPage> {
     } catch (e) {
       _showMessage('로그아웃 처리 중 오류가 발생했습니다: $e');
     } finally {
-      if (mounted) {
-        setState(() => _isAuthBusy = false);
-      }
+      if (mounted) setState(() => _isAuthBusy = false);
     }
   }
 
   void _showMessage(String text) {
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          const ClubalBackground(),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-              child: Column(
+    return Column(
+      children: [
+        GlassCard(
+          child: StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context, snapshot) {
+              final user = snapshot.data;
+              final isLoggedIn = user != null;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      PressedIconActionButton(
-                        icon: Icons.arrow_back_rounded,
-                        tooltip: '뒤로가기',
-                        onTap: () => Navigator.of(context).pop(),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        '설정',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: const Color(0xFFE9F6FF),
-                          fontWeight: FontWeight.w700,
+                  _SettingRowWithArrow(
+                    title: '알림 설정',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const NotificationSettingsPage(),
                         ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                  const SizedBox(height: 18),
-                  GlassCard(
-                    child: StreamBuilder<User?>(
-                      stream: FirebaseAuth.instance.authStateChanges(),
-                      builder: (context, snapshot) {
-                        final user = snapshot.data;
-                        final isLoggedIn = user != null;
-
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const _SettingRow(
-                              title: '알림 설정',
-                              subtitle: '매칭/채팅 알림 관리',
-                            ),
-                            const SizedBox(height: 14),
-                            _SettingRow(
-                              title: '계정/인증',
-                              subtitle: isLoggedIn
-                                  ? '연결 계정: ${user.email ?? user.displayName ?? user.uid}'
-                                  : '구글 로그인으로 계정을 연결해 주세요',
-                            ),
-                            const SizedBox(height: 12),
-                            _GoogleAuthButton(
-                              busy: _isAuthBusy,
-                              isLoggedIn: isLoggedIn,
-                              onSignIn: _signInWithGoogle,
-                              onSignOut: _signOut,
-                            ),
-                            const SizedBox(height: 14),
-                            const _SettingRow(
-                              title: '결제/정산',
-                              subtitle: '1/N 결제 수단 및 내역',
-                            ),
-                            const SizedBox(height: 14),
-                            const _SettingRow(
-                              title: '고객지원',
-                              subtitle: '문의 및 신고 접수',
-                            ),
-                          ],
-                        );
-                      },
-                    ),
+                  const SizedBox(height: 14),
+                  _SettingRow(
+                    title: '계정/인증',
+                    subtitle: isLoggedIn
+                        ? '연결 계정: ${user.email ?? user.displayName ?? user.uid}'
+                        : '구글 로그인으로 계정을 연결해 주세요',
+                  ),
+                  const SizedBox(height: 12),
+                  _GoogleAuthButton(
+                    busy: _isAuthBusy,
+                    isLoggedIn: isLoggedIn,
+                    onSignIn: _signInWithGoogle,
+                    onSignOut: _signOut,
+                  ),
+                  const SizedBox(height: 14),
+                  _SettingRow(
+                    title: '결제/정산',
+                    subtitle: '1/N 결제 수단 및 내역',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const SettingsSubPage(
+                            title: '결제/정산',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  _SettingRow(
+                    title: '고객지원',
+                    subtitle: '문의 및 신고 접수',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const SettingsSubPage(
+                            title: '고객지원',
+                            child: CustomerSupportBody(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  _SettingRow(
+                    title: '약관 및 정보',
+                    subtitle: '이용약관·개인정보처리방침',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const SettingsSubPage(
+                            title: '약관 및 정보',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  _SettingRow(
+                    title: '계정 관리',
+                    subtitle: '프로필·보안·연동 관리',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const SettingsSubPage(
+                            title: '계정 관리',
+                            child: AccountManagementBody(),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
-              ),
-            ),
+              );
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -179,8 +266,8 @@ class _GoogleAuthButtonState extends State<_GoogleAuthButton> {
     final label = widget.busy
         ? '처리 중...'
         : widget.isLoggedIn
-        ? 'Google 로그아웃'
-        : 'Google로 로그인';
+            ? 'Google 로그아웃'
+            : 'Google로 로그인';
 
     return GestureDetector(
       onTapDown: widget.busy ? null : (_) => setState(() => _pressed = true),
@@ -224,9 +311,9 @@ class _GoogleAuthButtonState extends State<_GoogleAuthButton> {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: const Color(0xFFF4FBFF),
-                    fontWeight: FontWeight.w700,
-                  ),
+                        color: Colors.black,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
               ],
             ),
@@ -238,14 +325,21 @@ class _GoogleAuthButtonState extends State<_GoogleAuthButton> {
 }
 
 class _SettingRow extends StatelessWidget {
-  const _SettingRow({required this.title, required this.subtitle});
+  const _SettingRow({
+    required this.title,
+    required this.subtitle,
+    this.onTap,
+  });
 
   final String title;
   final String subtitle;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final isTappable = onTap != null;
+
+    Widget content = Row(
       children: [
         Container(
           width: 8,
@@ -263,21 +357,207 @@ class _SettingRow extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: const Color(0xFFF3FAFF),
-                  fontWeight: FontWeight.w600,
-                ),
+                      color: Colors.black,
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(color: const Color(0xCCE2F2FF)),
+                ).textTheme.bodySmall?.copyWith(
+                      color: Colors.black,
+                    ),
               ),
             ],
           ),
         ),
+        if (isTappable) ...[
+          const SizedBox(width: 8),
+          const Icon(
+            Icons.chevron_right_rounded,
+            size: 20,
+            color: Colors.black,
+          ),
+        ],
       ],
+    );
+
+    if (!isTappable) {
+      return content;
+    }
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: content,
+      ),
+    );
+  }
+}
+
+class _SettingRowWithArrow extends StatelessWidget {
+  const _SettingRowWithArrow({
+    required this.title,
+    required this.onTap,
+  });
+
+  final String title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: Colors.black,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AnimatedToggleRow extends StatefulWidget {
+  const _AnimatedToggleRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  State<_AnimatedToggleRow> createState() => _AnimatedToggleRowState();
+}
+
+class _AnimatedToggleRowState extends State<_AnimatedToggleRow> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _pressed ? 0.97 : 1.0;
+    final opacity = _pressed ? 0.86 : 1.0;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTap: () => widget.onChanged(!widget.value),
+      child: AnimatedScale(
+        scale: scale,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: AnimatedOpacity(
+          opacity: opacity,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOutCubic,
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.label,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              _GlassToggle(
+                value: widget.value,
+                onChanged: widget.onChanged,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassToggle extends StatelessWidget {
+  const _GlassToggle({required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        width: 46,
+        height: 26,
+        padding: const EdgeInsets.symmetric(horizontal: 3),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: value
+                ? const Color(0x77A7ECFF)
+                : const Color(0x55FFFFFF),
+            width: 1,
+          ),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: value
+                ? const [Color(0x7FF3FAFF), Color(0x7FA7ECFF)]
+                : const [Color(0x30FFFFFF), Color(0x1F9EBCFF)],
+          ),
+        ),
+        child: Align(
+          alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.95),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
