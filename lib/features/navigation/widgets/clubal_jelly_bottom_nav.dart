@@ -131,26 +131,36 @@ class _JellyBottomNavContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: const _RainbowLensBorderPainter(),
-      child: Row(
-        children: [
-          for (int i = 0; i < tabs.length; i++)
-            Expanded(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  bounceControllers[i].forward(from: 0);
-                  if (i != selectedIndex) {
-                    onChanged(i);
-                  }
-                },
-                child: AnimatedBuilder(
-                  animation: scaleAnimations[i],
-                  builder: (context, _) => _LiquidGlassNavItem(
-                    tab: tabs[i],
-                    isSelected: i == selectedIndex,
-                    bounceScale: scaleAnimations[i].value,
+    final fgColor = selected
+        ? const Color(0xFFF5FCFF)
+        : const Color(0xB3DCEAFF);
+    return Material(
+      color: Colors.transparent,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => onTapDown(),
+        onTapUp: (_) => onTapUp(),
+        onTapCancel: onTapCancel,
+        onTap: onTap,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(tab.icon, color: fgColor, size: 26),
+              const SizedBox(height: 4),
+              SizedBox(
+                height: 14,
+                child: Center(
+                  child: Text(
+                    tab.label,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: fgColor,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      height: 1.0,
+                    ),
                   ),
                 ),
               ),
