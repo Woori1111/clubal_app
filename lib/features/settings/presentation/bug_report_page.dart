@@ -1,3 +1,4 @@
+import 'package:clubal_app/core/utils/app_dialogs.dart';
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
@@ -38,11 +39,11 @@ class _BugReportPageState extends State<BugReportPage> {
   void _submitReport() async {
     // 최소 검증: 유형 선택 + 내용 10자 이상
     if (_selectedCategory == null) {
-      _showSnackBar('제보 유형을 선택해주세요.', isError: true);
+      showMessageDialog(context, message: '제보 유형을 선택해주세요.', isError: true);
       return;
     }
     if (_contentController.text.trim().length < 10) {
-      _showSnackBar('제보 내용을 10자 이상 입력해주세요.', isError: true);
+      showMessageDialog(context, message: '제보 내용을 10자 이상 입력해주세요.', isError: true);
       FocusScope.of(context).requestFocus(_contentFocusNode);
       return;
     }
@@ -60,16 +61,6 @@ class _BugReportPageState extends State<BugReportPage> {
       });
       _showSuccessDialog();
     }
-  }
-
-  void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.redAccent : Colors.black87,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   void _showSuccessDialog() {
@@ -147,7 +138,7 @@ class _BugReportPageState extends State<BugReportPage> {
 
   void _addMockImage() {
     if (_mockImages.length >= 3) {
-      _showSnackBar('이미지는 최대 3장까지 첨부할 수 있습니다.', isError: true);
+      showMessageDialog(context, message: '이미지는 최대 3장까지 첨부할 수 있습니다.', isError: true);
       return;
     }
     setState(() {

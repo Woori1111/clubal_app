@@ -1,8 +1,7 @@
 import 'dart:ui';
 
-import 'package:clubal_app/core/theme/app_colors.dart';
-import 'package:clubal_app/core/theme/app_glass_styles.dart';
-import 'package:clubal_app/core/widgets/liquid_pressable.dart';
+import 'package:clubal_app/core/utils/app_dialogs.dart';
+import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
 import 'package:clubal_app/features/matching/presentation/dialogs/matching_info_dialog.dart';
 import 'package:clubal_app/features/matching/presentation/widgets/matching_page_scaffold.dart';
@@ -150,6 +149,13 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
                           ),
                         ),
                       ),
+                      if (isMyRoom)
+                        IconButton(
+                          onPressed: () {
+                            showMessageDialog(context, message: '편집 기능은 준비 중입니다.');
+                          },
+                          icon: const Icon(Icons.edit_rounded),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -165,28 +171,29 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
                       color: onSurface,
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-          if (isMyRoom)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-              child: Row(
-                children: [
-                  Expanded(
-                          child: LiquidPressable(
-                            onTap: _showRecruitmentStatusSheet,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0x332ECEF2),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: const Color(0xFF2ECEF2), width: 1.5),
-                                  ),
+                ),
+
+                // 하단 버튼들 (내 방일 경우)
+                if (isMyRoom)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0x332ECEF2),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0xFF2ECEF2), width: 1.5),
+                                ),
+                                child: InkWell(
+                                  onTap: () {
+                                    showMessageDialog(context, message: '상태가 변경되었습니다.');
+                                  },
                                   child: const Padding(
                                     padding: EdgeInsets.symmetric(vertical: 16),
                                     child: Center(
@@ -203,47 +210,37 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
                                 ),
                               ),
                             ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: LiquidPressable(
-                      onTap: () {
-                        showMatchingConfirmDialog(
-                          context,
-                          title: '삭제 확인',
-                          message: '정말 이 조각 방을 삭제하시겠습니까?',
-                          confirmLabel: '삭제',
-                          cancelLabel: '취소',
-                          destructive: true,
-                          onConfirm: () {
-                            showMatchingInfoDialog(
-                              context,
-                              message: '방이 삭제되었습니다.',
-                              onConfirm: () => Navigator.of(context).pop(),
-                            );
-                          },
-                        );
-                      },
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xD9FF5E5E),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0x66FFFFFF), width: 1.5),
-                            ),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              child: Center(
-                                child: Text(
-                                  '삭제',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xD9FF5E5E),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0x66FFFFFF), width: 1.5),
+                                ),
+                                child: InkWell(
+                                  onTap: () {
+                                    showMessageDialog(context, message: '방이 삭제되었습니다.');
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    child: Center(
+                                      child: Text(
+                                        '삭제',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),

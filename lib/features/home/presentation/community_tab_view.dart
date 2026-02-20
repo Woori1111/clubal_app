@@ -1,5 +1,9 @@
 import 'dart:ui';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:clubal_app/features/home/presentation/post_detail_page.dart';
+import 'package:clubal_app/features/home/presentation/write_post_page.dart';
 import 'package:clubal_app/features/home/widgets/post_card.dart';
 import 'package:clubal_app/features/navigation/widgets/clubal_top_tab_bar.dart';
 import 'package:flutter/material.dart';
@@ -64,59 +68,86 @@ class _LatestPostsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final posts = [
-      {
-        'userName': '김민수',
-        'userProfileImageUrl': null,
-        'title': '오늘 클럽 가실 분 구해요!',
-        'location': '강남',
-        'date': '2시간 전',
-        'viewCount': 24,
-        'likeCount': 3,
-        'commentCount': 5,
-        'imageUrl': null,
-      },
-      {
-        'userName': '이지은',
-        'userProfileImageUrl': null,
-        'title': '주말에 함께 갈 사람 있나요? 정말 재밌는 클럽이에요!',
-        'location': '홍대',
-        'date': '5시간 전',
-        'viewCount': 48,
-        'likeCount': 7,
-        'commentCount': 12,
-        'imageUrl': 'https://picsum.photos/200/200?random=1',
-      },
-      {
-        'userName': '박준호',
-        'userProfileImageUrl': null,
-        'title': '클럽 테이블비 1/N으로 나눠요',
-        'location': '압구정',
-        'date': '1일 전',
-        'viewCount': 67,
-        'likeCount': 2,
-        'commentCount': 8,
-        'imageUrl': null,
-      },
-    ];
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('community_posts')
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Center(child: Text('데이터를 불러오는 중 오류가 발생했습니다.'));
+        }
 
-    return ListView.separated(
-      controller: scrollController,
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
-      itemCount: posts.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final post = posts[index];
-        return PostCard(
-          userName: post['userName'] as String,
-          userProfileImageUrl: post['userProfileImageUrl'] as String?,
-          title: post['title'] as String,
-          location: post['location'] as String?,
-          date: post['date'] as String?,
-          viewCount: post['viewCount'] as int?,
-          likeCount: post['likeCount'] as int? ?? 0,
-          commentCount: post['commentCount'] as int? ?? 0,
-          imageUrl: post['imageUrl'] as String?,
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final posts = snapshot.data?.docs ?? [];
+
+        if (posts.isEmpty) {
+          return Center(
+            child: Text(
+              '아직 작성된 글이 없습니다.\n첫 글을 작성해보세요!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant, 
+                fontSize: 16
+              ),
+            ),
+          );
+        }
+
+        return ListView.separated(
+          physics: const ClampingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
+          itemCount: posts.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final doc = posts[index];
+            final data = doc.data() as Map<String, dynamic>;
+            final likedBy = data['likedBy'] as List<dynamic>? ?? [];
+            final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? 'guest_user';
+            final isLiked = likedBy.contains(currentUserId);
+
+            final createdAt = data['createdAt'] as Timestamp?;
+
+            return GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => PostDetailPage(
+                      postId: doc.id,
+                      userName: data['userName'] as String? ?? '알 수 없음',
+                      userProfileImageUrl: data['userProfileImageUrl'] as String?,
+                      title: data['title'] as String? ?? '제목 없음',
+                      content: data['content'] as String?,
+                      location: data['location'] as String?,
+                      createdAt: createdAt?.toDate(),
+                      viewCount: data['viewCount'] as int?,
+                      likeCount: data['likeCount'] as int? ?? 0,
+                      commentCount: data['commentCount'] as int? ?? 0,
+                      imageUrl: data['imageUrl'] as String?,
+                      likedBy: likedBy,
+                    ),
+                  ),
+                );
+              },
+              child: PostCard(
+                userName: data['userName'] as String? ?? '알 수 없음',
+                userProfileImageUrl: data['userProfileImageUrl'] as String?,
+                title: data['title'] as String? ?? '제목 없음',
+                location: data['location'] as String?,
+                createdAt: createdAt?.toDate(),
+                viewCount: data['viewCount'] as int?,
+                likeCount: data['likeCount'] as int? ?? 0,
+                commentCount: data['commentCount'] as int? ?? 0,
+                imageUrl: data['imageUrl'] as String?,
+                isLiked: isLiked,
+                likeButtonColoredWhenLiked: false,
+                likeButtonEnabled: false,
+              ),
+            );
+          },
         );
       },
     );
@@ -129,7 +160,13 @@ class _WriteFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const WritePostPage(),
+          ),
+        );
+      },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
         child: BackdropFilter(

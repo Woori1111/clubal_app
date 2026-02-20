@@ -1,3 +1,4 @@
+import 'package:clubal_app/core/utils/app_dialogs.dart';
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
@@ -131,7 +132,7 @@ class _InlineSettingsContentState extends State<InlineSettingsContent> {
 
   void _showMessage(String text) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+    showMessageDialog(context, message: text);
   }
 
   @override
