@@ -1,4 +1,8 @@
+import 'dart:ui';
+
+import 'package:clubal_app/core/theme/app_glass_styles.dart';
 import 'package:clubal_app/core/widgets/clubal_background.dart';
+import 'package:clubal_app/core/widgets/long_press_confirm_button.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
 import 'package:clubal_app/features/home/presentation/chat_tab_view.dart';
 import 'package:clubal_app/features/home/presentation/community_tab_view.dart';
@@ -29,7 +33,11 @@ class ClubalHomeShell extends StatefulWidget {
 
 class _ClubalHomeShellState extends State<ClubalHomeShell> {
   int _selectedIndex = 0;
-  
+
+  /// 탭별 스크롤 컨트롤러 (같은 탭 다시 탭 시 맨 위로 스크롤용)
+  late final List<ScrollController> _scrollControllers =
+      List.generate(5, (_) => ScrollController());
+
   final List<PieceRoom> _pieceRooms = [
     PieceRoom(
       title: '불금 강남 클럽 조각 구해요',
@@ -90,15 +98,34 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
       _navChannel.setMethodCallHandler((call) async {
         if (call.method == 'setTab') {
           final index = call.arguments as int;
-          if (mounted) setState(() => _selectedIndex = index);
+          if (!mounted) return;
+          if (index == _selectedIndex) {
+            _scrollToTopOfTab(index);
+          } else {
+            setState(() => _selectedIndex = index);
+          }
         }
       });
+    }
+  }
+
+  void _scrollToTopOfTab(int index) {
+    final controller = _scrollControllers[index];
+    if (controller.hasClients) {
+      controller.animateTo(
+        0,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
     }
   }
 
   @override
   void dispose() {
     if (_isIOSNative) _navChannel.setMethodCallHandler(null);
+    for (final c in _scrollControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -108,6 +135,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
     final isIOS = _isIOSNative;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       extendBody: !isIOS,
       body: Stack(
         children: [
@@ -140,10 +168,37 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
                               ),
                       ),
                       if (selected.label == '매칭')
-                        PressedIconActionButton(
-                          icon: Icons.add_rounded,
-                          tooltip: '조각 방 만들기',
-                          onTap: _openCreatePieceRoom,
+                        SizedBox(
+                          width: 52,
+                          height: 52,
+                          child: OverflowBox(
+                            maxWidth: 52 * 1.15,
+                            maxHeight: 52 * 1.15,
+                            alignment: Alignment.center,
+                            child: LongPressConfirmButton(
+                              onTap: _openCreatePieceRoom,
+                              baseWidth: 52,
+                              baseHeight: 52,
+                              background: ClipOval(
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                                  child: Container(
+                                    width: 52,
+                                    height: 52,
+                                    decoration: AppGlassStyles.card(
+                                      radius: 26,
+                                      isDark: Theme.of(context).brightness == Brightness.dark,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              content: Icon(
+                                Icons.add_rounded,
+                                color: Theme.of(context).colorScheme.onSurface,
+                                size: 28,
+                              ),
+                            ),
+                          ),
                         ),
                       if (selected.label == '메뉴')
                         Row(
@@ -173,20 +228,6 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
                                 if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
                               },
                             ),
-                            const SizedBox(width: 8),
-                            PressedIconActionButton(
-                              icon: Icons.settings_rounded,
-                              tooltip: '설정',
-                              onTap: () async {
-                                if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', false);
-                                await Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => const ClubalSettingsPage(),
-                                  ),
-                                );
-                                if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
-                              },
-                            ),
                           ],
                         ),
                     ],
@@ -205,7 +246,13 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
           ? BottomNavigationBar(
               type: BottomNavigationBarType.fixed,
               currentIndex: _selectedIndex,
-              onTap: (index) => setState(() => _selectedIndex = index),
+              onTap: (index) {
+                if (index == _selectedIndex) {
+                  _scrollToTopOfTab(index);
+                } else {
+                  setState(() => _selectedIndex = index);
+                }
+              },
               items: [
                 for (final tab in _tabs)
                   BottomNavigationBarItem(
@@ -217,20 +264,42 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
           // iOS: 네이티브 탭바가 담당하므로 Flutter 쪽은 하단바 없음
           : isIOS
               ? null
-              // Android 등 나머지 플랫폼: 기존 젤리 네비게이션 유지
-              : ClubalJellyBottomNav(
-                  tabs: _tabs,
-                  selectedIndex: _selectedIndex,
-                  onChanged: (index) =>
-                      setState(() => _selectedIndex = index),
+              // Android 등 나머지 플랫폼: 기존 젤리 네비게이션 유지 (배경 투명으로 하단 여백에 body 배경 비침)
+              : Material(
+                  color: Colors.transparent,
+                  child: ClubalJellyBottomNav(
+                    tabs: _tabs,
+                    selectedIndex: _selectedIndex,
+                    onChanged: (index) {
+                      if (index == _selectedIndex) {
+                        _scrollToTopOfTab(index);
+                      } else {
+                        setState(() => _selectedIndex = index);
+                      }
+                    },
+                  ),
                 ),
     );
   }
 
   Widget _buildTabBody(String label) {
+    final index = _tabs.indexWhere((t) => t.label == label);
+    final scrollController = index >= 0 && index < _scrollControllers.length
+        ? _scrollControllers[index]
+        : null;
     switch (label) {
       case '홈':
-        return const HomeTabView();
+        return HomeTabView(
+          scrollController: scrollController,
+          onMatchTap: () {
+            setState(() => _selectedIndex = 1);
+            if (_isIOSNative) _navChannel.invokeMethod('setTab', 1);
+          },
+          onChatTap: () {
+            setState(() => _selectedIndex = 2);
+            if (_isIOSNative) _navChannel.invokeMethod('setTab', 2);
+          },
+        );
       case '매칭':
         return MatchingTabView(
           rooms: _pieceRooms,
@@ -238,13 +307,14 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
           activeMatches: _activeMatches,
           onAutoMatchTap: _openAutoMatch,
           topPadding: 8,
+          scrollController: scrollController,
         );
       case '채팅':
         return const ChatTabView();
       case '커뮤니티':
-        return const CommunityTabView();
+        return CommunityTabView(scrollController: scrollController);
       case '메뉴':
-        return const MenuTabView();
+        return MenuTabView(scrollController: scrollController);
       default:
         return const SizedBox.shrink();
     }

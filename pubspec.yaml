@@ -39,7 +39,6 @@ dependencies:
   cloud_firestore: ^6.1.2
   firebase_analytics: ^12.1.2
   google_sign_in: ^7.2.0
-  liquid_glass_easy: ^1.1.1
 
 dev_dependencies:
   flutter_test:
@@ -72,9 +71,6 @@ flutter:
           weight: 500
         - asset: assets/fonts/Pretendard-Bold.otf
           weight: 700
-
-  shaders:
-    - shaders/nav_lens.frag
 
   # To add assets to your application, add an assets section, like this:
   # assets:

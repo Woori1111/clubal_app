@@ -38,5 +38,11 @@ class AppColors {
   static const Color innerGlassBorderDark = Color(0x22FFFFFF);
   static const Color innerGlassGradientStartDark = Color(0x18FFFFFF);
   static const Color innerGlassGradientEndDark = Color(0x08FFFFFF);
+
+  /// 성공/진행 상태 (모집중, 완료 성공 등) — 앱 전역 통일
+  static const Color success = Color(0xFF3AC0A0);
+
+  /// 실패/경고/중단 상태 (모집완료, 꽉참, 에러 등) — 앱 전역 통일
+  static const Color failure = Color(0xFFED3241);
 }
 

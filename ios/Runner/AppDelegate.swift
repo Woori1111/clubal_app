@@ -17,22 +17,27 @@ import UIKit
   }
 
   private func configureTabBarAppearance() {
-    let black = UIColor(red: 28/255,  green: 28/255,  blue: 30/255,  alpha: 1) // #1C1C1E
-    let gray  = UIColor(red: 160/255, green: 160/255, blue: 165/255, alpha: 1) // #A0A0A5
+    // 앱에 화이트 테마 없음 — 전역 탭바도 다크/투명으로 설정해 어디서든 흰색이 안 나오도록
+    let fg = UIColor(red: 230/255, green: 237/255, blue: 243/255, alpha: 1)
+    let dim = UIColor(red: 139/255, green: 148/255, blue: 158/255, alpha: 1)
 
-    // UITabBarItemStateAppearance 로 normal/selected 색상을 각각 명시
-    // — SwiftUI .tint() 보다 우선순위가 높아 파란색 덮어쓰기 방지
     let appearance = UITabBarAppearance()
-    appearance.configureWithDefaultBackground()
+    appearance.configureWithTransparentBackground()
+    if #available(iOS 13.0, *) {
+      appearance.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
+    } else {
+      appearance.backgroundEffect = UIBlurEffect(style: .dark)
+    }
+    appearance.backgroundColor = UIColor.black.withAlphaComponent(0.25)
 
-    appearance.stackedLayoutAppearance.normal.iconColor  = gray
-    appearance.stackedLayoutAppearance.normal.titleTextAttributes  = [.foregroundColor: gray]
-    appearance.stackedLayoutAppearance.selected.iconColor = black
-    appearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: black]
+    appearance.stackedLayoutAppearance.normal.iconColor = dim
+    appearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: dim]
+    appearance.stackedLayoutAppearance.selected.iconColor = fg
+    appearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: fg]
 
-    UITabBar.appearance().standardAppearance    = appearance
-    UITabBar.appearance().scrollEdgeAppearance  = appearance
-    UITabBar.appearance().tintColor             = black   // 추가 보장
-    UITabBar.appearance().unselectedItemTintColor = gray
+    UITabBar.appearance().standardAppearance = appearance
+    UITabBar.appearance().scrollEdgeAppearance = appearance
+    UITabBar.appearance().tintColor = fg
+    UITabBar.appearance().unselectedItemTintColor = dim
   }
 }
