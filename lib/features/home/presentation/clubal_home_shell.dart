@@ -173,20 +173,6 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
                                 if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
                               },
                             ),
-                            const SizedBox(width: 8),
-                            PressedIconActionButton(
-                              icon: Icons.settings_rounded,
-                              tooltip: '설정',
-                              onTap: () async {
-                                if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', false);
-                                await Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => const ClubalSettingsPage(),
-                                  ),
-                                );
-                                if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
-                              },
-                            ),
                           ],
                         ),
                     ],

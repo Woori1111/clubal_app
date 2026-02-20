@@ -11,6 +11,7 @@ import 'package:clubal_app/features/settings/presentation/clubal_settings_page.d
 import 'package:clubal_app/features/settings/presentation/faq_page.dart';
 import 'package:clubal_app/features/settings/presentation/bug_report_page.dart';
 import 'package:clubal_app/features/settings/presentation/suggestion_page.dart';
+import 'package:clubal_app/features/settings/presentation/one_on_one_support_page.dart';
 import 'package:flutter/material.dart';
 
 /// 요즘 앱처럼 상단 검색바 + 실시간(디바운스) 필터링 검색 화면
@@ -206,20 +207,20 @@ class _EmptyState extends StatelessWidget {
           Icon(
             Icons.search_rounded,
             size: 56,
-            color: const Color(0xFF304255).withOpacity(0.35),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.35),
           ),
           const SizedBox(height: 16),
           Text(
             '검색어를 입력하세요',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFF304255).withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 ),
           ),
           const SizedBox(height: 8),
           Text(
             '사람, 모임, 게시물을 찾아보세요',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF304255).withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                 ),
           ),
         ],
@@ -261,7 +262,7 @@ class _SearchResultsList extends StatelessWidget {
     {'title': '이전 계정 찾기', 'subtitle': '계정 관리 상세', 'type': 'setting', 'target': 'previous_account', 'keywords': <String>['이전', '계정', '찾기']},
     {'title': '계정 삭제', 'subtitle': '계정 관리 상세', 'type': 'setting', 'target': 'delete_account', 'keywords': <String>['계정', '삭제', '탈퇴']},
     {'title': '로그아웃', 'subtitle': '계정/인증 상세', 'type': 'setting', 'target': 'account_auth', 'highlight': 'logout', 'keywords': <String>['로그아웃']},
-    {'title': '고객센터', 'subtitle': '고객지원 상세', 'type': 'setting', 'target': 'support', 'highlight': 'center', 'keywords': <String>['고객센터', '문의', '상담']},
+    {'title': '1:1 문의', 'subtitle': '고객지원 상세', 'type': 'setting', 'target': 'support', 'highlight': 'one_on_one', 'keywords': <String>['1:1', '문의', '상담', '고객센터']},
     {'title': '개선할 점', 'subtitle': '고객지원 상세', 'type': 'setting', 'target': 'support', 'highlight': 'feedback', 'keywords': <String>['개선', '의견', '서비스']},
     {'title': '제보하기', 'subtitle': '고객지원 상세', 'type': 'setting', 'target': 'support', 'highlight': 'report', 'keywords': <String>['제보', '버그', '신고']},
     {'title': '가장 많이 하는 질문', 'subtitle': '고객지원 상세', 'type': 'setting', 'target': 'support', 'highlight': 'faq', 'keywords': <String>['질문', 'FAQ', '자주']},
@@ -298,13 +299,13 @@ class _SearchResultsList extends StatelessWidget {
             Icon(
               Icons.search_off_rounded,
               size: 48,
-              color: const Color(0xFF304255).withOpacity(0.4),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
             ),
             const SizedBox(height: 12),
             Text(
               '"$query"에 대한 결과가 없어요',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: const Color(0xFF304255).withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                   ),
             ),
           ],
@@ -344,12 +345,9 @@ class _SearchResultsList extends StatelessWidget {
                       Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) => const FaqPage(),
                       ));
-                    } else if (highlight == 'center') {
+                    } else if (highlight == 'one_on_one') {
                       Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => const SimpleSupportPage(
-                          title: '고객센터',
-                          description: '고객센터로 문의를 남길 수 있는 화면입니다.',
-                        ),
+                        builder: (_) => const OneOnOneSupportPage(),
                       ));
                     } else if (highlight == 'feedback') {
                       Navigator.of(context).push(MaterialPageRoute(
@@ -410,7 +408,7 @@ class _SearchResultsList extends StatelessWidget {
                               : item['subtitle'] == '모임'
                                   ? Icons.groups_rounded
                                   : Icons.article_rounded,
-                      color: const Color(0xFF304255),
+                      color: Theme.of(context).colorScheme.onSurface,
                       size: 24,
                     ),
                     const SizedBox(width: 14),
@@ -424,7 +422,7 @@ class _SearchResultsList extends StatelessWidget {
                                 .textTheme
                                 .titleSmall
                                 ?.copyWith(
-                                  color: const Color(0xFF243244),
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   fontWeight: FontWeight.w600,
                                 ),
                           ),
@@ -435,17 +433,16 @@ class _SearchResultsList extends StatelessWidget {
                                 .textTheme
                                 .bodySmall
                                 ?.copyWith(
-                                  color: const Color(0xFF304255)
-                                      .withOpacity(0.7),
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                                 ),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right_rounded,
                       size: 20,
-                      color: Color(0xFF304255),
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ],
                 ),

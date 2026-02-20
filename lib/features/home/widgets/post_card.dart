@@ -198,11 +198,11 @@ class _PostCardState extends State<PostCard> {
                         widget.imageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-return Icon(
+                          return Icon(
                             Icons.image_rounded,
                             color: caption,
                             size: 32,
-                        );
+                          );
                         },
                       ),
                     ),
@@ -376,7 +376,7 @@ return Icon(
                       widget.imageUrl!,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
-return Icon(
+                        return Icon(
                             Icons.image_rounded,
                             color: caption,
                             size: 32,
