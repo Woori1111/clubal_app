@@ -142,25 +142,25 @@ class _SearchBarState extends State<_SearchBar> {
         autofocus: true,
         textInputAction: TextInputAction.search,
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: const Color(0xFF243244),
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w500,
             ),
         decoration: InputDecoration(
           hintText: widget.hint,
           hintStyle: TextStyle(
-            color: const Color(0xFF243244).withOpacity(0.5),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             fontWeight: FontWeight.w400,
           ),
           prefixIcon: Icon(
             Icons.search_rounded,
-            color: const Color(0xFF304255).withOpacity(0.8),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             size: 24,
           ),
           suffixIcon: widget.controller.text.isNotEmpty
               ? IconButton(
                   icon: Icon(
                     Icons.cancel_rounded,
-                    color: const Color(0xFF304255).withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     size: 20,
                   ),
                   onPressed: () {
@@ -169,7 +169,7 @@ class _SearchBarState extends State<_SearchBar> {
                 )
               : null,
           filled: true,
-          fillColor: Colors.white.withOpacity(0.6),
+          fillColor: Theme.of(context).colorScheme.surface.withOpacity(0.6),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,
@@ -320,7 +320,7 @@ class _SearchResultsList extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Material(
-            color: Colors.white.withOpacity(0.5),
+            color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
             borderRadius: BorderRadius.circular(16),
             child: InkWell(
               onTap: () {

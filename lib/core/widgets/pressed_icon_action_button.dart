@@ -34,7 +34,7 @@ class _PressedIconActionButtonState extends State<PressedIconActionButton> {
         onTapUp: (_) => setState(() => _pressed = false),
         onTapCancel: () => setState(() => _pressed = false),
         onTap: widget.onTap,
-        child: AnimatedScale(https://github.com/Woori1111/clubal_app/pull/11/conflict?name=lib%252Fcore%252Fwidgets%252Fpressed_icon_action_button.dart&ancestor_oid=05f20b2ecf6f62e1fbb4fa929d697f73e924e5c3&base_oid=f5123de4940febbd0f35e83414ab950a4675df7d&head_oid=a168a3d0ac37489ab597e962299bd743eebe92f8
+        child: AnimatedScale(
           scale: scale,
           duration: const Duration(milliseconds: 120),
           curve: Curves.easeOutCubic,
@@ -59,7 +59,7 @@ class _PressedIconActionButtonState extends State<PressedIconActionButton> {
                   ),
                   child: Icon(
                     widget.icon,
-                    color: const Color(0xFFE9F6FF),
+                    color: Theme.of(context).iconTheme.color ?? const Color(0xFFE6EDF3),
                     size: 26,
                   ),
                 ),

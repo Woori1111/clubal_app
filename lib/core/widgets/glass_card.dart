@@ -17,7 +17,10 @@ class GlassCard extends StatelessWidget {
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
-          decoration: AppGlassStyles.card(radius: 28),
+          decoration: AppGlassStyles.card(
+          radius: 28,
+          isDark: Theme.of(context).brightness == Brightness.dark,
+        ),
           child: child,
         ),
       ),

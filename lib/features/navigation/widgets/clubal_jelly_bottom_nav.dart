@@ -76,13 +76,23 @@ class _ClubalJellyBottomNavState extends State<ClubalJellyBottomNav>
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(37),
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0x36FFFFFF), Color(0x1CFFFFFF)],
+                  colors: Theme.of(context).brightness == Brightness.dark
+                      ? [
+                          const Color(0x22FFFFFF),
+                          const Color(0x12FFFFFF),
+                        ]
+                      : [
+                          const Color(0x36FFFFFF),
+                          const Color(0x1CFFFFFF),
+                        ],
                 ),
                 border: Border.all(
-                  color: const Color(0x55FFFFFF),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0x33FFFFFF)
+                      : const Color(0x55FFFFFF),
                   width: 0.9,
                 ),
                 boxShadow: const [
@@ -131,38 +141,25 @@ class _JellyBottomNavContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fgColor = selected
-        ? const Color(0xFFF5FCFF)
-        : const Color(0xB3DCEAFF);
     return Material(
       color: Colors.transparent,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => onTapDown(),
-        onTapUp: (_) => onTapUp(),
-        onTapCancel: onTapCancel,
-        onTap: onTap,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(tab.icon, color: fgColor, size: 26),
-              const SizedBox(height: 4),
-              SizedBox(
-                height: 14,
-                child: Center(
-                  child: Text(
-                    tab.label,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: fgColor,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                      height: 1.0,
+      child: Row(
+        children: [
+          for (int i = 0; i < tabs.length; i++)
+            Expanded(
+              child: AnimatedBuilder(
+                animation: scaleAnimations[i],
+                builder: (context, child) {
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => onChanged(i),
+                    child: _LiquidGlassNavItem(
+                      tab: tabs[i],
+                      isSelected: selectedIndex == i,
+                      bounceScale: scaleAnimations[i].value,
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
             ),
         ],
@@ -184,11 +181,11 @@ class _LiquidGlassNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 비활성: 중립 회색 / 활성: 짙은 검정
-    final iconColor =
-        isSelected ? const Color(0xFF1C1C1E) : const Color(0xFFA0A0A5);
-    final labelColor =
-        isSelected ? const Color(0xFF1C1C1E) : const Color(0xFFA0A0A5);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = isDark
+        ? (isSelected ? const Color(0xFFE6EDF3) : const Color(0xFF8B949E))
+        : (isSelected ? const Color(0xFF1C1C1E) : const Color(0xFFA0A0A5));
+    final labelColor = iconColor;
 
     return Center(
       child: Transform.scale(
@@ -202,12 +199,12 @@ class _LiquidGlassNavItem extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0x38FFFFFF)
+                    ? (isDark ? const Color(0x28FFFFFF) : const Color(0x38FFFFFF))
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(14),
                 border: isSelected
                     ? Border.all(
-                        color: const Color(0x50FFFFFF),
+                        color: isDark ? const Color(0x35FFFFFF) : const Color(0x50FFFFFF),
                         width: 0.8,
                       )
                     : null,
@@ -224,7 +221,7 @@ class _LiquidGlassNavItem extends StatelessWidget {
               child: Icon(
                 tab.icon,
                 color: iconColor,
-                size: 12.0, // 활성·비활성 동일 크기 (이전 22dp의 절반)
+                size: 12.0,
               ),
             ),
             const SizedBox(height: 2),

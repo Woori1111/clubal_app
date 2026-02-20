@@ -144,7 +144,7 @@ class _AccountActionRow extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
                 ),
@@ -152,17 +152,17 @@ class _AccountActionRow extends StatelessWidget {
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          const Icon(
+          Icon(
             Icons.chevron_right_rounded,
             size: 20,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ],
       ),
@@ -186,7 +186,7 @@ class AccountDeactivatedPage extends StatelessWidget {
               Text(
                 '계정 비활성화 상태',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w700,
                     ),
               ),
@@ -194,7 +194,7 @@ class AccountDeactivatedPage extends StatelessWidget {
               Text(
                 '계정을 다시 활성화하면 모든 서비스를 이용할 수 있어요.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
               ),
               const Spacer(),
@@ -216,13 +216,13 @@ class AccountDeactivatedPage extends StatelessWidget {
                           '계정 활성화',
                           style:
                               Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: Colors.black,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     fontWeight: FontWeight.w700,
                                   ),
                         ),
-                        const Icon(
+                        Icon(
                           Icons.arrow_forward_rounded,
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ],
                     ),
@@ -304,7 +304,7 @@ class _PreviousAccountFindPageState extends State<PreviousAccountFindPage> {
               Text(
                 '문제 해결을 위해\n아래에 정보를 남겨주세요.',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w700,
                     ),
               ),
@@ -312,7 +312,7 @@ class _PreviousAccountFindPageState extends State<PreviousAccountFindPage> {
               Text(
                 '입력하신 정보는 계정을 찾는 용도로만 사용돼요.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
               ),
               const SizedBox(height: 24),
@@ -370,7 +370,7 @@ class _PreviousAccountFindPageState extends State<PreviousAccountFindPage> {
                                     .textTheme
                                     .labelLarge
                                     ?.copyWith(
-                                      color: Colors.black,
+                                      color: Theme.of(context).colorScheme.onSurface,
                                       fontWeight: FontWeight.w700,
                                     ),
                               ),
@@ -413,7 +413,7 @@ class _LabeledTextField extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.black,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
               ),
         ),
@@ -477,7 +477,7 @@ class AccountDeletePage extends StatelessWidget {
               Text(
                 '계정 삭제',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w700,
                     ),
               ),
@@ -485,7 +485,7 @@ class AccountDeletePage extends StatelessWidget {
               Text(
                 '계정을 삭제하면 일부 정보는 복구가 어려울 수 있어요.\n정말 삭제를 원하실 때에만 진행해 주세요.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
               ),
               const Spacer(),
@@ -511,13 +511,13 @@ class AccountDeletePage extends StatelessWidget {
                           '계정 삭제 진행',
                           style:
                               Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: Colors.black,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     fontWeight: FontWeight.w700,
                                   ),
                         ),
-                        const Icon(
+                        Icon(
                           Icons.delete_outline_rounded,
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ],
                     ),

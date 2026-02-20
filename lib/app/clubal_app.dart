@@ -13,7 +13,7 @@ class ClubalApp extends StatelessWidget {
       child: MaterialApp(
         title: '클러버 Clubal',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(),
+        theme: AppTheme.dark(),
         home: const ClubalHomeShell(),
       ),
     );

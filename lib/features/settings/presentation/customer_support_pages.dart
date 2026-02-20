@@ -162,7 +162,7 @@ class _SupportRow extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.6),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -228,7 +228,7 @@ class SimpleSupportPage extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w700,
                     ),
               ),
@@ -236,7 +236,7 @@ class SimpleSupportPage extends StatelessWidget {
               Text(
                 description,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
               ),
             ],

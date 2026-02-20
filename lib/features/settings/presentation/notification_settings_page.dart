@@ -83,7 +83,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                         Text(
                           '알림',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                color: Colors.black,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontWeight: FontWeight.w700,
                               ),
                         ),
@@ -93,7 +93,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                     Text(
                       '새로운 알림',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: Colors.grey,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                     ),
@@ -160,7 +160,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                     Text(
                       '커뮤니티',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: Colors.grey,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                     ),
@@ -227,7 +227,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                     Text(
                       '추천 알림',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: Colors.grey,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                     ),
@@ -311,15 +311,15 @@ class _SettingRowWithArrow extends StatelessWidget {
               child: Text(
                 title,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
                     ),
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
               size: 20,
-              color: Colors.black,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ],
         ),
@@ -376,7 +376,7 @@ class _AnimatedToggleRowState extends State<_AnimatedToggleRow> {
                     Text(
                       widget.label,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontWeight: FontWeight.w600,
                           ),
                     ),
@@ -438,7 +438,7 @@ class _GlassToggle extends StatelessWidget {
             height: 18,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.95),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.95),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x33000000),

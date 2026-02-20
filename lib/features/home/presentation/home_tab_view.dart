@@ -5,11 +5,11 @@ class HomeTabView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Text(
         '홈 화면 준비 중',
         style: TextStyle(
-          color: Color(0xFF8A9BAF),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           fontSize: 16,
         ),
       ),

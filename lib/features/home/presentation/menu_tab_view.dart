@@ -30,7 +30,7 @@ class _MenuTabViewState extends State<MenuTabView> {
           '프로필',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF243244),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
         ),
         const SizedBox(height: 20),
@@ -78,16 +78,19 @@ class _ProfileSummaryCard extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
-            decoration: AppGlassStyles.card(radius: 24),
+            decoration: AppGlassStyles.card(
+              radius: 24,
+              isDark: Theme.of(context).brightness == Brightness.dark,
+            ),
             padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 40,
-                  backgroundColor: Colors.white.withOpacity(0.25),
-                  child: const Icon(
+                  backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.15),
+                  child: Icon(
                     Icons.person_rounded,
-                    color: Color(0xFF243244),
+                    color: Theme.of(context).colorScheme.onSurface,
                     size: 40,
                   ),
                 ),
@@ -101,7 +104,7 @@ class _ProfileSummaryCard extends StatelessWidget {
                         displayName,
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF243244),
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                       ),
                       const SizedBox(height: 6),
@@ -110,15 +113,15 @@ class _ProfileSummaryCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: const Color(0xFF304255).withOpacity(0.8),
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
-                  color: Color(0xFF304255),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   size: 24,
                 ),
               ],

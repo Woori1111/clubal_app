@@ -222,14 +222,18 @@ class _AutoMatchFabState extends State<_AutoMatchFab> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: const Color(0x66FFFFFF),
-                        width: 1.5,
-                      ),
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xB3FFFFFF), Color(0x66EAF2FA)],
-                      ),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0x33FFFFFF)
+                              : const Color(0x66FFFFFF),
+                          width: 1.5,
+                        ),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: Theme.of(context).brightness == Brightness.dark
+                              ? [const Color(0x33FFFFFF), const Color(0x11EAF2FA)]
+                              : const [Color(0xB3FFFFFF), Color(0x66EAF2FA)],
+                        ),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x22000000),
@@ -249,18 +253,18 @@ class _AutoMatchFabState extends State<_AutoMatchFab> {
                           child: ScaleTransition(scale: animation, child: child),
                         ),
                         child: widget.compact
-                            ? const Icon(
+                            ? Icon(
                                 Icons.bolt_rounded,
-                                key: ValueKey('compact_bolt'),
-                                color: Color(0xFF253445),
+                                key: const ValueKey('compact_bolt'),
+                                color: Theme.of(context).colorScheme.onSurface,
                                 size: 33,
                                 weight: 700,
                               )
-                            : const Text(
+                            : Text(
                                 '자동매치',
-                                key: ValueKey('expanded_label'),
+                                key: const ValueKey('expanded_label'),
                                 style: TextStyle(
-                                  color: Color(0xFF253445),
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 17,
                                 ),
@@ -290,7 +294,7 @@ class _SectionLabel extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: const Color(0x993F4F61),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.w400,
           fontSize: 16,
         ),
@@ -314,7 +318,10 @@ class _BlobCard extends StatelessWidget {
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          decoration: AppGlassStyles.card(radius: 16),
+          decoration: AppGlassStyles.card(
+            radius: 16,
+            isDark: Theme.of(context).brightness == Brightness.dark,
+          ),
           child: child,
         ),
       ),
@@ -343,7 +350,7 @@ class _PieceRoomListItem extends StatelessWidget {
             Text(
               room.title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: const Color(0xFF304255),
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -385,18 +392,21 @@ class _InfoChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: AppGlassStyles.innerCard(radius: 10),
+      decoration: AppGlassStyles.innerCard(
+        radius: 10,
+        isDark: Theme.of(context).brightness == Brightness.dark,
+      ),
       child: Row(
         mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: const Color(0xFF4B5D73)),
+          Icon(icon, size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
           const SizedBox(width: 5),
           Flexible(
             child: Text(
               text,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF4B5D73),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
               ),
             ),

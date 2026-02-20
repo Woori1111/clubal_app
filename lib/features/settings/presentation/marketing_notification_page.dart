@@ -40,7 +40,7 @@ class _MarketingNotificationPageState extends State<MarketingNotificationPage> {
                       Text(
                         '마케팅·광고성 알림',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Colors.black,
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontWeight: FontWeight.w700,
                             ),
                       ),
@@ -109,7 +109,7 @@ class _ToggleRow extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
                     ),
               ),
@@ -120,7 +120,7 @@ class _ToggleRow extends StatelessWidget {
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall
-                      ?.copyWith(color: Colors.black),
+                      ?.copyWith(color: Theme.of(context).colorScheme.onSurface),
                 ),
               ],
             ],
@@ -172,7 +172,7 @@ class _GlassToggle extends StatelessWidget {
             height: 18,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.95),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.95),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x33000000),

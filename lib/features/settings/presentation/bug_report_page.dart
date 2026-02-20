@@ -128,10 +128,10 @@ class _BugReportPageState extends State<BugReportPage> {
                     Navigator.of(ctx).pop(); // 다이얼로그 닫기
                     Navigator.of(context).pop(); // 이전 페이지로 돌아가기
                   },
-                  child: const Text(
+                  child: Text(
                     '확인',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -210,7 +210,7 @@ class _BugReportPageState extends State<BugReportPage> {
                       Text(
                         '제보하기',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Colors.black,
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontWeight: FontWeight.w700,
                             ),
                       ),
@@ -361,7 +361,7 @@ class _BugReportPageState extends State<BugReportPage> {
                                     height: 80,
                                     margin: const EdgeInsets.only(right: 12),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.4),
+                                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: const Color(0xFF304255).withOpacity(0.2),
@@ -398,11 +398,11 @@ class _BugReportPageState extends State<BugReportPage> {
                                       height: 80,
                                       margin: const EdgeInsets.only(right: 12),
                                       decoration: BoxDecoration(
-                                        color: Colors.grey[300], // 임시 배경색
+                                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: const Center(
-                                        child: Icon(Icons.image, color: Colors.grey),
+                                      child: Center(
+                                        child: Icon(Icons.image, color: Theme.of(context).colorScheme.onSurfaceVariant),
                                       ),
                                     ),
                                     Positioned(
@@ -414,13 +414,13 @@ class _BugReportPageState extends State<BugReportPage> {
                                         },
                                         child: Container(
                                           padding: const EdgeInsets.all(2),
-                                          decoration: const BoxDecoration(
-                                            color: Colors.black54,
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.54),
                                             shape: BoxShape.circle,
                                           ),
-                                          child: const Icon(
+                                          child: Icon(
                                             Icons.close_rounded,
-                                            color: Colors.white,
+                                            color: Theme.of(context).colorScheme.onSurface,
                                             size: 16,
                                           ),
                                         ),
@@ -462,12 +462,12 @@ class _BugReportPageState extends State<BugReportPage> {
                                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
-                          : const Text(
+                          : Text(
                               '제보 보내기',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                     ),

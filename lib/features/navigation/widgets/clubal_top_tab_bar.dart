@@ -126,12 +126,23 @@ class _ClubalTopTabBarState extends State<ClubalTopTabBar> {
           height: 50,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0x55FFFFFF), width: 1.2),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0x4DF3FAFF), Color(0x33A7B7FF)],
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0x33FFFFFF)
+                  : const Color(0x55FFFFFF),
+              width: 1.2,
             ),
+            gradient: Theme.of(context).brightness == Brightness.dark
+                ? const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0x1AFFFFFF), Color(0x0DFFFFFF)],
+                  )
+                : const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0x4DF3FAFF), Color(0x33A7B7FF)],
+                  ),
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -281,9 +292,10 @@ class _TabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final fgColor = selected
-        ? const Color(0xFFF5FCFF)
-        : const Color(0xB3DCEAFF);
+        ? (isDark ? const Color(0xFFF0F6FC) : const Color(0xFFF5FCFF))
+        : (isDark ? const Color(0xB3C9D1D9) : const Color(0xB3DCEAFF));
     return Material(
       color: Colors.transparent,
       child: GestureDetector(

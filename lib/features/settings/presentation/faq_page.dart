@@ -108,7 +108,7 @@ class _FaqPageState extends State<FaqPage> {
                       Text(
                         '가장 많이 하는 질문',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Colors.black,
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontWeight: FontWeight.w700,
                             ),
                       ),
@@ -313,7 +313,7 @@ class _FaqCardState extends State<_FaqCard> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.55),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.55),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(

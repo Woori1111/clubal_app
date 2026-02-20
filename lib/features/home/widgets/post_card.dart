@@ -55,9 +55,9 @@ class _PostCardState extends State<PostCard> {
 
   @override
   Widget build(BuildContext context) {
-    // 텍스트 줄 수 계산
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     final textStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-      color: const Color(0xFFF5FCFF),
+      color: onSurface,
       fontWeight: FontWeight.w500,
     ) ?? const TextStyle();
     
@@ -83,24 +83,34 @@ class _PostCardState extends State<PostCard> {
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0x55FFFFFF), width: 1.2),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0x4DF3FAFF), Color(0x33A7B7FF)],
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0x33FFFFFF)
+                  : const Color(0x55FFFFFF),
+              width: 1.2,
             ),
+            gradient: Theme.of(context).brightness == Brightness.dark
+                ? const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0x1AFFFFFF), Color(0x0DFFFFFF)],
+                  )
+                : const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0x4DF3FAFF), Color(0x33A7B7FF)],
+                  ),
           ),
           padding: const EdgeInsets.all(12),
-          child: shouldUseMinHeight
-              ? _buildFixedHeightLayout(context)
-              : _buildFlexibleLayout(context),
+          child: _buildFlexibleLayout(context),
         ),
       ),
     );
   }
 
   Widget _buildFixedHeightLayout(BuildContext context) {
-    const detailStyle = TextStyle(color: Color(0xB3DCEAFF), fontSize: 12);
+    final caption = Theme.of(context).colorScheme.onSurfaceVariant;
+    final detailStyle = TextStyle(color: caption, fontSize: 12);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.max,
@@ -112,8 +122,8 @@ class _PostCardState extends State<PostCard> {
               child: Container(
                 width: 28,
                 height: 28,
-                decoration: const BoxDecoration(
-                  color: Color(0x33FFFFFF),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: widget.userProfileImageUrl != null
@@ -121,16 +131,16 @@ class _PostCardState extends State<PostCard> {
                         widget.userProfileImageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
+                          return Icon(
                             Icons.person_rounded,
-                            color: Color(0xB3DCEAFF),
+                            color: caption,
                             size: 18,
                           );
                         },
                       )
-                    : const Icon(
+                    : Icon(
                         Icons.person_rounded,
-                        color: Color(0xB3DCEAFF),
+                        color: caption,
                         size: 18,
                       ),
               ),
@@ -139,7 +149,7 @@ class _PostCardState extends State<PostCard> {
             Text(
               widget.userName,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFFE9F6FF),
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),
@@ -161,7 +171,7 @@ class _PostCardState extends State<PostCard> {
                       child: Text(
                         widget.title,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFFF5FCFF),
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
                         ),
@@ -181,18 +191,18 @@ class _PostCardState extends State<PostCard> {
                     height: 108,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: const Color(0x33FFFFFF),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Image.network(
                         widget.imageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
+return Icon(
                             Icons.image_rounded,
-                            color: Color(0xB3DCEAFF),
+                            color: caption,
                             size: 32,
-                          );
+                        );
                         },
                       ),
                     ),
@@ -211,19 +221,19 @@ class _PostCardState extends State<PostCard> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (widget.location != null) ...[
-                  const Icon(Icons.location_on_rounded, size: 12, color: Color(0xB3DCEAFF)),
+                  Icon(Icons.location_on_rounded, size: 12, color: caption),
                   const SizedBox(width: 2),
                   Text(widget.location!, style: detailStyle, overflow: TextOverflow.ellipsis),
                   const SizedBox(width: 8),
                 ],
                 if (widget.date != null) ...[
-                  const Icon(Icons.calendar_today_rounded, size: 12, color: Color(0xB3DCEAFF)),
+                  Icon(Icons.calendar_today_rounded, size: 12, color: caption),
                   const SizedBox(width: 2),
                   Text(widget.date!, style: detailStyle, overflow: TextOverflow.ellipsis),
                   const SizedBox(width: 8),
                 ],
                 if (widget.viewCount != null) ...[
-                  const Icon(Icons.visibility_rounded, size: 12, color: Color(0xB3DCEAFF)),
+                  Icon(Icons.visibility_rounded, size: 12, color: caption),
                   const SizedBox(width: 2),
                   Text('${widget.viewCount}', style: detailStyle),
                 ],
@@ -238,16 +248,16 @@ class _PostCardState extends State<PostCard> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.favorite_border_rounded,
                         size: 18,
-                        color: Color(0xB3DCEAFF),
+                        color: caption,
                       ),
                       const SizedBox(width: 2),
                       Text(
                         '$_likeCount',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xB3DCEAFF),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 12,
                         ),
                       ),
@@ -258,16 +268,16 @@ class _PostCardState extends State<PostCard> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.chat_bubble_outline_rounded,
                       size: 18,
-                      color: Color(0xB3DCEAFF),
+                      color: caption,
                     ),
                     const SizedBox(width: 2),
                     Text(
                       '${widget.commentCount}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xB3DCEAFF),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -282,7 +292,8 @@ class _PostCardState extends State<PostCard> {
   }
 
   Widget _buildFlexibleLayout(BuildContext context) {
-    const detailStyle = TextStyle(color: Color(0xB3DCEAFF), fontSize: 12);
+    final caption = Theme.of(context).colorScheme.onSurfaceVariant;
+    final detailStyle = TextStyle(color: caption, fontSize: 12);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -293,8 +304,8 @@ class _PostCardState extends State<PostCard> {
               child: Container(
                 width: 28,
                 height: 28,
-                decoration: const BoxDecoration(
-                  color: Color(0x33FFFFFF),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: widget.userProfileImageUrl != null
@@ -302,16 +313,16 @@ class _PostCardState extends State<PostCard> {
                         widget.userProfileImageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
+                          return Icon(
                             Icons.person_rounded,
-                            color: Color(0xB3DCEAFF),
+                            color: caption,
                             size: 18,
                           );
                         },
                       )
-                    : const Icon(
+                    : Icon(
                         Icons.person_rounded,
-                        color: Color(0xB3DCEAFF),
+                        color: caption,
                         size: 18,
                       ),
               ),
@@ -320,7 +331,7 @@ class _PostCardState extends State<PostCard> {
             Text(
               widget.userName,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFFE9F6FF),
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),
@@ -339,7 +350,7 @@ class _PostCardState extends State<PostCard> {
                   Text(
                     widget.title,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFFF5FCFF),
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w500,
                       fontSize: 14,
                     ),
@@ -358,17 +369,17 @@ class _PostCardState extends State<PostCard> {
                   height: 108,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0x33FFFFFF),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Image.network(
                       widget.imageUrl!,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.image_rounded,
-                          color: Color(0xB3DCEAFF),
-                          size: 32,
+return Icon(
+                            Icons.image_rounded,
+                            color: caption,
+                            size: 32,
                         );
                       },
                     ),
@@ -388,19 +399,19 @@ class _PostCardState extends State<PostCard> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (widget.location != null) ...[
-                  const Icon(Icons.location_on_rounded, size: 12, color: Color(0xB3DCEAFF)),
+                  Icon(Icons.location_on_rounded, size: 12, color: caption),
                   const SizedBox(width: 2),
                   Text(widget.location!, style: detailStyle, overflow: TextOverflow.ellipsis),
                   const SizedBox(width: 8),
                 ],
                 if (widget.date != null) ...[
-                  const Icon(Icons.calendar_today_rounded, size: 12, color: Color(0xB3DCEAFF)),
+                  Icon(Icons.calendar_today_rounded, size: 12, color: caption),
                   const SizedBox(width: 2),
                   Text(widget.date!, style: detailStyle, overflow: TextOverflow.ellipsis),
                   const SizedBox(width: 8),
                 ],
                 if (widget.viewCount != null) ...[
-                  const Icon(Icons.visibility_rounded, size: 12, color: Color(0xB3DCEAFF)),
+                  Icon(Icons.visibility_rounded, size: 12, color: caption),
                   const SizedBox(width: 2),
                   Text('${widget.viewCount}', style: detailStyle),
                 ],
@@ -415,16 +426,16 @@ class _PostCardState extends State<PostCard> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.favorite_border_rounded,
                         size: 18,
-                        color: Color(0xB3DCEAFF),
+                        color: caption,
                       ),
                       const SizedBox(width: 2),
                       Text(
                         '$_likeCount',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xB3DCEAFF),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 12,
                         ),
                       ),
@@ -435,16 +446,16 @@ class _PostCardState extends State<PostCard> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.chat_bubble_outline_rounded,
                       size: 18,
-                      color: Color(0xB3DCEAFF),
+                      color: caption,
                     ),
                     const SizedBox(width: 2),
                     Text(
                       '${widget.commentCount}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xB3DCEAFF),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),

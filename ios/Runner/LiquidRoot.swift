@@ -120,15 +120,15 @@ final class NativeTabBarViewController: UIViewController, UITabBarDelegate {
     ]
     
     let cfg = UIImage.SymbolConfiguration(pointSize: 12, weight: .regular)
-    let black = UIColor(red: 28.0/255.0, green: 28.0/255.0, blue: 30.0/255.0, alpha: 1.0)
-    let gray = UIColor(red: 160.0/255.0, green: 160.0/255.0, blue: 165.0/255.0, alpha: 1.0)
+    // 다크테마 아이콘 색상 (선택: 하얀색 계열, 미선택: 중간 회색)
+    let selectedColor = UIColor(red: 230.0/255.0, green: 237.0/255.0, blue: 243.0/255.0, alpha: 1.0)
+    let unselectedColor = UIColor(red: 139.0/255.0, green: 148.0/255.0, blue: 158.0/255.0, alpha: 1.0)
     
     tabBar.items = items.enumerated().map { i, item in
       let baseImg = UIImage(systemName: item.icon, withConfiguration: cfg)
       
-      // iOS 버전에 관계없이 확실하게 색상을 강제하기 위해 Original 렌더링 사용
-      let unselectedImg = baseImg?.withTintColor(gray, renderingMode: .alwaysOriginal)
-      let selectedImg = baseImg?.withTintColor(black, renderingMode: .alwaysOriginal)
+      let unselectedImg = baseImg?.withTintColor(unselectedColor, renderingMode: .alwaysOriginal)
+      let selectedImg = baseImg?.withTintColor(selectedColor, renderingMode: .alwaysOriginal)
       
       let tabItem = UITabBarItem(title: item.title, image: unselectedImg, tag: i)
       tabItem.selectedImage = selectedImg
@@ -148,16 +148,16 @@ final class NativeTabBarViewController: UIViewController, UITabBarDelegate {
     // 흰색 반투명 오버레이
     appearance.backgroundColor = UIColor.white.withAlphaComponent(0.22)
     
-    // 전역 틴트 설정 (활성: 검정, 비활성: 회색)
-    let black = UIColor(red: 28.0/255.0, green: 28.0/255.0, blue: 30.0/255.0, alpha: 1.0)
-    let gray = UIColor(red: 160.0/255.0, green: 160.0/255.0, blue: 165.0/255.0, alpha: 1.0)
+    // 전역 틴트 설정 (활성: 하얀색 계열, 비활성: 회색 계열)
+    let selectedColor = UIColor(red: 230.0/255.0, green: 237.0/255.0, blue: 243.0/255.0, alpha: 1.0)
+    let unselectedColor = UIColor(red: 139.0/255.0, green: 148.0/255.0, blue: 158.0/255.0, alpha: 1.0)
     
     // 아이콘과 텍스트 색상을 확실하게 적용하기 위한 ItemAppearance 생성
     let itemAppearance = UITabBarItemAppearance()
-    itemAppearance.normal.iconColor = gray
-    itemAppearance.normal.titleTextAttributes = [.foregroundColor: gray]
-    itemAppearance.selected.iconColor = black
-    itemAppearance.selected.titleTextAttributes = [.foregroundColor: black]
+    itemAppearance.normal.iconColor = unselectedColor
+    itemAppearance.normal.titleTextAttributes = [.foregroundColor: unselectedColor]
+    itemAppearance.selected.iconColor = selectedColor
+    itemAppearance.selected.titleTextAttributes = [.foregroundColor: selectedColor]
     
     appearance.stackedLayoutAppearance = itemAppearance
     appearance.inlineLayoutAppearance = itemAppearance
@@ -169,8 +169,8 @@ final class NativeTabBarViewController: UIViewController, UITabBarDelegate {
     }
     tabBar.isTranslucent = true
     
-    tabBar.tintColor = black
-    tabBar.unselectedItemTintColor = gray
+    tabBar.tintColor = selectedColor
+    tabBar.unselectedItemTintColor = unselectedColor
   }
 
   func updateSelectedTab(_ index: Int) {
