@@ -385,11 +385,7 @@ class _InfoChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: const Color(0x66FFFFFF),
-        border: Border.all(color: const Color(0x33586B80), width: 1),
-      ),
+      decoration: AppGlassStyles.innerCard(radius: 10),
       child: Row(
         mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
         children: [
