@@ -5,12 +5,14 @@ import 'package:clubal_app/features/home/presentation/community_tab_view.dart';
 import 'package:clubal_app/features/home/presentation/home_tab_view.dart';
 import 'package:clubal_app/features/home/presentation/menu_tab_view.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
+import 'package:clubal_app/features/matching/presentation/auto_match_page.dart';
 import 'package:clubal_app/features/matching/presentation/create_piece_room_page.dart';
 import 'package:clubal_app/features/matching/presentation/matching_tab_view.dart';
 import 'package:clubal_app/features/navigation/models/nav_tab.dart';
 import 'package:clubal_app/features/navigation/widgets/clubal_jelly_bottom_nav.dart';
 import 'package:clubal_app/features/notifications/presentation/past_notifications_page.dart';
 import 'package:clubal_app/features/search/presentation/search_page.dart';
+import 'package:clubal_app/features/settings/presentation/clubal_settings_page.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,7 +29,47 @@ class ClubalHomeShell extends StatefulWidget {
 
 class _ClubalHomeShellState extends State<ClubalHomeShell> {
   int _selectedIndex = 0;
-  final List<PieceRoom> _pieceRooms = [];
+  final List<PieceRoom> _pieceRooms = [
+    PieceRoom(
+      title: '불금 강남 클럽 조각 구해요',
+      currentMembers: 2,
+      maxMembers: 4,
+      creator: '강남불나방',
+      location: '강남구 · 추천 · Club Arena',
+      meetingAt: DateTime.now().add(const Duration(days: 1, hours: 5)),
+      description: '이번주 불금에 강남 클럽 아레나 가실 분들 구합니다! 현재 남자 2명이고 추가로 2명 더 모셔요. 편하게 놀아요~',
+    ),
+    PieceRoom(
+      title: '홍대 감성주점 -> 클럽 코스',
+      currentMembers: 3,
+      maxMembers: 5,
+      creator: '홍대병말기',
+      location: '마포구 · 홍대 · Retro Pulse',
+      meetingAt: DateTime.now().add(const Duration(days: 2, hours: 2)),
+      description: '홍대에서 간단히 1차 하고 클럽으로 넘어갈 분들 찾습니다. 텐션 좋으신 분들 환영해요!',
+    ),
+    PieceRoom(
+      title: '이태원 힙합 클럽 가실분',
+      currentMembers: 1,
+      maxMembers: 3,
+      creator: '힙스터',
+      location: '용산구 · 이태원 · Noir Stage',
+      meetingAt: DateTime.now().add(const Duration(hours: 10)),
+      description: '이태원 힙합 클럽 좋아하시는 분들 같이가요~ N빵 깔끔하게 합니다.',
+    ),
+  ];
+  final List<PieceRoom> _myPieceRooms = [
+    PieceRoom(
+      title: '이번주 토요일 성수 핫플 ㄱㄱ',
+      currentMembers: 1,
+      maxMembers: 4,
+      creator: '유저별명',
+      location: '성동구 · 성수 · Seongsu Hive',
+      meetingAt: DateTime.now().add(const Duration(days: 3)),
+      description: '성수동 핫플 클럽 같이 가실 분 구합니다! 제가 총대 맵니다.',
+    ),
+  ];
+  final List<PieceRoom> _activeMatches = [];
 
   final List<NavTab> _tabs = const [
     NavTab(label: '홈', icon: Icons.home_rounded),
@@ -116,12 +158,30 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
                             PressedIconActionButton(
                               icon: Icons.notifications_none_rounded,
                               tooltip: '알림',
-                              onTap: () => Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) =>
-                                      const PastNotificationsPage(),
-                                ),
-                              ),
+                              onTap: () async {
+                                if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', false);
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) =>
+                                        const PastNotificationsPage(),
+                                  ),
+                                );
+                                if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            PressedIconActionButton(
+                              icon: Icons.settings_rounded,
+                              tooltip: '설정',
+                              onTap: () async {
+                                if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', false);
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => const ClubalSettingsPage(),
+                                  ),
+                                );
+                                if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
+                              },
                             ),
                           ],
                         ),
@@ -170,7 +230,9 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
       case '매칭':
         return MatchingTabView(
           rooms: _pieceRooms,
-          onAutoMatchTap: () {},
+          myRooms: _myPieceRooms,
+          activeMatches: _activeMatches,
+          onAutoMatchTap: _openAutoMatch,
           topPadding: 8,
         );
       case '채팅':
@@ -185,12 +247,26 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
   }
 
   Future<void> _openCreatePieceRoom() async {
+    if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', false);
     final created = await Navigator.of(context).push<PieceRoom>(
       MaterialPageRoute<PieceRoom>(
         builder: (_) => const CreatePieceRoomPage(),
       ),
     );
+    if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
     if (created == null) return;
-    setState(() => _pieceRooms.insert(0, created));
+    setState(() => _myPieceRooms.insert(0, created));
+  }
+
+  Future<void> _openAutoMatch() async {
+    if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', false);
+    final created = await Navigator.of(context).push<PieceRoom>(
+      MaterialPageRoute<PieceRoom>(
+        builder: (_) => const AutoMatchPage(),
+      ),
+    );
+    if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
+    if (created == null) return;
+    setState(() => _activeMatches.insert(0, created));
   }
 }
