@@ -15,225 +15,286 @@ class CreatePieceRoomPage extends StatefulWidget {
 class _CreatePieceRoomPageState extends State<CreatePieceRoomPage> {
   static const Color _brandColor = Color(0xFF2ECEF2);
 
-  final TextEditingController _titleController = TextEditingController(
-    text: '별명님의 조각',
-  );
-  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _titleController = TextEditingController(text: '유저별명님의 조각');
+  final TextEditingController _contentController = TextEditingController();
 
-  late DateTime _selectedDateTime;
   int _memberCount = 4;
-  PlaceSelection? _selectedPlace;
-  bool _openedDateSheetInitially = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedDateTime = _roundToHour(DateTime.now());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _openedDateSheetInitially) {
-        return;
-      }
-      _openedDateSheetInitially = true;
-      _openDatePickerBottomSheet();
-    });
-  }
 
   @override
   void dispose() {
     _titleController.dispose();
-    _descriptionController.dispose();
+    _contentController.dispose();
     super.dispose();
   }
 
-  static DateTime _roundToHour(DateTime value) {
-    return DateTime(value.year, value.month, value.day, value.hour);
+  void _appendContent(String info) {
+    final currentText = _contentController.text;
+    if (currentText.isEmpty) {
+      _contentController.text = info;
+    } else {
+      _contentController.text = '$currentText\n$info';
+    }
   }
 
-  Future<void> _openDatePickerBottomSheet() async {
-    final now = _roundToHour(DateTime.now());
-    final minDate = now;
-    final maxDate = now.add(const Duration(days: 365));
+  Future<void> _onTapDate() async {
+    final now = DateTime.now();
+    final minDate = DateTime(now.year, now.month, now.day, now.hour);
+    final maxDate = minDate.add(const Duration(days: 365));
+
     final picked = await showModalBottomSheet<DateTime>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return _DatePickerBottomSheet(
-          initialDate: _selectedDateTime,
+        return DatePickerBottomSheet(
+          initialDate: minDate,
           minDate: minDate,
           maxDate: maxDate,
         );
       },
     );
-    if (picked == null) {
-      return;
+    if (picked != null) {
+      final text = '${picked.month}월 ${picked.day}일 ${picked.hour.toString().padLeft(2, '0')}시';
+      _appendContent('📅 날짜: $text');
     }
-    setState(() => _selectedDateTime = picked);
   }
 
-  Future<void> _selectPlace() async {
+  Future<void> _onTapPlace() async {
     final result = await Navigator.of(context).push<PlaceSelection>(
       MaterialPageRoute<PlaceSelection>(
-        builder: (_) => const _PlaceSelectionPage(),
+        builder: (_) => const PlaceSelectionPage(),
       ),
     );
-    if (result == null) {
-      return;
+    if (result != null) {
+      _appendContent('📍 장소: ${result.displayLabel}');
     }
-    setState(() => _selectedPlace = result);
+  }
+
+  void _onTapPhoto() {
+    // 사진 선택 모의 동작
+    _appendContent('📸 사진: 첨부됨');
+  }
+
+  Future<void> _onTapPrice() async {
+    final price = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        String input = '';
+        return AlertDialog(
+          title: const Text('가격 입력'),
+          content: TextField(
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(hintText: '예: 50000'),
+            onChanged: (val) => input = val,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(input),
+              child: const Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+    if (price != null && price.trim().isNotEmpty) {
+      _appendContent('💰 가격: $price원');
+    }
   }
 
   void _submit() {
-    if (_selectedPlace == null) {
-      return;
-    }
     final title = _titleController.text.trim().isEmpty
-        ? '별명님의 조각'
+        ? '새로운 조각 방'
         : _titleController.text.trim();
+    
     final room = PieceRoom(
       title: title,
       currentMembers: 1,
       maxMembers: _memberCount,
-      creator: '별명',
-      location: _selectedPlace!.clubName,
-      meetingAt: _selectedDateTime,
-      description: _descriptionController.text.trim().isEmpty
-          ? null
-          : _descriptionController.text.trim(),
+      creator: '유저',
+      location: '미정', // 본래는 selectedPlace에서 가져와야 하지만 요구사항상 본문에 추가됨
+      meetingAt: DateTime.now(),
+      description: _contentController.text.trim(),
     );
     Navigator.of(context).pop(room);
   }
 
   @override
   Widget build(BuildContext context) {
-    final readyToSubmit = _selectedPlace != null;
-    final dateLabel =
-        '${_selectedDateTime.month}월 ${_selectedDateTime.day}일 ${_selectedDateTime.hour.toString().padLeft(2, '0')}시';
     return Scaffold(
       body: Stack(
         children: [
           const ClubalBackground(),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+              padding: const EdgeInsets.fromLTRB(0, 16, 0, 18),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '조각 방 만들기',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.arrow_back_ios_new_rounded),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 4),
+                        Text(
+                          '게시물 작성',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
+                  
                   Expanded(
                     child: SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _SectionCard(
-                            title: '날짜 선택',
-                            child: _PlainActionButton(
-                              label: dateLabel,
-                              onTap: _openDatePickerBottomSheet,
+                          // 제목 입력
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: TextField(
+                              controller: _titleController,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF253445),
+                              ),
+                              decoration: const InputDecoration(
+                                hintText: '제목을 입력하세요',
+                                hintStyle: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0x66253445),
+                                ),
+                                border: InputBorder.none,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          _SectionCard(
-                            title: '장소 선택',
-                            child: _PlainActionButton(
-                              label: _selectedPlace == null
-                                  ? '장소 선택하기'
-                                  : _selectedPlace!.displayLabel,
-                              onTap: _selectPlace,
-                            ),
-                          ),
-                          AnimatedCrossFade(
-                            firstChild: const SizedBox.shrink(),
-                            secondChild: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          const SizedBox(height: 16),
+                          
+                          // 인원수 스텝퍼
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Row(
                               children: [
-                                const SizedBox(height: 12),
-                                _SectionCard(
-                                  title: '방 제목',
-                                  child: TextField(
-                                    controller: _titleController,
-                                    decoration: const InputDecoration(
-                                      hintText: '방 제목을 입력하세요',
-                                      border: InputBorder.none,
+                                Text(
+                                  '인원수',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF253445),
+                                  ),
+                                ),
+                                const Spacer(),
+                                _ArrowCircleButton(
+                                  icon: Icons.remove_rounded,
+                                  onTap: _memberCount > 2
+                                      ? () => setState(() => _memberCount--)
+                                      : null,
+                                ),
+                                SizedBox(
+                                  width: 40,
+                                  child: Center(
+                                    child: Text(
+                                      '$_memberCount',
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF253445),
+                                      ),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 12),
-                                _SectionCard(
-                                  title: '인원',
-                                  child: Row(
-                                    children: [
-                                      _ArrowCircleButton(
-                                        icon: Icons.chevron_left_rounded,
-                                        onTap: _memberCount > 4
-                                            ? () => setState(() => _memberCount--)
-                                            : null,
-                                      ),
-                                      Expanded(
-                                        child: Center(
-                                          child: Text(
-                                            '$_memberCount명',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleMedium
-                                                ?.copyWith(
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                          ),
-                                        ),
-                                      ),
-                                      _ArrowCircleButton(
-                                        icon: Icons.chevron_right_rounded,
-                                        onTap: _memberCount < 6
-                                            ? () => setState(() => _memberCount++)
-                                            : null,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                _SectionCard(
-                                  title: '설명 (선택사항)',
-                                  child: TextField(
-                                    controller: _descriptionController,
-                                    maxLines: 3,
-                                    decoration: const InputDecoration(
-                                      hintText: '분위기, 드레스코드 등을 자유롭게 작성하세요',
-                                      border: InputBorder.none,
-                                    ),
-                                  ),
+                                _ArrowCircleButton(
+                                  icon: Icons.add_rounded,
+                                  onTap: _memberCount < 10
+                                      ? () => setState(() => _memberCount++)
+                                      : null,
                                 ),
                               ],
                             ),
-                            crossFadeState: _selectedPlace == null
-                                ? CrossFadeState.showFirst
-                                : CrossFadeState.showSecond,
-                            duration: const Duration(milliseconds: 260),
                           ),
+                          const SizedBox(height: 24),
+                          
+                          // 카드 섹션들 (장소, 날짜, 사진, 가격)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                            children: [
+                              OptionChip(
+                                icon: Icons.place_rounded,
+                                label: '장소',
+                                onTap: _onTapPlace,
+                              ),
+                              OptionChip(
+                                icon: Icons.calendar_today_rounded,
+                                label: '날짜',
+                                onTap: _onTapDate,
+                              ),
+                              OptionChip(
+                                icon: Icons.camera_alt_rounded,
+                                label: '사진',
+                                onTap: _onTapPhoto,
+                              ),
+                              OptionChip(
+                                icon: Icons.attach_money_rounded,
+                                label: '가격',
+                                onTap: _onTapPrice,
+                              ),
+                            ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          
+                          // 내용 입력
+                          Container(
+                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                            decoration: const BoxDecoration(
+                              border: Border(
+                                top: BorderSide(color: Color(0x334B5D73), width: 1),
+                              ),
+                            ),
+                            child: TextField(
+                              controller: _contentController,
+                              maxLines: 12,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Color(0xFF253445),
+                                height: 1.5,
+                              ),
+                              decoration: const InputDecoration(
+                                hintText: '내용을 자유롭게 입력하세요...',
+                                hintStyle: TextStyle(
+                                  color: Color(0x88253445),
+                                ),
+                                border: InputBorder.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 40),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  _ConfirmButton(
-                    enabled: readyToSubmit,
-                    onTap: _submit,
-                    brandColor: _brandColor,
+                  
+                  // 확인 버튼
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: ConfirmButton(
+                      enabled: true,
+                      onTap: _submit,
+                      brandColor: _brandColor,
+                    ),
                   ),
                 ],
               ),
@@ -245,8 +306,69 @@ class _CreatePieceRoomPageState extends State<CreatePieceRoomPage> {
   }
 }
 
-class _DatePickerBottomSheet extends StatefulWidget {
-  const _DatePickerBottomSheet({
+class OptionChip extends StatelessWidget {
+  const OptionChip({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0x66FFFFFF),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0x4DFFFFFF), width: 1),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x0A000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16, color: const Color(0xFF253445)),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF253445),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ----------------------------------------------------------------------
+// 아래는 기존의 DatePickerBottomSheet, PlaceSelection 등 재사용 컴포넌트들
+// ----------------------------------------------------------------------
+
+class DatePickerBottomSheet extends StatefulWidget {
+  const DatePickerBottomSheet({
+    super.key,
     required this.initialDate,
     required this.minDate,
     required this.maxDate,
@@ -257,10 +379,10 @@ class _DatePickerBottomSheet extends StatefulWidget {
   final DateTime maxDate;
 
   @override
-  State<_DatePickerBottomSheet> createState() => _DatePickerBottomSheetState();
+  State<DatePickerBottomSheet> createState() => _DatePickerBottomSheetState();
 }
 
-class _DatePickerBottomSheetState extends State<_DatePickerBottomSheet> {
+class _DatePickerBottomSheetState extends State<DatePickerBottomSheet> {
   late DateTime _selectedDateTime;
 
   @override
@@ -411,14 +533,14 @@ class PlaceSelection {
   String get displayLabel => '$region · $district · $clubName';
 }
 
-class _PlaceSelectionPage extends StatefulWidget {
-  const _PlaceSelectionPage();
+class PlaceSelectionPage extends StatefulWidget {
+  const PlaceSelectionPage({super.key});
 
   @override
-  State<_PlaceSelectionPage> createState() => _PlaceSelectionPageState();
+  State<PlaceSelectionPage> createState() => _PlaceSelectionPageState();
 }
 
-class _PlaceSelectionPageState extends State<_PlaceSelectionPage> {
+class _PlaceSelectionPageState extends State<PlaceSelectionPage> {
   static const _hotClubs = [
     'Aura Seoul',
     'Club Nyx',
@@ -779,50 +901,6 @@ class _EmptyFavoriteCard extends StatelessWidget {
   }
 }
 
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0x2F3F5468), width: 1),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xDFFFFFFF), Color(0xCCEAF2FA)],
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xAA34485F),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 10),
-              child,
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _ArrowCircleButton extends StatelessWidget {
   const _ArrowCircleButton({required this.icon, required this.onTap});
 
@@ -842,37 +920,9 @@ class _ArrowCircleButton extends StatelessWidget {
   }
 }
 
-class _PlainActionButton extends StatelessWidget {
-  const _PlainActionButton({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton(
-      onPressed: onTap,
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(48),
-        side: const BorderSide(color: Color(0x444B5D73)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          label,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-        ),
-      ),
-    );
-  }
-}
-
-class _ConfirmButton extends StatefulWidget {
-  const _ConfirmButton({
+class ConfirmButton extends StatefulWidget {
+  const ConfirmButton({
+    super.key,
     required this.enabled,
     required this.onTap,
     required this.brandColor,
@@ -883,10 +933,10 @@ class _ConfirmButton extends StatefulWidget {
   final Color brandColor;
 
   @override
-  State<_ConfirmButton> createState() => _ConfirmButtonState();
+  State<ConfirmButton> createState() => _ConfirmButtonState();
 }
 
-class _ConfirmButtonState extends State<_ConfirmButton> {
+class _ConfirmButtonState extends State<ConfirmButton> {
   bool _pressed = false;
 
   void _setPressed(bool value) {
@@ -911,27 +961,37 @@ class _ConfirmButtonState extends State<_ConfirmButton> {
         child: AnimatedOpacity(
           duration: const Duration(milliseconds: 110),
           opacity: opacity,
-          child: Container(
-            width: double.infinity,
-            height: 54,
-            decoration: BoxDecoration(
-              color: widget.brandColor,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x332ECEF2),
-                  blurRadius: 16,
-                  offset: Offset(0, 8),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(
+                width: double.infinity,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: widget.brandColor.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0x66FFFFFF),
+                    width: 1.5,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x332ECEF2),
+                      blurRadius: 16,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: const Center(
-              child: Text(
-                '확인',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
+                child: const Center(
+                  child: Text(
+                    '확인',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
               ),
             ),

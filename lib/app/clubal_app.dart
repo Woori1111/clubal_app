@@ -8,13 +8,13 @@ class ClubalApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '클러버 Clubal',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      home: UserProfileScope(
-        controller: UserProfileController(),
-        child: const ClubalHomeShell(),
+    return UserProfileScope(
+      controller: UserProfileController(),
+      child: MaterialApp(
+        title: '클러버 Clubal',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.dark(),
+        home: const ClubalHomeShell(),
       ),
     );
   }

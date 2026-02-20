@@ -43,24 +43,24 @@ class _PressedIconActionButtonState extends State<PressedIconActionButton> {
             duration: const Duration(milliseconds: 120),
             curve: Curves.easeOutCubic,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(14),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                 child: Container(
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: const Color(0x1A314D6A),
+                    borderRadius: BorderRadius.circular(14),
+                    color: const Color(0x66FFFFFF),
                     border: Border.all(
-                      color: const Color(0x22314D6A),
+                      color: const Color(0x4DFFFFFF),
                       width: 1,
                     ),
                   ),
                   child: Icon(
                     widget.icon,
-                    color: const Color(0xFF1D2D3E),
-                    size: 24,
+                    color: Theme.of(context).iconTheme.color ?? const Color(0xFFE6EDF3),
+                    size: 26,
                   ),
                 ),
               ),

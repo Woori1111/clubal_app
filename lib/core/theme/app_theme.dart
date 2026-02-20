@@ -57,10 +57,11 @@ class AppTheme {
     );
   }
 
-  /// 향후 사용을 위한 다크 테마 스텁
+  /// 다크 테마 — 텍스트·아이콘 밝게
   static ThemeData dark() {
     final base = ThemeData(
       brightness: Brightness.dark,
+      scaffoldBackgroundColor: AppColors.backgroundDark,
       useMaterial3: true,
       fontFamily: 'Pretendard',
       fontFamilyFallback: const [
@@ -71,11 +72,59 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: const Color(0xFF8ED9FF),
         brightness: Brightness.dark,
+        surface: AppColors.backgroundDark,
+      ).copyWith(
+        onSurface: AppColors.textPrimaryDark,
+        onSurfaceVariant: AppColors.textSecondaryDark,
+        onPrimary: AppColors.textPrimaryDark,
+        outline: AppColors.captionTextDark,
+      ),
+      iconTheme: const IconThemeData(
+        color: AppColors.iconOnDark,
+        size: 24,
       ),
     );
 
     return base.copyWith(
-      textTheme: base.textTheme,
+      textTheme: base.textTheme.copyWith(
+        headlineSmall: base.textTheme.headlineSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimaryDark,
+        ),
+        titleLarge: base.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimaryDark,
+        ),
+        titleMedium: base.textTheme.titleMedium?.copyWith(
+          color: AppColors.textPrimaryDark,
+        ),
+        titleSmall: base.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w500,
+          color: AppColors.textSecondaryDark,
+        ),
+        bodyLarge: base.textTheme.bodyLarge?.copyWith(
+          color: AppColors.bodyTextDark,
+        ),
+        bodyMedium: base.textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w400,
+          color: AppColors.bodyTextDark,
+        ),
+        bodySmall: base.textTheme.bodySmall?.copyWith(
+          fontWeight: FontWeight.w400,
+          color: AppColors.captionTextDark,
+        ),
+        labelLarge: base.textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimaryDark,
+        ),
+        labelMedium: base.textTheme.labelMedium?.copyWith(
+          color: AppColors.textSecondaryDark,
+        ),
+        labelSmall: base.textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w500,
+          color: AppColors.captionTextDark,
+        ),
+      ),
     );
   }
 }

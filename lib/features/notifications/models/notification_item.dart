@@ -6,6 +6,7 @@ class NotificationItem {
     required this.body,
     required this.createdAt,
     this.icon,
+    this.isRead = false,
   });
 
   final String id;
@@ -13,6 +14,7 @@ class NotificationItem {
   final String body;
   final DateTime createdAt;
   final String? icon;
+  final bool isRead;
 
   String get timeAgo {
     final now = DateTime.now();
@@ -21,5 +23,23 @@ class NotificationItem {
     if (diff.inHours < 24) return '${diff.inHours}시간 전';
     if (diff.inDays < 7) return '${diff.inDays}일 전';
     return '${createdAt.month}/${createdAt.day}';
+  }
+
+  NotificationItem copyWith({
+    String? id,
+    String? title,
+    String? body,
+    DateTime? createdAt,
+    String? icon,
+    bool? isRead,
+  }) {
+    return NotificationItem(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      createdAt: createdAt ?? this.createdAt,
+      icon: icon ?? this.icon,
+      isRead: isRead ?? this.isRead,
+    );
   }
 }

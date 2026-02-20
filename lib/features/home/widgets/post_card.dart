@@ -1,10 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:clubal_app/core/widgets/bouncing_like_button.dart';
-import 'package:clubal_app/core/widgets/relative_time_widget.dart';
 
-class PostCard extends StatelessWidget {
+class PostCard extends StatefulWidget {
   const PostCard({
     super.key,
     required this.userName,
@@ -13,13 +11,11 @@ class PostCard extends StatelessWidget {
     this.minHeight,
     this.maxHeight,
     this.location,
-    this.createdAt,
+    this.date,
     this.viewCount,
     this.likeCount = 0,
     this.commentCount = 0,
     this.imageUrl,
-    this.isLiked = false,
-    this.onLikeTap,
   });
 
   final String userName;
@@ -28,13 +24,24 @@ class PostCard extends StatelessWidget {
   final double? minHeight;
   final double? maxHeight;
   final String? location;
-  final DateTime? createdAt;
+  final String? date;
   final int? viewCount;
   final int likeCount;
   final int commentCount;
   final String? imageUrl;
-  final bool isLiked;
-  final VoidCallback? onLikeTap;
+
+  @override
+  State<PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends State<PostCard> {
+  late int _likeCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _likeCount = widget.likeCount;
+  }
 
   int _calculateTextLines(String text, double maxWidth, TextStyle style) {
     final textPainter = TextPainter(
@@ -48,21 +55,21 @@ class PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 텍스트 줄 수 계산
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     final textStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-      color: Colors.black,
+      color: onSurface,
       fontWeight: FontWeight.w500,
     ) ?? const TextStyle();
     
     final screenWidth = MediaQuery.of(context).size.width;
     final cardWidth = screenWidth - 48 - 32;
-    final imageWidth = imageUrl != null ? 112 : 0;
-    final titleLines = _calculateTextLines(title, cardWidth - imageWidth, textStyle);
+    final imageWidth = widget.imageUrl != null ? 112 : 0;
+    final titleLines = _calculateTextLines(widget.title, cardWidth - imageWidth, textStyle);
     
     // 제목만으로 높이 판단 (세부정보는 우측 열로 이동)
     final shouldUseMinHeight = titleLines <= 3;
     
-    final calculatedMinHeight = (minHeight ?? 0);
+    final calculatedMinHeight = (widget.minHeight ?? 0);
     final safeMinHeight = calculatedMinHeight < 120 ? 120.0 : calculatedMinHeight;
     
     return ClipRRect(
@@ -72,30 +79,41 @@ class PostCard extends StatelessWidget {
         child: Container(
           constraints: BoxConstraints(
             minHeight: shouldUseMinHeight ? safeMinHeight : 0,
+            maxHeight: widget.maxHeight ?? double.infinity,
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0x55FFFFFF), width: 1.2),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0x4DF3FAFF), Color(0x33A7B7FF)],
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0x33FFFFFF)
+                  : const Color(0x55FFFFFF),
+              width: 1.2,
             ),
+            gradient: Theme.of(context).brightness == Brightness.dark
+                ? const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0x1AFFFFFF), Color(0x0DFFFFFF)],
+                  )
+                : const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0x4DF3FAFF), Color(0x33A7B7FF)],
+                  ),
           ),
           padding: const EdgeInsets.all(12),
-          child: shouldUseMinHeight
-              ? _buildFixedHeightLayout(context)
-              : _buildFlexibleLayout(context),
+          child: _buildFlexibleLayout(context),
         ),
       ),
     );
   }
 
   Widget _buildFixedHeightLayout(BuildContext context) {
-    const detailStyle = TextStyle(color: Colors.black, fontSize: 12);
+    final caption = Theme.of(context).colorScheme.onSurfaceVariant;
+    final detailStyle = TextStyle(color: caption, fontSize: 12);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: MainAxisSize.max,
       children: [
         // 프로필 영역
         Row(
@@ -104,34 +122,34 @@ class PostCard extends StatelessWidget {
               child: Container(
                 width: 28,
                 height: 28,
-                decoration: const BoxDecoration(
-                  color: Color(0x33FFFFFF),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: userProfileImageUrl != null
+                child: widget.userProfileImageUrl != null
                     ? Image.network(
-userProfileImageUrl!,
+                        widget.userProfileImageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
+                          return Icon(
                             Icons.person_rounded,
-                            color: Colors.black,
+                            color: caption,
                             size: 18,
                           );
                         },
                       )
-                    : const Icon(
+                    : Icon(
                         Icons.person_rounded,
-                        color: Colors.black,
+                        color: caption,
                         size: 18,
                       ),
               ),
             ),
             const SizedBox(width: 6),
             Text(
-userName,
+              widget.userName,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.black,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),
@@ -140,48 +158,49 @@ userName,
         ),
         const SizedBox(height: 8),
         // 제목 + 사진 (사진은 위쪽 정렬)
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-title,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        widget.title,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                        maxLines: null,
+                        overflow: TextOverflow.clip,
+                      ),
                     ),
-                    maxLines: null,
-                    overflow: TextOverflow.clip,
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            if (imageUrl != null) ...[
-              const SizedBox(width: 10),
-              Transform.translate(
-                offset: const Offset(0, -16),
-                child: ClipRRect(
+              if (widget.imageUrl != null) ...[
+                const SizedBox(width: 10),
+                ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: SizedBox(
                     width: 108,
                     height: 108,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: const Color(0x33FFFFFF),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Image.network(
-imageUrl!,
+                        widget.imageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
+                          return Icon(
                             Icons.image_rounded,
-                            color: Colors.black,
+                            color: caption,
                             size: 32,
                           );
                         },
@@ -189,9 +208,9 @@ imageUrl!,
                     ),
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
         // 하단: 좌측(위치/시간/조회수) + 우측(좋아요/댓글)
         Row(
@@ -201,22 +220,22 @@ imageUrl!,
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (location != null) ...[
-                  const Icon(Icons.location_on_rounded, size: 12, color: Colors.black),
+                if (widget.location != null) ...[
+                  Icon(Icons.location_on_rounded, size: 12, color: caption),
                   const SizedBox(width: 2),
-                  Text(location!, style: detailStyle, overflow: TextOverflow.ellipsis),
+                  Text(widget.location!, style: detailStyle, overflow: TextOverflow.ellipsis),
                   const SizedBox(width: 8),
                 ],
-                if (createdAt != null) ...[
-                  const Icon(Icons.calendar_today_rounded, size: 12, color: Colors.black),
+                if (widget.date != null) ...[
+                  Icon(Icons.calendar_today_rounded, size: 12, color: caption),
                   const SizedBox(width: 2),
-                  RelativeTimeWidget(dateTime: createdAt!, style: detailStyle),
+                  Text(widget.date!, style: detailStyle, overflow: TextOverflow.ellipsis),
                   const SizedBox(width: 8),
                 ],
-                if (viewCount != null) ...[
-                  const Icon(Icons.visibility_rounded, size: 12, color: Colors.black),
+                if (widget.viewCount != null) ...[
+                  Icon(Icons.visibility_rounded, size: 12, color: caption),
                   const SizedBox(width: 2),
-                  Text('${viewCount}', style: detailStyle),
+                  Text('${widget.viewCount}', style: detailStyle),
                 ],
               ],
             ),
@@ -224,28 +243,41 @@ imageUrl!,
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                BouncingLikeButton(
-                  isLiked: isLiked,
-                  likeCount: likeCount,
-                  onTap: onLikeTap,
-                  iconSize: 18,
-                  textSize: 12,
-                  defaultColor: Colors.black,
+                GestureDetector(
+                  onTap: () => setState(() => _likeCount++),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.favorite_border_rounded,
+                        size: 18,
+                        color: caption,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        '$_likeCount',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.chat_bubble_outline_rounded,
                       size: 18,
-                      color: Colors.black,
+                      color: caption,
                     ),
                     const SizedBox(width: 2),
                     Text(
-                      '${commentCount}',
+                      '${widget.commentCount}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -260,7 +292,8 @@ imageUrl!,
   }
 
   Widget _buildFlexibleLayout(BuildContext context) {
-    const detailStyle = TextStyle(color: Colors.black, fontSize: 12);
+    final caption = Theme.of(context).colorScheme.onSurfaceVariant;
+    final detailStyle = TextStyle(color: caption, fontSize: 12);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -271,34 +304,34 @@ imageUrl!,
               child: Container(
                 width: 28,
                 height: 28,
-                decoration: const BoxDecoration(
-                  color: Color(0x33FFFFFF),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: userProfileImageUrl != null
+                child: widget.userProfileImageUrl != null
                     ? Image.network(
-userProfileImageUrl!,
+                        widget.userProfileImageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
+                          return Icon(
                             Icons.person_rounded,
-                            color: Colors.black,
+                            color: caption,
                             size: 18,
                           );
                         },
                       )
-                    : const Icon(
+                    : Icon(
                         Icons.person_rounded,
-                        color: Colors.black,
+                        color: caption,
                         size: 18,
                       ),
               ),
             ),
             const SizedBox(width: 6),
             Text(
-userName,
+              widget.userName,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.black,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),
@@ -315,9 +348,9 @@ userName,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-title,
+                    widget.title,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w500,
                       fontSize: 14,
                     ),
@@ -327,31 +360,28 @@ title,
                 ],
               ),
             ),
-            if (imageUrl != null) ...[
+            if (widget.imageUrl != null) ...[
               const SizedBox(width: 10),
-              Transform.translate(
-                offset: const Offset(0, -16),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: SizedBox(
-                    width: 108,
-                    height: 108,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0x33FFFFFF),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Image.network(
-imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.image_rounded,
-                            color: Color(0xB3DCEAFF),
-                            size: 32,
-                          );
-                        },
-                      ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(
+                  width: 108,
+                  height: 108,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Image.network(
+                      widget.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          Icons.image_rounded,
+                          color: caption,
+                          size: 32,
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -368,22 +398,22 @@ imageUrl!,
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (location != null) ...[
-                  const Icon(Icons.location_on_rounded, size: 12, color: Colors.black),
+                if (widget.location != null) ...[
+                  Icon(Icons.location_on_rounded, size: 12, color: caption),
                   const SizedBox(width: 2),
-                  Text(location!, style: detailStyle, overflow: TextOverflow.ellipsis),
+                  Text(widget.location!, style: detailStyle, overflow: TextOverflow.ellipsis),
                   const SizedBox(width: 8),
                 ],
-                if (createdAt != null) ...[
-                  const Icon(Icons.calendar_today_rounded, size: 12, color: Colors.black),
+                if (widget.date != null) ...[
+                  Icon(Icons.calendar_today_rounded, size: 12, color: caption),
                   const SizedBox(width: 2),
-                  RelativeTimeWidget(dateTime: createdAt!, style: detailStyle),
+                  Text(widget.date!, style: detailStyle, overflow: TextOverflow.ellipsis),
                   const SizedBox(width: 8),
                 ],
-                if (viewCount != null) ...[
-                  const Icon(Icons.visibility_rounded, size: 12, color: Colors.black),
+                if (widget.viewCount != null) ...[
+                  Icon(Icons.visibility_rounded, size: 12, color: caption),
                   const SizedBox(width: 2),
-                  Text('${viewCount}', style: detailStyle),
+                  Text('${widget.viewCount}', style: detailStyle),
                 ],
               ],
             ),
@@ -391,28 +421,41 @@ imageUrl!,
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                BouncingLikeButton(
-                  isLiked: isLiked,
-                  likeCount: likeCount,
-                  onTap: onLikeTap,
-                  iconSize: 18,
-                  textSize: 12,
-                  defaultColor: Colors.black,
+                GestureDetector(
+                  onTap: () => setState(() => _likeCount++),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.favorite_border_rounded,
+                        size: 18,
+                        color: caption,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        '$_likeCount',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.chat_bubble_outline_rounded,
                       size: 18,
-                      color: Colors.black,
+                      color: caption,
                     ),
                     const SizedBox(width: 2),
                     Text(
-                      '${commentCount}',
+                      '${widget.commentCount}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
