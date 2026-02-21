@@ -3,19 +3,33 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminRole } from "@/hooks/useAdminRole";
 
-const navItems = [
+const navItems: Array<{
+  href: string;
+  label: string;
+  icon: string;
+  requirePermission?: "canManageAnnouncements" | "canManageTickets" | "canManageUsers" | "canViewLogs";
+}> = [
   { href: "/dashboard", label: "대시보드", icon: "📊" },
-  { href: "/users", label: "유저 관리", icon: "👥" },
-  { href: "/inquiries", label: "문의 관리", icon: "💬" },
+  { href: "/announcements", label: "공지 관리", icon: "📢", requirePermission: "canManageAnnouncements" },
+  { href: "/users", label: "유저 관리", icon: "👥", requirePermission: "canManageUsers" },
+  { href: "/inquiries", label: "문의 관리", icon: "💬", requirePermission: "canManageTickets" },
   { href: "/reports", label: "제보 관리", icon: "🐛" },
   { href: "/search", label: "검색", icon: "🔍" },
+  { href: "/logs", label: "관리자 로그", icon: "📋", requirePermission: "canViewLogs" },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuth();
+  const permissions = useAdminRole();
+
+  const visibleItems = navItems.filter((item) => {
+    if (!item.requirePermission) return true;
+    return permissions[item.requirePermission];
+  });
 
   async function handleLogout() {
     await logout();
@@ -28,8 +42,8 @@ export default function AdminSidebar() {
       <div className="p-6 border-b border-gray-700">
         <h2 className="text-lg font-bold">Clubal 관리자</h2>
       </div>
-      <nav className="flex-1 p-4 space-y-1">
-        {navItems.map((item) => {
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {visibleItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link

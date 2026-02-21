@@ -16,6 +16,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import type { AdminRole } from "@/types/admin";
 
 export type AuthErrorType =
   | "LOGIN_FAILED"
@@ -27,6 +28,7 @@ export interface AuthState {
   user: User | null;
   idToken: string | null;
   isAdmin: boolean;
+  adminRole: AdminRole | null;
   loading: boolean;
 }
 
@@ -42,29 +44,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [idToken, setIdToken] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const checkAdminRole = useCallback(async (uid: string): Promise<boolean> => {
-    try {
-      const usersRef = doc(db, "users", uid);
-      const usersSnap = await getDoc(usersRef);
-      if (usersSnap.exists() && usersSnap.data()?.role === "ADMIN") {
-        return true;
+  const checkAdminRole = useCallback(
+    async (uid: string): Promise<{ isAdmin: boolean; role: AdminRole | null }> => {
+      try {
+        const adminsRef = doc(db, "admins", uid);
+        const adminsSnap = await getDoc(adminsRef);
+        if (adminsSnap.exists()) {
+          const role = adminsSnap.data()?.role as AdminRole | undefined;
+          const validRoles: AdminRole[] = ["super", "editor", "support"];
+          return {
+            isAdmin: true,
+            role: role && validRoles.includes(role) ? role : "support",
+          };
+        }
+        const usersRef = doc(db, "users", uid);
+        const usersSnap = await getDoc(usersRef);
+        if (usersSnap.exists() && usersSnap.data()?.role === "ADMIN") {
+          return { isAdmin: true, role: "super" };
+        }
+        return { isAdmin: false, role: null };
+      } catch {
+        return { isAdmin: false, role: null };
       }
-      const adminsRef = doc(db, "admins", uid);
-      const adminsSnap = await getDoc(adminsRef);
-      return adminsSnap.exists();
-    } catch {
-      return false;
-    }
-  }, []);
+    },
+    []
+  );
 
   const refreshTokenAndRole = useCallback(
     async (u: User) => {
       const token = await u.getIdToken();
       setIdToken(token);
-      const admin = await checkAdminRole(u.uid);
+      const { isAdmin: admin, role } = await checkAdminRole(u.uid);
       setIsAdmin(admin);
+      setAdminRole(role);
       if (!admin) {
         await signOut(auth);
       }
@@ -81,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
         setIdToken(null);
         setIsAdmin(false);
+        setAdminRole(null);
       }
       setLoading(false);
     });
@@ -92,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       try {
         const cred = await signInWithEmailAndPassword(auth, email, password);
-        const admin = await checkAdminRole(cred.user.uid);
+        const { isAdmin: admin, role } = await checkAdminRole(cred.user.uid);
         if (!admin) {
           await signOut(auth);
           const e = new Error("NO_PERMISSION");
@@ -103,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIdToken(token);
         setUser(cred.user);
         setIsAdmin(true);
+        setAdminRole(role);
       } catch (err: unknown) {
         if (err instanceof Error && err.message === "NO_PERMISSION") {
           throw err;
@@ -134,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setIdToken(null);
     setIsAdmin(false);
+    setAdminRole(null);
   }, []);
 
   const getToken = useCallback(async (): Promise<string | null> => {
@@ -147,6 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     idToken,
     isAdmin,
+    adminRole,
     loading,
     login,
     logout,
