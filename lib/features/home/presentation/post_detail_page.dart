@@ -52,6 +52,7 @@ class PostDetailPage extends StatefulWidget {
     this.imageUrl,
     this.likedBy = const [],
     this.isAuthor = false,
+    this.postUserId,
   });
 
   final String postId;
@@ -67,6 +68,8 @@ class PostDetailPage extends StatefulWidget {
   final String? imageUrl;
   final List<dynamic> likedBy;
   final bool isAuthor;
+  /// 게시글 작성자 UID (본인 작성 여부 판단용, null이면 기존 isAuthor 사용)
+  final String? postUserId;
 
   @override
   State<PostDetailPage> createState() => _PostDetailPageState();
@@ -116,6 +119,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
           .doc(widget.postId)
           .collection('comments')
           .add({
+        'userId': user?.uid,
         'userName': user?.displayName ?? '익명',
         'userProfileImageUrl': user?.photoURL,
         'content': text,
@@ -192,7 +196,13 @@ class _PostDetailPageState extends State<PostDetailPage> {
                             initialLikeCount: widget.likeCount,
                           ),
                           onMoreTap: () async {
-                            final result = await showMoreOptionsDialog(context, isAuthor: widget.isAuthor);
+                            final isAuthorForPost = widget.postUserId != null
+                                ? (widget.postUserId == _currentUserId)
+                                : widget.isAuthor;
+                            final result = await showMoreOptionsDialog(
+                              context,
+                              isAuthor: isAuthorForPost,
+                            );
                             if (result != null && context.mounted) {
                               if (result == 'delete') {
                                 showMessageDialog(context, message: '글이 삭제되었습니다.');
