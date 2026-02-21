@@ -199,6 +199,7 @@ class _LatestPostsListState extends State<_LatestPostsList> {
                       imageUrl: data['imageUrl'] as String?,
                       likedBy: likedBy,
                       isAuthor: isAuthor,
+                      postUserId: data['userId'] as String?,
                     ),
                   ),
                 );
@@ -217,7 +218,11 @@ class _LatestPostsListState extends State<_LatestPostsList> {
                 likeButtonColoredWhenLiked: false,
                 likeButtonEnabled: false,
                 onMoreTap: () async {
-                  final result = await showMoreOptionsDialog(context, isAuthor: isAuthor);
+                  final result = await showMoreOptionsDialog(
+                    context,
+                    isAuthor: isAuthor,
+                    showHideUserOption: false,
+                  );
                   if (result != null && context.mounted) {
                     if (result == 'delete') {
                       // 실제 삭제 로직 (생략 또는 구현)

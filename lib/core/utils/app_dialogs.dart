@@ -35,10 +35,12 @@ Future<void> showMessageDialog(
 /// 게시글/댓글 옵션 더보기 다이얼로그
 /// [isAuthor] 본인 작성글 여부
 /// [isComment] 댓글 여부 (기본값 false, 게시글용)
+/// [showHideUserOption] 이 사용자의 글 숨김 버튼 표시 여부 (커뮤니티 목록에서는 false)
 Future<String?> showMoreOptionsDialog(
   BuildContext context, {
   required bool isAuthor,
   bool isComment = false,
+  bool showHideUserOption = true,
 }) {
   return showDialog<String>(
     context: context,
@@ -59,7 +61,7 @@ Future<String?> showMoreOptionsDialog(
           children: [
             ListTile(
               leading: Icon(Icons.visibility_off_rounded, color: onSurface),
-              title: Text('$hideTarget 숨김'),
+              title: Text('$hideTarget 숨기기'),
               onTap: () => Navigator.of(ctx).pop('hide'),
             ),
             ListTile(
@@ -67,11 +69,12 @@ Future<String?> showMoreOptionsDialog(
               title: const Text('신고', style: TextStyle(color: Colors.redAccent)),
               onTap: () => Navigator.of(ctx).pop('report'),
             ),
-            ListTile(
-              leading: Icon(Icons.person_off_rounded, color: onSurface),
-              title: Text('이 사용자의 $targetText 숨김'),
-              onTap: () => Navigator.of(ctx).pop('hide_user'),
-            ),
+            if (showHideUserOption)
+              ListTile(
+                leading: Icon(Icons.person_off_rounded, color: onSurface),
+                title: Text('이 사용자의 $targetText 숨기기'),
+                onTap: () => Navigator.of(ctx).pop('hide_user'),
+              ),
             if (isAuthor) ...[
               const Divider(height: 1),
               ListTile(
