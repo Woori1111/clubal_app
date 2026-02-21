@@ -90,15 +90,18 @@ class _LatestPostsList extends StatelessWidget {
               '아직 작성된 글이 없습니다.\n첫 글을 작성해보세요!',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant, 
-                fontSize: 16
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 16,
               ),
             ),
           );
         }
 
         return ListView.separated(
-          physics: const ClampingScrollPhysics(),
+          controller: scrollController,
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
           itemCount: posts.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),

@@ -1,4 +1,5 @@
 import 'package:clubal_app/core/widgets/clubal_background.dart';
+import 'package:clubal_app/core/widgets/clubal_full_body.dart';
 import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
 import 'package:clubal_app/features/profile/presentation/profile_edit_page.dart';
@@ -33,11 +34,16 @@ class ProfileDetailPage extends StatelessWidget {
     final profile = controller.profile;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          const ClubalBackground(),
-          SafeArea(
-            child: Padding(
+      body: Builder(
+        builder: (context) => wrapFullBody(
+          context,
+          Stack(
+            children: [
+              Positioned.fill(
+                child: IgnorePointer(child: ClubalBackground()),
+              ),
+              SafeArea(
+                child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,12 +160,14 @@ class ProfileDetailPage extends StatelessWidget {
                       );
                     },
                   ),
-                  const Spacer(),
+                  const Spacer(                  ),
                 ],
               ),
             ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

@@ -22,22 +22,26 @@ struct LiquidRoot: View {
 
   var body: some View {
     ZStack(alignment: .bottom) {
-      // Flutter 화면 (전체 영역)
+      // 1) Flutter: 전체 화면
       FlutterViewRepresentable(viewController: flutterViewController)
-        .ignoresSafeArea()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea(.all)
 
-      // 탭바는 항상 뷰 계층에 유지, opacity로만 숨김. 오버레이 배경은 투명(Flutter가 보이도록).
+      // 2) 네이티브 탭바 오버레이: 전체 프레임, 둥근 마스크로 탭바만 보이고 바깥은 투명
       NativeTabBarOverlay(
         selectedTab: $selectedTab,
-        navChannel: navChannel
+        navChannel: navChannel,
+        engine: flutterViewController.engine
       )
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
       .background(Color.clear)
-      .ignoresSafeArea(edges: .bottom)
+      .ignoresSafeArea(.all)
       .opacity(isTabBarVisible ? 1 : 0)
       .allowsHitTesting(isTabBarVisible)
       .animation(.easeOut(duration: 0.2), value: isTabBarVisible)
     }
-    .background(Color.black)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(Color.clear)
     .onAppear {
       navChannel.setMethodCallHandler { call, result in
         if call.method == "setTabBarVisible" {
@@ -69,9 +73,10 @@ struct LiquidRoot: View {
 private struct NativeTabBarOverlay: UIViewControllerRepresentable {
   @Binding var selectedTab: Int
   let navChannel: FlutterMethodChannel
+  let engine: FlutterEngine
 
   func makeUIViewController(context: Context) -> NativeTabBarViewController {
-    NativeTabBarViewController(selectedTab: $selectedTab, navChannel: navChannel)
+    NativeTabBarViewController(selectedTab: $selectedTab, navChannel: navChannel, engine: engine)
   }
 
   func updateUIViewController(_ vc: NativeTabBarViewController, context: Context) {
@@ -83,10 +88,12 @@ final class NativeTabBarViewController: UIViewController, UITabBarDelegate {
   private var tabBar: UITabBar!
   private var selectedTabBinding: Binding<Int>
   private let navChannel: FlutterMethodChannel
+  private let engine: FlutterEngine
 
-  init(selectedTab: Binding<Int>, navChannel: FlutterMethodChannel) {
+  init(selectedTab: Binding<Int>, navChannel: FlutterMethodChannel, engine: FlutterEngine) {
     self.selectedTabBinding = selectedTab
     self.navChannel = navChannel
+    self.engine = engine
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -95,16 +102,19 @@ final class NativeTabBarViewController: UIViewController, UITabBarDelegate {
   override func loadView() {
     let passThrough = PassThroughView()
     passThrough.backgroundColor = .clear
+    passThrough.isOpaque = false
+    passThrough.layer.backgroundColor = nil
     view = passThrough
   }
 
   override func viewDidLoad() {
     super.viewDidLoad()
     view.backgroundColor = .clear
+    view.isOpaque = false
 
     tabBar = UITabBar()
-    // 첫 프레임부터 흰 배경이 나오지 않도록 즉시 투명/다크 처리 (앱에 화이트 테마 없음)
     tabBar.backgroundColor = .clear
+    tabBar.isOpaque = false
     tabBar.barTintColor = .clear
     tabBar.backgroundImage = UIImage()
     tabBar.shadowImage = UIImage()
@@ -116,7 +126,6 @@ final class NativeTabBarViewController: UIViewController, UITabBarDelegate {
       tabBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       tabBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       tabBar.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-      // 높이는 UITabBar가 내부적으로 자동 계산(기본 49pt + 하단 Safe Area)
     ])
 
     setupTabBarItems()
@@ -191,13 +200,49 @@ final class NativeTabBarViewController: UIViewController, UITabBarDelegate {
 
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
-    // UITabBar 내부 _UIBarBackground 등이 한 프레임 흰색으로 그려지는 것 방지
     for sub in tabBar.subviews {
-      if String(describing: type(of: sub)).contains("BarBackground") {
+      let name = String(describing: type(of: sub))
+      if name.contains("BarBackground") || name.contains("Background") {
         sub.backgroundColor = .clear
-        sub.layer.backgroundColor = UIColor.clear.cgColor
+        sub.isOpaque = false
+        sub.layer.backgroundColor = nil
       }
     }
+    view.layer.backgroundColor = nil
+    view.layer.isOpaque = false
+    applyRoundedMask()
+  }
+
+  private static let tabBarCornerRadius: CGFloat = 24
+
+  private func applyRoundedMask() {
+    view.layoutIfNeeded()
+    guard view.bounds.width > 0, view.bounds.height > 0 else { return }
+    let tabFrame = tabBar.convert(tabBar.bounds, to: view)
+    guard tabFrame.width > 0, tabFrame.height > 0 else { return }
+    let path = UIBezierPath(
+      roundedRect: tabFrame,
+      byRoundingCorners: [.topLeft, .topRight],
+      cornerRadii: CGSize(width: Self.tabBarCornerRadius, height: Self.tabBarCornerRadius)
+    )
+    let maskLayer = CAShapeLayer()
+    maskLayer.path = path.cgPath
+    maskLayer.frame = view.bounds
+    view.layer.mask = maskLayer
+
+    // #region agent log
+    let debugChannel = FlutterMethodChannel(name: "com.clubal.app/debug", binaryMessenger: engine.binaryMessenger)
+    debugChannel.invokeMethod("log", arguments: [
+      "message": "applyRoundedMask",
+      "hypothesisId": "H5",
+      "data": [
+        "viewBounds": "\(view.bounds)",
+        "tabFrame": "\(tabFrame)",
+        "hasMask": view.layer.mask != nil,
+        "viewBg": String(describing: view.backgroundColor as Any),
+      ] as [String: Any]
+    ])
+    // #endregion
   }
 
   func updateSelectedTab(_ index: Int) {

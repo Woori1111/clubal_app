@@ -79,6 +79,9 @@ class _HomeTabViewState extends State<HomeTabView> {
     return SafeArea(
       child: ListView(
         controller: widget.scrollController,
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 100),
         children: [
           // 상단: 왼쪽 유저 프로필(정사각) | 오른쪽 버튼 4개(프로필 4등분 크기, 2x2)

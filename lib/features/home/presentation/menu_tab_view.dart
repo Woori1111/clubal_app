@@ -27,6 +27,9 @@ class _MenuTabViewState extends State<MenuTabView> {
 
     return ListView(
       controller: widget.scrollController,
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       children: [
         Text(

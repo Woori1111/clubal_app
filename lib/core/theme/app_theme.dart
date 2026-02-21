@@ -57,11 +57,12 @@ class AppTheme {
     );
   }
 
-  /// 다크 테마 — 텍스트·아이콘 밝게
+  /// 다크 테마 — 텍스트·아이콘 밝게. canvasColor 다크 고정으로 빈 영역에서 흰색이 나오지 않게 함.
   static ThemeData dark() {
     final base = ThemeData(
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.backgroundDark,
+      canvasColor: AppColors.backgroundDark,
       useMaterial3: true,
       fontFamily: 'Pretendard',
       fontFamilyFallback: const [

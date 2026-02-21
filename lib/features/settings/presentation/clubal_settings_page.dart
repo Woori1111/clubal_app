@@ -1,4 +1,5 @@
 import 'package:clubal_app/core/widgets/clubal_background.dart';
+import 'package:clubal_app/core/widgets/clubal_full_body.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
 import 'package:clubal_app/features/settings/presentation/notification_settings_controller.dart';
 import 'package:clubal_app/features/settings/widgets/inline_settings_content.dart';
@@ -19,11 +20,16 @@ class _ClubalSettingsPageState extends State<ClubalSettingsPage> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      body: Stack(
-        children: [
-          const ClubalBackground(),
-          SafeArea(
-            child: Padding(
+      body: Builder(
+        builder: (context) => wrapFullBody(
+          context,
+          Stack(
+            children: [
+              Positioned.fill(
+                child: IgnorePointer(child: ClubalBackground()),
+              ),
+              SafeArea(
+                child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
               child: Column(
                 children: [
@@ -56,8 +62,10 @@ class _ClubalSettingsPageState extends State<ClubalSettingsPage> {
                 ],
               ),
             ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

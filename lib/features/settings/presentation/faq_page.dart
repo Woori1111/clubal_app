@@ -1,4 +1,5 @@
 import 'package:clubal_app/core/widgets/clubal_background.dart';
+import 'package:clubal_app/core/widgets/clubal_full_body.dart';
 import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
 import 'package:flutter/material.dart';
@@ -87,11 +88,16 @@ class _FaqPageState extends State<FaqPage> {
     }).toList();
 
     return Scaffold(
-      body: Stack(
-        children: [
-          const ClubalBackground(),
-          SafeArea(
-            child: Column(
+      body: Builder(
+        builder: (context) => wrapFullBody(
+          context,
+          Stack(
+            children: [
+              Positioned.fill(
+                child: IgnorePointer(child: ClubalBackground()),
+              ),
+              SafeArea(
+                child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // 헤더
@@ -245,6 +251,8 @@ class _FaqPageState extends State<FaqPage> {
           ),
         ],
       ),
+    ),
+  ),
     );
   }
 }
