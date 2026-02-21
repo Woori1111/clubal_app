@@ -31,3 +31,63 @@ Future<void> showMessageDialog(
     ),
   );
 }
+
+/// 게시글/댓글 옵션 더보기 다이얼로그
+/// [isAuthor] 본인 작성글 여부
+/// [isComment] 댓글 여부 (기본값 false, 게시글용)
+Future<String?> showMoreOptionsDialog(
+  BuildContext context, {
+  required bool isAuthor,
+  bool isComment = false,
+}) {
+  return showDialog<String>(
+    context: context,
+    barrierDismissible: true,
+    builder: (ctx) {
+      final theme = Theme.of(ctx);
+      final onSurface = theme.colorScheme.onSurface;
+      
+      final String hideTarget = isComment ? '댓글' : '게시물';
+      final String targetText = isComment ? '댓글' : '글';
+
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ListTile(
+              leading: Icon(Icons.visibility_off_rounded, color: onSurface),
+              title: Text('$hideTarget 숨김'),
+              onTap: () => Navigator.of(ctx).pop('hide'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.report_rounded, color: Colors.redAccent),
+              title: const Text('신고', style: TextStyle(color: Colors.redAccent)),
+              onTap: () => Navigator.of(ctx).pop('report'),
+            ),
+            ListTile(
+              leading: Icon(Icons.person_off_rounded, color: onSurface),
+              title: Text('이 사용자의 $targetText 숨김'),
+              onTap: () => Navigator.of(ctx).pop('hide_user'),
+            ),
+            if (isAuthor) ...[
+              const Divider(height: 1),
+              ListTile(
+                leading: Icon(Icons.edit_rounded, color: onSurface),
+                title: Text('$targetText 수정하기'),
+                onTap: () => Navigator.of(ctx).pop('edit'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_rounded, color: Colors.redAccent),
+                title: Text('$targetText 삭제', style: const TextStyle(color: Colors.redAccent)),
+                onTap: () => Navigator.of(ctx).pop('delete'),
+              ),
+            ],
+          ],
+        ),
+      );
+    },
+  );
+}

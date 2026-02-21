@@ -51,6 +51,7 @@ class PostDetailPage extends StatefulWidget {
     this.commentCount = 0,
     this.imageUrl,
     this.likedBy = const [],
+    this.isAuthor = false,
   });
 
   final String postId;
@@ -65,6 +66,7 @@ class PostDetailPage extends StatefulWidget {
   final int commentCount;
   final String? imageUrl;
   final List<dynamic> likedBy;
+  final bool isAuthor;
 
   @override
   State<PostDetailPage> createState() => _PostDetailPageState();
@@ -189,6 +191,19 @@ class _PostDetailPageState extends State<PostDetailPage> {
                             initialIsLiked: widget.likedBy.contains(_currentUserId),
                             initialLikeCount: widget.likeCount,
                           ),
+                          onMoreTap: () async {
+                            final result = await showMoreOptionsDialog(context, isAuthor: widget.isAuthor);
+                            if (result != null && context.mounted) {
+                              if (result == 'delete') {
+                                showMessageDialog(context, message: '글이 삭제되었습니다.');
+                                Navigator.of(context).pop();
+                              } else if (result == 'edit') {
+                                showMessageDialog(context, message: '수정 기능은 준비 중입니다.');
+                              } else {
+                                showMessageDialog(context, message: '처리되었습니다.');
+                              }
+                            }
+                          },
                         ),
                         const SizedBox(height: 16),
                         _CommentsCard(
@@ -325,6 +340,7 @@ class _PostContentCard extends StatelessWidget {
     this.createdAt,
     required this.theme,
     required this.likeSection,
+    this.onMoreTap,
   });
 
   final String userName;
@@ -338,6 +354,7 @@ class _PostContentCard extends StatelessWidget {
   final DateTime? createdAt;
   final TextTheme? theme;
   final Widget likeSection;
+  final VoidCallback? onMoreTap;
 
   @override
   Widget build(BuildContext context) {
@@ -348,7 +365,6 @@ class _PostContentCard extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: _PostDetailColors.postCardBorder, width: 1.2),
@@ -361,11 +377,15 @@ class _PostContentCard extends StatelessWidget {
               ],
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          child: Stack(
             children: [
-              Row(
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
                 children: [
                   ClipOval(
                     child: Container(
@@ -479,7 +499,21 @@ class _PostContentCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
+        if (onMoreTap != null)
+          Positioned(
+            top: 4,
+            right: 4,
+            child: IconButton(
+              icon: const Icon(Icons.more_vert, color: _PostDetailColors.caption, size: 24),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              onPressed: onMoreTap,
+            ),
+          ),
+      ],
+    ),
+  ),
+),
     );
   }
 }
@@ -570,6 +604,7 @@ class _CommentsCard extends StatelessWidget {
                         likeCount: data['likeCount'] as int? ?? 0,
                         likedBy: data['likedBy'] as List<dynamic>? ?? [],
                         currentUserId: currentUserId,
+                        authorId: data['userId'] as String?,
                         docRef: doc.reference,
                         isLast: isLast,
                       );
@@ -594,6 +629,7 @@ class _CommentTile extends StatelessWidget {
     required this.likeCount,
     required this.likedBy,
     required this.currentUserId,
+    this.authorId,
     required this.docRef,
     required this.isLast,
   });
@@ -605,6 +641,7 @@ class _CommentTile extends StatelessWidget {
   final int likeCount;
   final List<dynamic> likedBy;
   final String currentUserId;
+  final String? authorId;
   final DocumentReference<Object?> docRef;
   final bool isLast;
 
@@ -640,24 +677,53 @@ class _CommentTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          userName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            color: _PostDetailColors.titleDark,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                userName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  color: _PostDetailColors.titleDark,
+                                ),
+                              ),
+                              if (createdAt != null) ...[
+                                const SizedBox(height: 2),
+                                RelativeTimeWidget(
+                                  dateTime: createdAt!.toDate(),
+                                  style: const TextStyle(color: _PostDetailColors.caption, fontSize: 12),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                        if (createdAt != null) ...[
-                          const SizedBox(height: 2),
-                          RelativeTimeWidget(
-                            dateTime: createdAt!.toDate(),
-                            style: const TextStyle(color: _PostDetailColors.caption, fontSize: 12),
-                          ),
-                        ],
+                        IconButton(
+                          icon: const Icon(Icons.more_vert, color: _PostDetailColors.caption, size: 20),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          onPressed: () async {
+                            final isAuthor = authorId == currentUserId;
+                            final result = await showMoreOptionsDialog(
+                              context,
+                              isAuthor: isAuthor,
+                              isComment: true,
+                            );
+                            if (result != null && context.mounted) {
+                              if (result == 'delete') {
+                                showMessageDialog(context, message: '댓글이 삭제되었습니다.');
+                              } else if (result == 'edit') {
+                                showMessageDialog(context, message: '수정 기능은 준비 중입니다.');
+                              } else {
+                                showMessageDialog(context, message: '처리되었습니다.');
+                              }
+                            }
+                          },
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),

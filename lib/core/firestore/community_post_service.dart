@@ -24,6 +24,7 @@ class CommunityPostService {
   }) async {
     final user = FirebaseAuth.instance.currentUser;
     final doc = await _posts.add({
+      'userId': user?.uid,
       'userName': userName ?? user?.displayName ?? '익명',
       'userProfileImageUrl': userProfileImageUrl ?? user?.photoURL,
       'title': title,

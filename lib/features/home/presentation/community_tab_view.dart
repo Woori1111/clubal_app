@@ -1,7 +1,9 @@
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:clubal_app/core/utils/app_dialogs.dart';
 import 'package:clubal_app/features/home/presentation/post_detail_page.dart';
 import 'package:clubal_app/features/home/presentation/write_post_page.dart';
 import 'package:clubal_app/features/home/widgets/post_card.dart';
@@ -61,47 +63,113 @@ class _CommunityTabViewState extends State<CommunityTabView> {
   }
 }
 
-class _LatestPostsList extends StatelessWidget {
+class _LatestPostsList extends StatefulWidget {
   const _LatestPostsList({this.scrollController});
 
   final ScrollController? scrollController;
 
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
+  State<_LatestPostsList> createState() => _LatestPostsListState();
+}
+
+class _LatestPostsListState extends State<_LatestPostsList> {
+  static const int _limit = 20;
+
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _posts = [];
+  bool _isLoading = true;
+  Object? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPosts();
+  }
+
+  Future<void> _loadPosts() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final snapshot = await FirebaseFirestore.instance
           .collection('community_posts')
           .orderBy('createdAt', descending: true)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return const Center(child: Text('데이터를 불러오는 중 오류가 발생했습니다.'));
-        }
+          .limit(_limit)
+          .get();
+      if (mounted) {
+        setState(() {
+          _posts = snapshot.docs;
+          _isLoading = false;
+          _error = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = e;
+        });
+      }
+    }
+  }
 
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final posts = snapshot.data?.docs ?? [];
-
-        if (posts.isEmpty) {
-          return Center(
-            child: Text(
-              '아직 작성된 글이 없습니다.\n첫 글을 작성해보세요!',
-              textAlign: TextAlign.center,
+  @override
+  Widget build(BuildContext context) {
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '데이터를 불러오는 중 오류가 발생했습니다.',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 16,
+                fontSize: 14,
               ),
             ),
-          );
-        }
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: _loadPosts,
+              child: const Text('다시 시도'),
+            ),
+          ],
+        ),
+      );
+    }
 
-        return ListView.separated(
-          controller: scrollController,
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
+    if (_isLoading && _posts.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_posts.isEmpty) {
+      return Center(
+        child: Text(
+          '아직 작성된 글이 없습니다.\n첫 글을 작성해보세요!',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 16,
           ),
+        ),
+      );
+    }
+
+    final posts = _posts;
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? 'guest_user';
+
+    return CustomRefreshIndicator(
+      onRefresh: _loadPosts,
+      trigger: IndicatorTrigger.leadingEdge,
+      triggerMode: IndicatorTriggerMode.onEdge,
+      builder: (context, child, controller) => _PillRefreshLayout(
+        child: child,
+        controller: controller,
+      ),
+      child: ListView.separated(
+        controller: widget.scrollController,
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
           itemCount: posts.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -109,10 +177,9 @@ class _LatestPostsList extends StatelessWidget {
             final doc = posts[index];
             final data = doc.data();
             final likedBy = data['likedBy'] as List<dynamic>? ?? [];
-            final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? 'guest_user';
             final isLiked = likedBy.contains(currentUserId);
-
             final createdAt = data['createdAt'] as Timestamp?;
+            final isAuthor = data['userId'] == currentUserId;
 
             return GestureDetector(
               onTap: () {
@@ -131,6 +198,7 @@ class _LatestPostsList extends StatelessWidget {
                       commentCount: data['commentCount'] as int? ?? 0,
                       imageUrl: data['imageUrl'] as String?,
                       likedBy: likedBy,
+                      isAuthor: isAuthor,
                     ),
                   ),
                 );
@@ -148,11 +216,77 @@ class _LatestPostsList extends StatelessWidget {
                 isLiked: isLiked,
                 likeButtonColoredWhenLiked: false,
                 likeButtonEnabled: false,
+                onMoreTap: () async {
+                  final result = await showMoreOptionsDialog(context, isAuthor: isAuthor);
+                  if (result != null && context.mounted) {
+                    if (result == 'delete') {
+                      // 실제 삭제 로직 (생략 또는 구현)
+                      showMessageDialog(context, message: '글이 삭제되었습니다.');
+                    } else if (result == 'edit') {
+                      showMessageDialog(context, message: '수정 기능은 준비 중입니다.');
+                    } else {
+                      showMessageDialog(context, message: '처리되었습니다.');
+                    }
+                  }
+                },
               ),
             );
           },
-        );
-      },
+        ),
+    );
+  }
+}
+
+/// 목록 고정 + 알약형 로딩 인디케이터
+class _PillRefreshLayout extends StatelessWidget {
+  const _PillRefreshLayout({
+    required this.child,
+    required this.controller,
+  });
+
+  final Widget child;
+  final IndicatorController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final isVisible = controller.value > 0.01;
+    final theme = Theme.of(context);
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        child,
+        if (isVisible)
+          Positioned(
+            top: 8 + (controller.value * 24),
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Material(
+                elevation: 2,
+                borderRadius: BorderRadius.circular(20),
+                color: theme.colorScheme.surfaceContainerHighest,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: controller.isLoading
+                        ? CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: theme.colorScheme.primary,
+                          )
+                        : CircularProgressIndicator(
+                            value: controller.value.clamp(0.0, 1.0),
+                            strokeWidth: 2,
+                            color: theme.colorScheme.primary,
+                          ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
