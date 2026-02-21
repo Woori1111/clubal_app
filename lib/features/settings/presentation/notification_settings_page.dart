@@ -1,4 +1,5 @@
 import 'package:clubal_app/core/widgets/clubal_background.dart';
+import 'package:clubal_app/core/widgets/clubal_full_body.dart';
 import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
 import 'package:clubal_app/features/settings/presentation/marketing_notification_page.dart';
@@ -61,11 +62,16 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     final settings = _controller.settings;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          const ClubalBackground(),
-          SafeArea(
-            child: Padding(
+      body: Builder(
+        builder: (context) => wrapFullBody(
+          context,
+          Stack(
+            children: [
+              Positioned.fill(
+                child: IgnorePointer(child: ClubalBackground()),
+              ),
+              SafeArea(
+                child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
               child: SingleChildScrollView(
                 controller: _scrollController,
@@ -285,6 +291,8 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
           ),
         ],
       ),
+    ),
+  ),
     );
   }
 }

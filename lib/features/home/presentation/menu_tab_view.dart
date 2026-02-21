@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:clubal_app/core/theme/app_glass_styles.dart';
 import 'package:clubal_app/features/profile/presentation/profile_detail_page.dart';
 import 'package:clubal_app/features/profile/presentation/user_profile_scope.dart';
-import 'package:clubal_app/features/settings/presentation/clubal_settings_page.dart';
+import 'package:clubal_app/features/settings/widgets/inline_settings_content.dart';
 import 'package:clubal_app/features/settings/presentation/notification_settings_controller.dart';
 import 'package:flutter/material.dart';
 
@@ -17,7 +17,7 @@ class MenuTabView extends StatefulWidget {
 }
 
 class _MenuTabViewState extends State<MenuTabView> {
-  late final NotificationSettingsController _settingsController =
+  final NotificationSettingsController _settingsController =
       NotificationSettingsController();
 
   @override
@@ -27,6 +27,9 @@ class _MenuTabViewState extends State<MenuTabView> {
 
     return ListView(
       controller: widget.scrollController,
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       children: [
         Text(

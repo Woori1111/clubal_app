@@ -23,9 +23,12 @@ import 'package:flutter/services.dart';
 
 // iOS 네이티브 TabView → Flutter 탭 전환 채널
 const _navChannel = MethodChannel('com.clubal.app/navigation');
+const int _shellTabCount = 5;
 
 class ClubalHomeShell extends StatefulWidget {
-  const ClubalHomeShell({super.key});
+  const ClubalHomeShell({super.key, this.navigatorKey});
+
+  final GlobalKey<NavigatorState>? navigatorKey;
 
   @override
   State<ClubalHomeShell> createState() => _ClubalHomeShellState();
@@ -36,7 +39,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
 
   /// 탭별 스크롤 컨트롤러 (같은 탭 다시 탭 시 맨 위로 스크롤용)
   late final List<ScrollController> _scrollControllers =
-      List.generate(5, (_) => ScrollController());
+      List.generate(_shellTabCount, (_) => ScrollController());
 
   final List<PieceRoom> _pieceRooms = [
     PieceRoom(
@@ -91,6 +94,28 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
   bool get _isIOSNative =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
 
+  void _onTabTapped(int index) {
+    final nav = widget.navigatorKey?.currentState;
+    final didPop = nav != null && nav.canPop();
+    if (didPop) {
+      nav.popUntil((route) => route.isFirst);
+      if (!mounted) return;
+    }
+    void apply() {
+      if (!mounted) return;
+      if (index == _selectedIndex) {
+        _scrollToTopOfTab(index);
+      } else {
+        setState(() => _selectedIndex = index);
+      }
+    }
+    if (didPop) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => apply());
+    } else {
+      apply();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -99,11 +124,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
         if (call.method == 'setTab') {
           final index = call.arguments as int;
           if (!mounted) return;
-          if (index == _selectedIndex) {
-            _scrollToTopOfTab(index);
-          } else {
-            setState(() => _selectedIndex = index);
-          }
+          _onTabTapped(index);
         }
       });
     }
@@ -118,6 +139,11 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
         curve: Curves.easeOutCubic,
       );
     }
+  }
+
+  void _switchToTab(int index) {
+    setState(() => _selectedIndex = index);
+    if (_isIOSNative) _navChannel.invokeMethod('setTab', index);
   }
 
   @override
@@ -136,147 +162,75 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      extendBody: !isIOS,
-      body: Stack(
-        children: [
-          // 배경 (전체 화면)
-          const ClubalBackground(),
-
-          // 메인 레이아웃: SafeArea > Column (헤더 → [탭바] → 컨텐츠)
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 헤더 바
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: (selected.label == '매칭' ||
-                                selected.label == '메뉴')
-                            ? const SizedBox.shrink()
-                            : Text(
-                                '클러버 Clubal',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineSmall
-                                    ?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSurface,
-                                    ),
-                              ),
-                      ),
-                      if (selected.label == '매칭')
-                        SizedBox(
-                          width: 52,
-                          height: 52,
-                          child: OverflowBox(
-                            maxWidth: 52 * 1.15,
-                            maxHeight: 52 * 1.15,
-                            alignment: Alignment.center,
-                            child: LongPressConfirmButton(
-                              onTap: _openCreatePieceRoom,
-                              baseWidth: 52,
-                              baseHeight: 52,
-                              background: ClipOval(
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                                  child: Container(
-                                    width: 52,
-                                    height: 52,
-                                    decoration: AppGlassStyles.card(
-                                      radius: 26,
-                                      isDark: Theme.of(context).brightness == Brightness.dark,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              content: Icon(
-                                Icons.add_rounded,
-                                color: Theme.of(context).colorScheme.onSurface,
-                                size: 28,
-                              ),
+      extendBody: true,
+      body: Builder(
+        builder: (context) {
+          // iOS: body가 하단 safe area까지 높이를 받아야 배경이 그 구간까지 그려짐. 하단 패딩 제거.
+          final removeBottom = _isIOSNative;
+          return MediaQuery.removePadding(
+            context: context,
+            removeBottom: removeBottom,
+            child: SizedBox.expand(
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: IgnorePointer(child: ClubalBackground()),
+                  ),
+                  SafeArea(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _ShellHeader(
+                          selectedLabel: selected.label,
+                          onOpenCreatePieceRoom: _openCreatePieceRoom,
+                          onSearch: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const SearchPage(),
+                            ),
+                          ),
+                          onNotifications: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const PastNotificationsPage(),
+                            ),
+                          ),
+                          onSettings: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const ClubalSettingsPage(),
                             ),
                           ),
                         ),
-                      if (selected.label == '메뉴')
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            PressedIconActionButton(
-                              icon: Icons.search_rounded,
-                              tooltip: '검색',
-                              onTap: () => Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => const SearchPage(),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            PressedIconActionButton(
-                              icon: Icons.notifications_none_rounded,
-                              tooltip: '알림',
-                              onTap: () async {
-                                if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', false);
-                                await Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) =>
-                                        const PastNotificationsPage(),
-                                  ),
-                                );
-                                if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
-                              },
-                            ),
-                          ],
-                        ),
-                    ],
+                        Expanded(child: _buildTabBody(selected.label)),
+                      ],
+                    ),
                   ),
-                ),
-
-                // 탭별 컨텐츠 (Expanded로 남은 공간 채움)
-                Expanded(child: _buildTabBody(selected.label)),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          );
+        },
       ),
-      bottomNavigationBar: kIsWeb
-          // Web: 단순한 기본 네비게이션으로 안전하게 렌더링
-          ? BottomNavigationBar(
-              type: BottomNavigationBarType.fixed,
-              currentIndex: _selectedIndex,
-              onTap: (index) {
-                if (index == _selectedIndex) {
-                  _scrollToTopOfTab(index);
-                } else {
-                  setState(() => _selectedIndex = index);
-                }
-              },
-              items: [
-                for (final tab in _tabs)
-                  BottomNavigationBarItem(
-                    icon: Icon(tab.icon),
-                    label: tab.label,
-                  ),
-              ],
-            )
-          // iOS: 네이티브 탭바가 담당하므로 Flutter 쪽은 하단바 없음
-          : isIOS
-              ? null
-              // Android 등 나머지 플랫폼: 기존 젤리 네비게이션 유지 (배경 투명으로 하단 여백에 body 배경 비침)
+      // iOS: 반드시 null. 네이티브 UITabBar만 쓰고, Flutter 쪽 젤리 네비는 겹치면 안 됨.
+      bottomNavigationBar: isIOS
+          ? null
+          : kIsWeb
+              ? BottomNavigationBar(
+                  type: BottomNavigationBarType.fixed,
+                  currentIndex: _selectedIndex,
+                  onTap: _onTabTapped,
+                  items: [
+                    for (final tab in _tabs)
+                      BottomNavigationBarItem(
+                        icon: Icon(tab.icon),
+                        label: tab.label,
+                      ),
+                  ],
+                )
               : Material(
                   color: Colors.transparent,
                   child: ClubalJellyBottomNav(
                     tabs: _tabs,
                     selectedIndex: _selectedIndex,
-                    onChanged: (index) {
-                      if (index == _selectedIndex) {
-                        _scrollToTopOfTab(index);
-                      } else {
-                        setState(() => _selectedIndex = index);
-                      }
-                    },
+                    onChanged: _onTabTapped,
                   ),
                 ),
     );
@@ -284,21 +238,15 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
 
   Widget _buildTabBody(String label) {
     final index = _tabs.indexWhere((t) => t.label == label);
-    final scrollController = index >= 0 && index < _scrollControllers.length
+    final scrollController = index >= 0 && index < _shellTabCount
         ? _scrollControllers[index]
         : null;
     switch (label) {
       case '홈':
         return HomeTabView(
           scrollController: scrollController,
-          onMatchTap: () {
-            setState(() => _selectedIndex = 1);
-            if (_isIOSNative) _navChannel.invokeMethod('setTab', 1);
-          },
-          onChatTap: () {
-            setState(() => _selectedIndex = 2);
-            if (_isIOSNative) _navChannel.invokeMethod('setTab', 2);
-          },
+          onMatchTap: () => _switchToTab(1),
+          onChatTap: () => _switchToTab(2),
         );
       case '매칭':
         return MatchingTabView(
@@ -310,7 +258,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
           scrollController: scrollController,
         );
       case '채팅':
-        return const ChatTabView();
+        return ChatTabView(scrollController: scrollController);
       case '커뮤니티':
         return CommunityTabView(scrollController: scrollController);
       case '메뉴':
@@ -342,5 +290,103 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
     if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
     if (created == null) return;
     setState(() => _activeMatches.insert(0, created));
+  }
+}
+
+/// 헤더 바 (높이 56 통일). 탭에 따라 제목 / 매칭 버튼 / 메뉴 버튼 표시.
+class _ShellHeader extends StatelessWidget {
+  const _ShellHeader({
+    required this.selectedLabel,
+    required this.onOpenCreatePieceRoom,
+    required this.onSearch,
+    required this.onNotifications,
+    required this.onSettings,
+  });
+
+  final String selectedLabel;
+  final VoidCallback onOpenCreatePieceRoom;
+  final VoidCallback onSearch;
+  final VoidCallback onNotifications;
+  final VoidCallback onSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+      child: SizedBox(
+        height: 56,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: (selectedLabel == '매칭' || selectedLabel == '메뉴')
+                  ? const SizedBox.shrink()
+                  : Text(
+                      '클러버 Clubal',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                    ),
+            ),
+            if (selectedLabel == '매칭')
+              SizedBox(
+                width: 52,
+                height: 52,
+                child: OverflowBox(
+                  maxWidth: 52 * 1.15,
+                  maxHeight: 52 * 1.15,
+                  alignment: Alignment.center,
+                  child: LongPressConfirmButton(
+                    onTap: onOpenCreatePieceRoom,
+                    baseWidth: 52,
+                    baseHeight: 52,
+                    background: ClipOval(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                        child: Container(
+                          width: 52,
+                          height: 52,
+                          decoration: AppGlassStyles.card(
+                            radius: 26,
+                            isDark: Theme.of(context).brightness == Brightness.dark,
+                          ),
+                        ),
+                      ),
+                    ),
+                    content: Icon(
+                      Icons.add_rounded,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      size: 28,
+                    ),
+                  ),
+                ),
+              ),
+            if (selectedLabel == '메뉴')
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  PressedIconActionButton(
+                    icon: Icons.search_rounded,
+                    tooltip: '검색',
+                    onTap: onSearch,
+                  ),
+                  const SizedBox(width: 8),
+                  PressedIconActionButton(
+                    icon: Icons.notifications_none_rounded,
+                    tooltip: '알림',
+                    onTap: onNotifications,
+                  ),
+                  const SizedBox(width: 8),
+                  PressedIconActionButton(
+                    icon: Icons.settings_rounded,
+                    tooltip: '설정',
+                    onTap: onSettings,
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }

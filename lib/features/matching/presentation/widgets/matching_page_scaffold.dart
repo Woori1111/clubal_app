@@ -1,4 +1,5 @@
 import 'package:clubal_app/core/widgets/clubal_background.dart';
+import 'package:clubal_app/core/widgets/clubal_full_body.dart';
 import 'package:clubal_app/features/matching/presentation/widgets/matching_app_bar.dart';
 import 'package:flutter/material.dart';
 
@@ -23,26 +24,33 @@ class MatchingPageScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          const ClubalBackground(),
-          SafeArea(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(0, 16, 0, bottomPadding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  MatchingAppBar(
-                    title: title,
-                    onBack: onBack,
-                    trailing: appBarTrailing,
-                  ),
-                  Expanded(child: body),
-                ],
+      body: Builder(
+        builder: (context) => wrapFullBody(
+          context,
+          Stack(
+            children: [
+              Positioned.fill(
+                child: IgnorePointer(child: ClubalBackground()),
               ),
-            ),
+              SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(0, 16, 0, bottomPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      MatchingAppBar(
+                        title: title,
+                        onBack: onBack,
+                        trailing: appBarTrailing,
+                      ),
+                      Expanded(child: body),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

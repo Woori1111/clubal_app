@@ -1,4 +1,5 @@
 import 'package:clubal_app/core/widgets/clubal_background.dart';
+import 'package:clubal_app/core/widgets/clubal_full_body.dart';
 import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
 import 'package:clubal_app/features/notifications/models/notification_item.dart';
@@ -68,11 +69,16 @@ class _PastNotificationsPageState extends State<PastNotificationsPage> {
     const emptyMessage = '현재는 알림이 없습니다. 새로운 소식이 있으면 알려드리겠습니다.';
 
     return Scaffold(
-      body: Stack(
-        children: [
-          const ClubalBackground(),
-          SafeArea(
-            child: Padding(
+      body: Builder(
+        builder: (context) => wrapFullBody(
+          context,
+          Stack(
+            children: [
+              Positioned.fill(
+                child: IgnorePointer(child: ClubalBackground()),
+              ),
+              SafeArea(
+                child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,8 +159,10 @@ class _PastNotificationsPageState extends State<PastNotificationsPage> {
                 ],
               ),
             ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

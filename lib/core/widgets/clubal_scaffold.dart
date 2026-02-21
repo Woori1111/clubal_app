@@ -1,4 +1,5 @@
 import 'package:clubal_app/core/widgets/clubal_background.dart';
+import 'package:clubal_app/core/widgets/clubal_full_body.dart';
 import 'package:flutter/material.dart';
 
 class ClubalScaffold extends StatelessWidget {
@@ -19,42 +20,49 @@ class ClubalScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          const ClubalBackground(),
-          SafeArea(
-            child: Padding(
-              padding: padding,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+      body: Builder(
+        builder: (context) => wrapFullBody(
+          context,
+          Stack(
+            children: [
+              Positioned.fill(
+                child: IgnorePointer(child: ClubalBackground()),
+              ),
+              SafeArea(
+                child: Padding(
+                  padding: padding,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded),
-                        onPressed: () => Navigator.of(context).pop(),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_rounded),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            title,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                          const Spacer(),
+                          if (actions != null) ...actions!,
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        title,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge
-                            ?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                      ),
-                      const Spacer(),
-                      if (actions != null) ...actions!,
+                      const SizedBox(height: 20),
+                      Expanded(child: body),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  Expanded(child: body),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

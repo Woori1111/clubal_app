@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:clubal_app/core/widgets/clubal_background.dart';
+import 'package:clubal_app/core/widgets/clubal_full_body.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
 import 'package:clubal_app/features/settings/presentation/account_management_pages.dart';
 import 'package:clubal_app/features/settings/presentation/customer_support_pages.dart';
@@ -53,11 +54,16 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          const ClubalBackground(),
-          SafeArea(
-            child: Column(
+      body: Builder(
+        builder: (context) => wrapFullBody(
+          context,
+          Stack(
+            children: [
+              Positioned.fill(
+                child: IgnorePointer(child: ClubalBackground()),
+              ),
+              SafeArea(
+                child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
@@ -85,8 +91,10 @@ class _SearchPageState extends State<SearchPage> {
                 ),
               ],
             ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

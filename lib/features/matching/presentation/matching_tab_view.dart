@@ -35,15 +35,14 @@ class MatchingTabView extends StatefulWidget {
 }
 
 class _MatchingTabViewState extends State<MatchingTabView> {
-  bool _fabCompact = false;
   static const List<PieceRoom> _completedMatches = [];
   final ValueNotifier<double> _fabScaleNotifier = ValueNotifier<double>(1.0);
+  final ValueNotifier<bool> _fabCompactNotifier = ValueNotifier<bool>(false);
 
   bool _handleScroll(UserScrollNotification notification) {
-    if (notification.direction == ScrollDirection.reverse && !_fabCompact) {
-      setState(() => _fabCompact = true);
-    } else if (notification.direction == ScrollDirection.forward && _fabCompact) {
-      setState(() => _fabCompact = false);
+    final wantCompact = notification.direction == ScrollDirection.reverse;
+    if (_fabCompactNotifier.value != wantCompact) {
+      _fabCompactNotifier.value = wantCompact;
     }
     return false;
   }
@@ -51,6 +50,7 @@ class _MatchingTabViewState extends State<MatchingTabView> {
   @override
   void dispose() {
     _fabScaleNotifier.dispose();
+    _fabCompactNotifier.dispose();
     super.dispose();
   }
 
@@ -75,6 +75,9 @@ class _MatchingTabViewState extends State<MatchingTabView> {
               onNotification: _handleScroll,
               child: ListView(
                 controller: widget.scrollController,
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
                 padding: const EdgeInsets.only(bottom: 170),
                 children: [
                   const MatchingSectionLabel(title: '매칭중'),
@@ -101,14 +104,19 @@ class _MatchingTabViewState extends State<MatchingTabView> {
             ),
             Positioned(
               right: 2,
-              bottom: 8,
-              child: LongPressConfirmButton(
-                onTap: widget.onAutoMatchTap,
-                scaleNotifier: _fabScaleNotifier,
-                child: AutoMatchFab(
-                  compact: _fabCompact,
-                  scaleNotifier: _fabScaleNotifier,
-                ),
+              bottom: _fabBottomOffset(context),
+              child: ValueListenableBuilder<bool>(
+                valueListenable: _fabCompactNotifier,
+                builder: (context, compact, child) {
+                  return LongPressConfirmButton(
+                    onTap: widget.onAutoMatchTap,
+                    scaleNotifier: _fabScaleNotifier,
+                    child: AutoMatchFab(
+                      compact: compact,
+                      scaleNotifier: _fabScaleNotifier,
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -118,6 +126,14 @@ class _MatchingTabViewState extends State<MatchingTabView> {
   }
 
   static const double _sectionSpacing = 14;
+
+  /// 탭바 위에 떠 있도록 FAB 하단 오프셋 (탭바 높이 + 여유 간격)
+  static double _fabBottomOffset(BuildContext context) {
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
+    const tabBarHeight = 56.0;
+    const gapAboveTabBar = 28.0;
+    return bottomPadding + tabBarHeight + gapAboveTabBar;
+  }
 
   List<Widget> _roomListItems(List<PieceRoom> list, {required bool isMyRoom}) {
     if (list.isEmpty) return [const SizedBox(height: 14)];
