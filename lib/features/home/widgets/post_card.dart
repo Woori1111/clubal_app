@@ -23,6 +23,7 @@ class PostCard extends StatefulWidget {
     this.onLikeTap,
     this.likeButtonColoredWhenLiked = true,
     this.likeButtonEnabled = true,
+    this.onMoreTap,
   });
 
   final String userName;
@@ -43,6 +44,8 @@ class PostCard extends StatefulWidget {
   final bool likeButtonColoredWhenLiked;
   /// false면 하트 탭 비활성화 (커뮤니티 리스트용)
   final bool likeButtonEnabled;
+  /// 우측 상단 ⋮ 버튼 탭 시 호출
+  final VoidCallback? onMoreTap;
 
   @override
   State<PostCard> createState() => _PostCardState();
@@ -115,8 +118,29 @@ class _PostCardState extends State<PostCard> {
                     colors: [Color(0x4DF3FAFF), Color(0x33A7B7FF)],
                   ),
           ),
-          padding: const EdgeInsets.all(12),
-          child: _buildFlexibleLayout(context),
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: _buildFlexibleLayout(context),
+              ),
+              if (widget.onMoreTap != null)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.more_vert,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      size: 22,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    onPressed: widget.onMoreTap,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -300,7 +324,7 @@ class _PostCardState extends State<PostCard> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            widget.isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+            Icons.favorite_border_rounded,
             size: 18,
             color: caption,
           ),

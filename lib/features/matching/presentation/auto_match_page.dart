@@ -44,7 +44,7 @@ class _AutoMatchPageState extends State<AutoMatchPage> {
   }
 
   Future<void> _onTapPlace() async {
-    final result = await Navigator.of(context).push<PlaceSelection>(https://github.com/Woori1111/clubal_app/pull/14/conflict?name=lib%252Ffeatures%252Fhome%252Fpresentation%252Fcommunity_tab_view.dart&ancestor_oid=8e9dfb5a0f9cec39136e176372c3a399e3abcfe3&base_oid=31309cc1c6a285d0c6a5bdb8a61303c4872459f5&head_oid=5cbcfdb85ef26d99dbc4ff615bc0f137ebd078df
+    final result = await Navigator.of(context).push<PlaceSelection>(
       MaterialPageRoute(builder: (_) => const PlaceSelectionPage()),
     );
     if (result != null && mounted) setState(() => _selectedPlace = result.displayLabel);

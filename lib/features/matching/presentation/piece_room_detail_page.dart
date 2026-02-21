@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:clubal_app/core/theme/app_colors.dart';
+import 'package:clubal_app/core/theme/app_glass_styles.dart';
 import 'package:clubal_app/core/utils/app_dialogs.dart';
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
@@ -56,7 +58,7 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
               ListTile(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 tileColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                leading: const Icon(Icons.check_circle_rounded, color: AppColors.success),
+                leading: Icon(Icons.check_circle_rounded, color: AppColors.success),
                 title: const Text('모집중'),
                 onTap: () {
                   setState(() => _room = _room.copyWith(isRecruitmentClosed: false));
@@ -68,7 +70,7 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
               ListTile(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 tileColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                leading: const Icon(Icons.cancel_rounded, color: AppColors.failure),
+                leading: Icon(Icons.cancel_rounded, color: AppColors.failure),
                 title: const Text('모집완료'),
                 onTap: () {
                   setState(() => _room = _room.copyWith(isRecruitmentClosed: true));
@@ -171,10 +173,8 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
                       color: onSurface,
                     ),
                   ),
-                ),
-
-                // 하단 버튼들 (내 방일 경우)
-                if (isMyRoom)
+                  // 하단 버튼들 (내 방일 경우)
+                  if (isMyRoom)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                     child: Row(
@@ -247,12 +247,13 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
+          ),
         ],
       ),
     );
