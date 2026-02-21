@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:clubal_app/core/theme/app_colors.dart';
+import 'package:clubal_app/core/theme/app_glass_styles.dart';
 import 'package:clubal_app/core/utils/app_dialogs.dart';
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
@@ -171,11 +173,9 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
                       color: onSurface,
                     ),
                   ),
-                ),
-
-                // 하단 버튼들 (내 방일 경우)
-                if (isMyRoom)
-                  Padding(
+                  // 하단 버튼들 (내 방일 경우)
+                  if (isMyRoom)
+                    Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                     child: Row(
                       children: [
@@ -247,12 +247,13 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
+          ),
         ],
       ),
     );

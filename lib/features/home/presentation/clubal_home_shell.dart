@@ -310,7 +310,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
           scrollController: scrollController,
         );
       case '채팅':
-        return const ChatTabView();
+        return ChatTabView(scrollController: scrollController);
       case '커뮤니티':
         return CommunityTabView(scrollController: scrollController);
       case '메뉴':
