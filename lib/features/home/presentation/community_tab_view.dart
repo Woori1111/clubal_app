@@ -107,7 +107,7 @@ class _LatestPostsList extends StatelessWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final doc = posts[index];
-            final data = doc.data() as Map<String, dynamic>;
+            final data = doc.data();
             final likedBy = data['likedBy'] as List<dynamic>? ?? [];
             final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? 'guest_user';
             final isLiked = likedBy.contains(currentUserId);
