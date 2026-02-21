@@ -130,13 +130,12 @@ class MatchingRoomGridCard extends StatelessWidget {
 
   List<_GridItem> _buildInfoItems(PieceRoom room) {
     final d = room.meetingAt;
-    final dateStr = '${d.month}/${d.day}';
-    final timeStr = '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    final dateStr = '${d.month}월 ${d.day}일';
     return [
       _GridItem(Icons.group_rounded, room.capacityLabel),
       _GridItem(Icons.place_rounded, room.locationDisplay),
       _GridItem(Icons.calendar_today_rounded, dateStr),
-      _GridItem(Icons.schedule_rounded, timeStr),
+      _GridItem(Icons.schedule_rounded, '시간 미정'),
     ];
   }
 }

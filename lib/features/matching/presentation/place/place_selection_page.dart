@@ -1,3 +1,4 @@
+import 'package:clubal_app/core/theme/app_glass_styles.dart';
 import 'package:clubal_app/features/matching/presentation/place/place_selection.dart';
 import 'package:flutter/material.dart';
 
@@ -47,6 +48,12 @@ class _PlaceSelectionPageState extends State<PlaceSelectionPage> {
     );
   }
 
+  void _selectAny() {
+    Navigator.of(context).pop(
+      const PlaceSelection(region: '상관없음', district: '', clubName: ''),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final favoriteList = _favoriteClubs.toList()..sort();
@@ -55,6 +62,8 @@ class _PlaceSelectionPageState extends State<PlaceSelectionPage> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
         children: [
+          _AnyPlaceButton(onTap: _selectAny),
+          const SizedBox(height: 20),
           _PlaceSectionTitle(title: 'HOT🔥'),
           const SizedBox(height: 8),
           _HorizontalClubCards(
@@ -90,10 +99,10 @@ class _PlaceSelectionPageState extends State<PlaceSelectionPage> {
             runSpacing: 8,
             children: _regions.keys
                 .map(
-                  (region) => ChoiceChip(
-                    label: Text(region),
+                  (region) => _RegionChip(
+                    label: region,
                     selected: region == _selectedRegion,
-                    onSelected: (_) => setState(() => _selectedRegion = region),
+                    onTap: () => setState(() => _selectedRegion = region),
                   ),
                 )
                 .toList(),
@@ -111,8 +120,9 @@ class _PlaceSelectionPageState extends State<PlaceSelectionPage> {
             ),
             itemBuilder: (context, index) {
               final district = _regions[_selectedRegion]![index];
-              return OutlinedButton(
-                onPressed: () async {
+              return _DistrictChip(
+                label: district,
+                onTap: () async {
                   final result = await Navigator.of(context).push<ClubListResult>(
                     MaterialPageRoute<ClubListResult>(
                       builder: (_) => ClubListPage(
@@ -137,13 +147,6 @@ class _PlaceSelectionPageState extends State<PlaceSelectionPage> {
                     ),
                   );
                 },
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0x3B4A5F76)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(district, style: const TextStyle(fontSize: 13)),
               );
             },
           ),
@@ -291,38 +294,152 @@ class ClubSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = favorite ? const Color(0xFF111111) : const Color(0xF2FFFFFF);
-    final fgColor = favorite ? Colors.white : const Color(0xFF2D3E54);
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: favorite ? const Color(0xFF111111) : const Color(0x334C6078),
-            width: 1,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final onSurfaceVariant = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        borderRadius: BorderRadius.circular(16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          decoration: AppGlassStyles.innerCard(radius: 16, isDark: isDark),
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (favorite)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: Icon(Icons.star_rounded, size: 18, color: Theme.of(context).colorScheme.primary),
+                  ),
+                Flexible(
+                  child: Text(
+                    title,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: onSurfaceVariant,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x16000000),
-              blurRadius: 10,
-              offset: Offset(0, 5),
-            ),
-          ],
         ),
-        child: Center(
-          child: Text(
-            title,
-            style: TextStyle(
-              color: fgColor,
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
+      ),
+    );
+  }
+}
+
+class _AnyPlaceButton extends StatelessWidget {
+  const _AnyPlaceButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: AppGlassStyles.innerCard(radius: 16, isDark: isDark),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.check_circle_outline_rounded, size: 22, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 10),
+              Text(
+                '상관없음',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RegionChip extends StatelessWidget {
+  const _RegionChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final onSurfaceVariant = Theme.of(context).colorScheme.onSurfaceVariant;
+    final primary = Theme.of(context).colorScheme.primary;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: AppGlassStyles.innerCard(radius: 12, isDark: isDark).copyWith(
+            border: Border.all(
+              color: selected ? primary : (isDark ? const Color(0x33FFFFFF) : const Color(0x4DFFFFFF)),
+              width: selected ? 1.5 : 1.0,
             ),
+          ),
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: selected ? primary : onSurfaceVariant,
+                ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DistrictChip extends StatelessWidget {
+  const _DistrictChip({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final onSurfaceVariant = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          alignment: Alignment.center,
+          decoration: AppGlassStyles.innerCard(radius: 12, isDark: isDark),
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: onSurfaceVariant,
+                  fontSize: 13,
+                ),
           ),
         ),
       ),
@@ -351,18 +468,16 @@ class _EmptyFavoriteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final onSurfaceVariant = Theme.of(context).colorScheme.onSurfaceVariant;
     return Container(
       height: 56,
       alignment: Alignment.center,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: const Color(0x8AFFFFFF),
-        border: Border.all(color: const Color(0x334A5F75), width: 1),
-      ),
+      decoration: AppGlassStyles.innerCard(radius: 16, isDark: isDark),
       child: Text(
         '클럽 카드를 길게 눌러 즐겨찾기에 추가하세요',
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF55667B),
+              color: onSurfaceVariant,
             ),
       ),
     );

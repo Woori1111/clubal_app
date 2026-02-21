@@ -84,90 +84,77 @@ class ChatListItem extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        if (room.isGroup) ...[
-                          Icon(
-                            Icons.people_outline_rounded,
-                            size: 14,
-                            color: onSurfaceVariant.withValues(alpha: 0.8),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${room.participantCount}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: onSurfaceVariant,
-                                ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
                         Expanded(
-                          child: Row(
-                            children: [
-                              if (room.locationTag != null) ...[
-                                Flexible(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: onSurfaceVariant.withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      room.locationTag!,
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                            color: onSurfaceVariant,
-                                            fontSize: 10,
+                          child: Opacity(
+                            opacity: room.isMuted ? 0.72 : 1,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                if (room.isGroup) ...[
+                                  Icon(
+                                    Icons.people_outline_rounded,
+                                    size: 14,
+                                    color: onSurfaceVariant.withValues(alpha: 0.8),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${room.participantCount}',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: onSurfaceVariant,
+                                        ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      if (room.locationTag != null) ...[
+                                        Flexible(
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: onSurfaceVariant.withValues(alpha: 0.15),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              room.locationTag!,
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    color: onSurfaceVariant,
+                                                    fontSize: 10,
+                                                  ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                      ],
+                                      if (room.dDayLabel != null) ...[
+                                        Text(
+                                          room.dDayLabel!,
+                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                color: AppColors.failure,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 11,
+                                              ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                      ],
+                                      Expanded(
+                                        child: Text(
+                                          room.lastMessage.isEmpty ? '메시지 없음' : room.lastMessage,
+                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                                color: onSurfaceVariant,
+                                              ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(width: 6),
                               ],
-                              if (room.dDayLabel != null) ...[
-                                Text(
-                                  room.dDayLabel!,
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: AppColors.failure,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 11,
-                                      ),
-                                ),
-                                const SizedBox(width: 6),
-                              ],
-                              Expanded(
-                                child: Text(
-                                  room.lastMessage.isEmpty ? '메시지 없음' : room.lastMessage,
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        color: onSurfaceVariant,
-                                      ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (room.unreadCount > 0)
-                          TweenAnimationBuilder<double>(
-                            tween: Tween(begin: 0.9, end: 1.0),
-                            duration: const Duration(milliseconds: 200),
-                            builder: (context, value, child) => Transform.scale(
-                              scale: value,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.failure,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  '${room.unreadCount}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
                             ),
                           ),
+                        ),
                         if (room.isMuted)
                           Padding(
                             padding: const EdgeInsets.only(left: 4),

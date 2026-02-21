@@ -23,20 +23,44 @@ class ChatListPage extends StatefulWidget {
 
 class _ChatListPageState extends State<ChatListPage> {
   int _segmentIndex = 0;
+  final Set<String> _leftRoomIds = {};
+  final Set<String> _removingRoomIds = {};
+  final Map<String, bool> _mutedOverrides = {};
 
   ChatRepository get _repo => widget.repository ?? getChatRepository();
 
   List<ChatRoom> _filterRooms(List<ChatRoom> rooms) {
-    final filtered = rooms.where((r) {
-      if (_segmentIndex == 0) return r.isGroup;
-      return !r.isGroup;
-    }).toList();
+    final filtered = rooms
+        .where((r) {
+          if (_leftRoomIds.contains(r.id)) return false;
+          if (_segmentIndex == 0) return r.isGroup;
+          return !r.isGroup;
+        })
+        .toList();
     filtered.sort((a, b) {
       if (a.isPinned != b.isPinned) return a.isPinned ? -1 : 1;
       return b.lastMessageAt.compareTo(a.lastMessageAt);
     });
     return filtered;
   }
+
+  void _onLeaveRoom(String chatId) {
+    setState(() => _removingRoomIds.add(chatId));
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (!mounted) return;
+      setState(() {
+        _removingRoomIds.remove(chatId);
+        _leftRoomIds.add(chatId);
+      });
+    });
+  }
+
+  void _onMuteChanged(String chatId, bool isMuted) {
+    setState(() => _mutedOverrides[chatId] = isMuted);
+  }
+
+  bool _displayIsMuted(ChatRoom room) =>
+      _mutedOverrides[room.id] ?? room.isMuted;
 
   @override
   Widget build(BuildContext context) {
@@ -93,10 +117,15 @@ class _ChatListPageState extends State<ChatListPage> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                child: SegmentTab(
-                  labels: const ['모임 채팅', '1:1 채팅'],
-                  selectedIndex: _segmentIndex,
-                  onChanged: (i) => setState(() => _segmentIndex = i),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SegmentTab(
+                      labels: const ['모임 채팅', '1:1 채팅'],
+                      selectedIndex: _segmentIndex,
+                      onChanged: (i) => setState(() => _segmentIndex = i),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -104,16 +133,23 @@ class _ChatListPageState extends State<ChatListPage> {
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final room = filtered[index];
-                  return ChatListItem(
-                    room: room,
+                  final isMuted = _displayIsMuted(room);
+                  final displayRoom = room.copyWith(isMuted: isMuted);
+                  final isRemoving = _removingRoomIds.contains(room.id);
+                  return _AnimatedChatListItem(
+                    room: displayRoom,
+                    isRemoving: isRemoving,
                     formatTime: app_date_utils.formatRelativeTime,
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (_) => ChatRoomPage(
                             chatId: room.id,
-                            room: room,
+                            room: displayRoom,
                             repository: _repo,
+                            initialIsMuted: isMuted,
+                            onMuteChanged: (v) => _onMuteChanged(room.id, v),
+                            onLeaveConfirm: () => _onLeaveRoom(room.id),
                           ),
                         ),
                       );
@@ -126,6 +162,40 @@ class _ChatListPageState extends State<ChatListPage> {
           ],
         );
       },
+    );
+  }
+}
+
+class _AnimatedChatListItem extends StatelessWidget {
+  const _AnimatedChatListItem({
+    required this.room,
+    required this.isRemoving,
+    required this.formatTime,
+    required this.onTap,
+  });
+
+  final ChatRoom room;
+  final bool isRemoving;
+  final String Function(DateTime) formatTime;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 200),
+      opacity: isRemoving ? 0 : 1,
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        alignment: Alignment.topCenter,
+        child: isRemoving
+            ? const SizedBox.shrink()
+            : ChatListItem(
+                room: room,
+                formatTime: formatTime,
+                onTap: onTap,
+              ),
+      ),
     );
   }
 }

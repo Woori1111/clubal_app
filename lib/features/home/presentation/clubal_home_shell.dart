@@ -1,13 +1,16 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:clubal_app/core/theme/app_glass_styles.dart';
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/long_press_confirm_button.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
+import 'package:clubal_app/features/chat/widgets/chat_tab_search_sheet.dart';
 import 'package:clubal_app/features/home/presentation/chat_tab_view.dart';
 import 'package:clubal_app/features/home/presentation/community_tab_view.dart';
 import 'package:clubal_app/features/home/presentation/home_tab_view.dart';
 import 'package:clubal_app/features/home/presentation/menu_tab_view.dart';
+import 'package:clubal_app/core/firestore/piece_room_service.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
 import 'package:clubal_app/features/matching/presentation/auto_match_page.dart';
 import 'package:clubal_app/features/matching/presentation/create_piece_room_page.dart';
@@ -41,47 +44,12 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
   late final List<ScrollController> _scrollControllers =
       List.generate(_shellTabCount, (_) => ScrollController());
 
-  final List<PieceRoom> _pieceRooms = [
-    PieceRoom(
-      title: '불금 강남 클럽 조각 구해요',
-      currentMembers: 2,
-      maxMembers: 4,
-      creator: '강남불나방',
-      location: '강남구 · 추천 · Club Arena',
-      meetingAt: DateTime.now().add(const Duration(days: 1, hours: 5)),
-      description: '이번주 불금에 강남 클럽 아레나 가실 분들 구합니다! 현재 남자 2명이고 추가로 2명 더 모셔요. 편하게 놀아요~',
-    ),
-    PieceRoom(
-      title: '홍대 감성주점 -> 클럽 코스',
-      currentMembers: 3,
-      maxMembers: 5,
-      creator: '홍대병말기',
-      location: '마포구 · 홍대 · Retro Pulse',
-      meetingAt: DateTime.now().add(const Duration(days: 2, hours: 2)),
-      description: '홍대에서 간단히 1차 하고 클럽으로 넘어갈 분들 찾습니다. 텐션 좋으신 분들 환영해요!',
-    ),
-    PieceRoom(
-      title: '이태원 힙합 클럽 가실분',
-      currentMembers: 1,
-      maxMembers: 3,
-      creator: '힙스터',
-      location: '용산구 · 이태원 · Noir Stage',
-      meetingAt: DateTime.now().add(const Duration(hours: 10)),
-      description: '이태원 힙합 클럽 좋아하시는 분들 같이가요~ N빵 깔끔하게 합니다.',
-    ),
-  ];
-  final List<PieceRoom> _myPieceRooms = [
-    PieceRoom(
-      title: '이번주 토요일 성수 핫플 ㄱㄱ',
-      currentMembers: 1,
-      maxMembers: 4,
-      creator: '유저별명',
-      location: '성동구 · 성수 · Seongsu Hive',
-      meetingAt: DateTime.now().add(const Duration(days: 3)),
-      description: '성수동 핫플 클럽 같이 가실 분 구합니다! 제가 총대 맵니다.',
-    ),
-  ];
+  final PieceRoomService _pieceRoomService = PieceRoomService();
+  List<PieceRoom> _pieceRooms = [];
+  List<PieceRoom> _myPieceRooms = [];
   final List<PieceRoom> _activeMatches = [];
+  StreamSubscription<List<PieceRoom>>? _roomsSub;
+  StreamSubscription<List<PieceRoom>>? _myRoomsSub;
 
   final List<NavTab> _tabs = const [
     NavTab(label: '홈', icon: Icons.home_rounded),
@@ -119,6 +87,12 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
   @override
   void initState() {
     super.initState();
+    _roomsSub = _pieceRoomService.streamAllRooms().listen((rooms) {
+      if (mounted) setState(() => _pieceRooms = rooms);
+    });
+    _myRoomsSub = _pieceRoomService.streamMyRooms().listen((rooms) {
+      if (mounted) setState(() => _myPieceRooms = rooms);
+    });
     if (_isIOSNative) {
       _navChannel.setMethodCallHandler((call) async {
         if (call.method == 'setTab') {
@@ -148,6 +122,8 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
 
   @override
   void dispose() {
+    _roomsSub?.cancel();
+    _myRoomsSub?.cancel();
     if (_isIOSNative) _navChannel.setMethodCallHandler(null);
     for (final c in _scrollControllers) {
       c.dispose();
@@ -253,6 +229,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
           rooms: _pieceRooms,
           myRooms: _myPieceRooms,
           activeMatches: _activeMatches,
+          pieceRoomService: _pieceRoomService,
           onAutoMatchTap: _openAutoMatch,
           topPadding: 8,
           scrollController: scrollController,
@@ -277,7 +254,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
     );
     if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
     if (created == null) return;
-    setState(() => _myPieceRooms.insert(0, created));
+    await _pieceRoomService.createRoom(created);
   }
 
   Future<void> _openAutoMatch() async {
@@ -289,7 +266,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
     );
     if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
     if (created == null) return;
-    setState(() => _activeMatches.insert(0, created));
+    await _pieceRoomService.createRoom(created);
   }
 }
 
@@ -322,12 +299,21 @@ class _ShellHeader extends StatelessWidget {
               child: (selectedLabel == '매칭' || selectedLabel == '메뉴')
                   ? const SizedBox.shrink()
                   : Text(
-                      '클러버 Clubal',
+                      selectedLabel == '채팅' ? '채팅' : '클러버 Clubal',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                     ),
             ),
+            if (selectedLabel == '채팅')
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: IconButton(
+                  icon: const Icon(Icons.search_rounded, size: 24),
+                  onPressed: () => showChatTabSearchSheet(context),
+                  tooltip: '채팅방·메시지 검색',
+                ),
+              ),
             if (selectedLabel == '매칭')
               SizedBox(
                 width: 52,
