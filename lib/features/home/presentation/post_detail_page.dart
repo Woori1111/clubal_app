@@ -3,37 +3,14 @@ import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:clubal_app/core/widgets/clubal_background.dart';
-import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
+import 'package:clubal_app/core/theme/app_colors.dart';
+import 'package:clubal_app/core/theme/app_dimensions.dart';
+import 'package:clubal_app/core/widgets/clubal_page_scaffold.dart';
 import 'package:clubal_app/core/widgets/bouncing_like_button.dart';
 import 'package:clubal_app/core/firestore/like_service.dart';
 import 'package:clubal_app/core/utils/app_dialogs.dart';
 import 'package:clubal_app/core/widgets/relative_time_widget.dart';
 import 'package:flutter/material.dart';
-
-// ---------------------------------------------------------------------------
-// 스타일 상수 (글 상세 전용)
-// ---------------------------------------------------------------------------
-
-abstract class _PostDetailColors {
-  static const detailText = Color(0xFF2D3E54);
-  static const caption = Color(0xFF6E8199);
-  static const titleDark = Color(0xFF1D2630);
-  static const divider = Color(0x224C6078);
-  static const avatarBg = Color(0x33FFFFFF);
-  static const postCardBorder = Color(0x55FFFFFF);
-  static const postCardGradientStart = Color(0x4DF3FAFF);
-  static const postCardGradientEnd = Color(0x33A7B7FF);
-  static const commentsCardBorder = Color(0x44FFFFFF);
-  static const commentsCardStart = Color(0x33E8F4FC);
-  static const commentsCardEnd = Color(0x22B8D4E8);
-  static const inputBarBg = Color(0xB3FFFFFF);
-  static const inputBarBorder = Color(0x334C6078);
-  static const inputFieldBg = Color(0x1A314D6A);
-  static const accent = Color(0xFF2ECEF2);
-  static const writeButtonStart = Color(0xFF9AE1FF);
-  static const writeButtonEnd = Color(0xFF69C6F6);
-}
 
 /// 커뮤니티 포스트 상세 정보를 보여주는 페이지.
 class PostDetailPage extends StatefulWidget {
@@ -143,38 +120,14 @@ class _PostDetailPageState extends State<PostDetailPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).textTheme;
-    return Scaffold(
-      body: Stack(
+    return ClubalPageScaffold(
+      title: '글 상세',
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const ClubalBackground(),
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 8, 16, 12),
-                  child: Row(
-                    children: [
-                      PressedIconActionButton(
-                        icon: Icons.arrow_back_ios_new_rounded,
-                        tooltip: '뒤로가기',
-                        onTap: () => Navigator.of(context).pop(),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '글 상세',
-                          style: theme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -225,14 +178,11 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     ),
                   ),
                 ),
-                _CommentInputBar(
-                  controller: _commentController,
-                  focusNode: _commentFocusNode,
-                  hasText: _hasCommentText,
-                  onSubmit: _submitComment,
-                ),
-              ],
-            ),
+          _CommentInputBar(
+            controller: _commentController,
+            focusNode: _commentFocusNode,
+            hasText: _hasCommentText,
+            onSubmit: _submitComment,
           ),
         ],
       ),
@@ -328,7 +278,7 @@ class _PostLikeSectionState extends State<_PostLikeSection> {
       onTap: _toggleLike,
       iconSize: 22,
       textSize: 14,
-      defaultColor: _PostDetailColors.detailText,
+      defaultColor: AppColors.bodyText,
     );
   }
 }
@@ -368,22 +318,22 @@ class _PostContentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final detailStyle = TextStyle(color: _PostDetailColors.detailText, fontSize: 14);
+    final detailStyle = TextStyle(color: AppColors.bodyText, fontSize: 14);
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: AppDimensions.borderRadiusPill,
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
         child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: _PostDetailColors.postCardBorder, width: 1.2),
+            borderRadius: AppDimensions.borderRadiusPill,
+            border: Border.all(color: AppColors.glassCardBorderLight, width: 1.2),
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                _PostDetailColors.postCardGradientStart,
-                _PostDetailColors.postCardGradientEnd,
+                AppColors.glassCardGradientStartLight,
+                AppColors.glassCardGradientEndLight,
               ],
             ),
           ),
@@ -402,7 +352,7 @@ class _PostContentCard extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: const BoxDecoration(
-                        color: _PostDetailColors.avatarBg,
+                        color: AppColors.avatarBg,
                         shape: BoxShape.circle,
                       ),
                       child: userProfileImageUrl != null
@@ -430,7 +380,7 @@ class _PostContentCard extends StatelessWidget {
                         const SizedBox(height: 2),
                         RelativeTimeWidget(
                           dateTime: createdAt!,
-                          style: theme?.bodySmall?.copyWith(color: _PostDetailColors.caption, fontSize: 12) ?? const TextStyle(),
+                          style: theme?.bodySmall?.copyWith(color: AppColors.captionText, fontSize: 12) ?? const TextStyle(),
                         ),
                       ],
                     ],
@@ -445,19 +395,19 @@ class _PostContentCard extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 content ?? title,
-                style: theme?.bodyLarge?.copyWith(color: _PostDetailColors.detailText, height: 1.5),
+                style: theme?.bodyLarge?.copyWith(color: AppColors.bodyText, height: 1.5),
               ),
               if (imageUrl != null) ...[
                 const SizedBox(height: 16),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: AppDimensions.borderRadiusCardSmall,
                   child: AspectRatio(
                     aspectRatio: 3 / 4,
                     child: Image.network(
                       imageUrl!,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
-                        color: _PostDetailColors.avatarBg,
+                        color: AppColors.avatarBg,
                         child: const Icon(Icons.image_rounded, size: 48, color: Colors.black54),
                       ),
                     ),
@@ -473,7 +423,7 @@ class _PostContentCard extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.location_on_rounded, size: 18, color: _PostDetailColors.detailText),
+                        const Icon(Icons.location_on_rounded, size: 18, color: AppColors.bodyText),
                         const SizedBox(width: 4),
                         Text(location!, style: detailStyle),
                       ],
@@ -482,7 +432,7 @@ class _PostContentCard extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.visibility_rounded, size: 18, color: _PostDetailColors.detailText),
+                        const Icon(Icons.visibility_rounded, size: 18, color: AppColors.bodyText),
                         const SizedBox(width: 4),
                         Text('조회 $viewCount', style: detailStyle),
                       ],
@@ -499,7 +449,7 @@ class _PostContentCard extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.chat_bubble_outline_rounded, size: 22, color: _PostDetailColors.detailText),
+                      const Icon(Icons.chat_bubble_outline_rounded, size: 22, color: AppColors.bodyText),
                       const SizedBox(width: 6),
                       Text('$commentCount', style: detailStyle.copyWith(fontWeight: FontWeight.w600)),
                     ],
@@ -514,7 +464,7 @@ class _PostContentCard extends StatelessWidget {
             top: 4,
             right: 4,
             child: IconButton(
-              icon: const Icon(Icons.more_vert, color: _PostDetailColors.caption, size: 24),
+              icon: const Icon(Icons.more_vert, color: AppColors.captionText, size: 24),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               onPressed: onMoreTap,
@@ -546,21 +496,21 @@ class _CommentsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: AppDimensions.borderRadiusCardLarge,
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _PostDetailColors.commentsCardBorder, width: 1.2),
+            borderRadius: AppDimensions.borderRadiusCardLarge,
+            border: Border.all(color: AppColors.commentsCardBorder, width: 1.2),
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                _PostDetailColors.commentsCardStart,
-                _PostDetailColors.commentsCardEnd,
+                AppColors.commentsCardStart,
+                AppColors.commentsCardEnd,
               ],
             ),
           ),
@@ -573,7 +523,7 @@ class _CommentsCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: _PostDetailColors.titleDark,
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 16),
@@ -670,7 +620,7 @@ class _CommentTile extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: const BoxDecoration(
-                    color: _PostDetailColors.avatarBg,
+                    color: AppColors.avatarBg,
                     shape: BoxShape.circle,
                   ),
                   child: profileUrl != null
@@ -699,21 +649,21 @@ class _CommentTile extends StatelessWidget {
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
-                                  color: _PostDetailColors.titleDark,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                               if (createdAt != null) ...[
                                 const SizedBox(height: 2),
                                 RelativeTimeWidget(
                                   dateTime: createdAt!.toDate(),
-                                  style: const TextStyle(color: _PostDetailColors.caption, fontSize: 12),
+                                  style: const TextStyle(color: AppColors.captionText, fontSize: 12),
                                 ),
                               ],
                             ],
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.more_vert, color: _PostDetailColors.caption, size: 20),
+                          icon: const Icon(Icons.more_vert, color: AppColors.captionText, size: 20),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                           onPressed: () async {
@@ -741,7 +691,7 @@ class _CommentTile extends StatelessWidget {
                       content,
                       style: const TextStyle(
                         fontSize: 14,
-                        color: _PostDetailColors.detailText,
+                        color: AppColors.bodyText,
                         height: 1.4,
                       ),
                     ),
@@ -767,13 +717,13 @@ class _CommentTile extends StatelessWidget {
                               Icon(
                                 isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                                 size: 16,
-                                color: isLiked ? Colors.redAccent : _PostDetailColors.caption,
+                                color: isLiked ? Colors.redAccent : AppColors.captionText,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 '$likeCount',
                                 style: TextStyle(
-                                  color: isLiked ? Colors.redAccent : _PostDetailColors.caption,
+                                  color: isLiked ? Colors.redAccent : AppColors.captionText,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -785,7 +735,7 @@ class _CommentTile extends StatelessWidget {
                         const Text(
                           '답글쓰기',
                           style: TextStyle(
-                            color: _PostDetailColors.caption,
+                            color: AppColors.captionText,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -801,7 +751,7 @@ class _CommentTile extends StatelessWidget {
         if (!isLast)
           const Padding(
             padding: EdgeInsets.only(bottom: 16),
-            child: Divider(height: 1, color: _PostDetailColors.divider),
+            child: Divider(height: 1, color: AppColors.divider),
           ),
       ],
     );
@@ -823,7 +773,7 @@ class _EmptyCommentsState extends StatelessWidget {
           children: [
             const Text(
               '첫 댓글을 남겨보세요.',
-              style: TextStyle(fontSize: 13, color: _PostDetailColors.caption),
+              style: TextStyle(fontSize: 13, color: AppColors.captionText),
             ),
             const SizedBox(height: 12),
             GestureDetector(
@@ -831,18 +781,18 @@ class _EmptyCommentsState extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: AppDimensions.borderRadiusCardLarge,
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      _PostDetailColors.writeButtonStart,
-                      _PostDetailColors.writeButtonEnd,
+                      AppColors.writeButtonStart,
+                      AppColors.writeButtonEnd,
                     ],
                   ),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x5522B8FF),
+                      color: AppColors.shadowBrand,
                       blurRadius: 8,
                       spreadRadius: -4,
                       offset: Offset(0, 4),
@@ -895,21 +845,21 @@ class _CommentInputBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: const BoxDecoration(
-        color: _PostDetailColors.inputBarBg,
-        border: Border(top: BorderSide(color: _PostDetailColors.inputBarBorder, width: 1)),
+        color: AppColors.inputBarBg,
+        border: Border(top: BorderSide(color: AppColors.inputBarBorder, width: 1)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.camera_alt_outlined, color: _PostDetailColors.detailText, size: 28),
+          const Icon(Icons.camera_alt_outlined, color: AppColors.bodyText, size: 28),
           const SizedBox(width: 12),
-          const Icon(Icons.photo_outlined, color: _PostDetailColors.detailText, size: 28),
+          const Icon(Icons.photo_outlined, color: AppColors.bodyText, size: 28),
           const SizedBox(width: 12),
           Expanded(
             child: Container(
               height: 44,
               decoration: BoxDecoration(
-                color: _PostDetailColors.inputFieldBg,
-                borderRadius: BorderRadius.circular(22),
+                color: AppColors.inputFieldBg,
+                borderRadius: BorderRadius.circular(AppDimensions.radiusCommentInput),
               ),
               child: Row(
                 children: [
@@ -938,7 +888,7 @@ class _CommentInputBar extends StatelessWidget {
                         onTap: hasText ? onSubmit : null,
                         child: const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 14),
-                          child: Icon(Icons.send_rounded, color: _PostDetailColors.accent, size: 20),
+                          child: Icon(Icons.send_rounded, color: AppColors.brandPrimary, size: 20),
                         ),
                       ),
                     ),

@@ -1,3 +1,4 @@
+import 'package:clubal_app/core/theme/app_colors.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
 import 'package:clubal_app/features/matching/presentation/dialogs/app_date_picker_dialog.dart';
 import 'package:clubal_app/features/matching/presentation/place/place_selection.dart';
@@ -16,8 +17,6 @@ class CreatePieceRoomPage extends StatefulWidget {
 }
 
 class _CreatePieceRoomPageState extends State<CreatePieceRoomPage> {
-  static const Color _brandColor = Color(0xFF2ECEF2);
-
   final TextEditingController _titleController = TextEditingController(text: '유저별명님의 조각');
   final TextEditingController _contentController = TextEditingController();
 
@@ -54,7 +53,7 @@ class _CreatePieceRoomPageState extends State<CreatePieceRoomPage> {
     final result = await Navigator.of(context).push<PlaceSelection>(
       MaterialPageRoute(builder: (_) => const PlaceSelectionPage()),
     );
-    if (result != null) _appendContent('📍 장소: ${result.displayLabel}');
+    if (result != null && mounted) _appendContent('📍 장소: ${result.displayLabel}');
   }
 
   void _onTapPhoto() {
@@ -62,16 +61,17 @@ class _CreatePieceRoomPageState extends State<CreatePieceRoomPage> {
   }
 
   Future<void> _onTapPrice() async {
+    final priceController = TextEditingController();
     final price = await showDialog<String>(
       context: context,
       builder: (ctx) {
-        String input = '';
         return AlertDialog(
           title: const Text('가격 입력'),
           content: TextField(
+            controller: priceController,
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(hintText: '예: 50000'),
-            onChanged: (val) => input = val,
+            autofocus: true,
           ),
           actions: [
             TextButton(
@@ -79,15 +79,16 @@ class _CreatePieceRoomPageState extends State<CreatePieceRoomPage> {
               child: const Text('취소'),
             ),
             TextButton(
-              onPressed: () => Navigator.of(ctx).pop(input),
+              onPressed: () => Navigator.of(ctx).pop(priceController.text.trim()),
               child: const Text('확인'),
             ),
           ],
         );
       },
     );
-    if (price != null && price.trim().isNotEmpty && mounted) {
-      _appendContent('💰 가격: ${price.trim()}원');
+    priceController.dispose();
+    if (price != null && price.isNotEmpty && mounted) {
+      _appendContent('💰 가격: ${price}원');
     }
   }
 
@@ -144,7 +145,7 @@ class _CreatePieceRoomPageState extends State<CreatePieceRoomPage> {
             child: ConfirmButton(
               enabled: true,
               onTap: _submit,
-              brandColor: _brandColor,
+              brandColor: AppColors.brandPrimary,
             ),
           ),
         ],

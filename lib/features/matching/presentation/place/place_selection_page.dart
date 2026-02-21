@@ -133,6 +133,7 @@ class _PlaceSelectionPageState extends State<PlaceSelectionPage> {
                     ),
                   );
                   if (result == null) return;
+                  if (!context.mounted) return;
                   setState(() {
                     _favoriteClubs
                       ..clear()

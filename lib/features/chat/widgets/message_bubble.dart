@@ -69,7 +69,7 @@ class MessageBubble extends StatelessWidget {
                       color: isMe
                           ? (isDark
                               ? AppColors.glassBorderDark.withValues(alpha: 0.4)
-                              : const Color(0xFF2ECEF2).withValues(alpha: 0.24))
+                              : AppColors.brandPrimary.withValues(alpha: 0.24))
                           : Theme.of(context)
                               .colorScheme
                               .surfaceContainerHighest

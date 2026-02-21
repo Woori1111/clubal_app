@@ -1,6 +1,7 @@
 import 'dart:ui';
 
-import 'package:clubal_app/core/theme/app_glass_styles.dart';
+import 'package:clubal_app/core/widgets/clubal_glass_card.dart';
+import 'package:clubal_app/core/widgets/section_label.dart';
 import 'package:clubal_app/features/home/widgets/post_card.dart';
 import 'package:flutter/material.dart';
 
@@ -82,7 +83,7 @@ class _HomeTabViewState extends State<HomeTabView> {
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 100),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 120),
         children: [
           // 상단: 왼쪽 유저 프로필(정사각) | 오른쪽 버튼 4개(프로필 4등분 크기, 2x2)
           LayoutBuilder(
@@ -100,8 +101,9 @@ class _HomeTabViewState extends State<HomeTabView> {
                     SizedBox(
                       width: profileSide,
                       height: profileSide,
-                      child: _HomeGlassCard(
+                      child: ClubalGlassCard(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                        radius: 16,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -154,8 +156,9 @@ class _HomeTabViewState extends State<HomeTabView> {
                               SizedBox(
                                 width: btnSide,
                                 height: btnSide,
-                                child: _HomeGlassCard(
+                                child: ClubalGlassCard(
                                   padding: const EdgeInsets.all(6),
+                                  radius: 16,
                                   onTap: widget.onMatchTap,
                                   child: Center(
                                     child: FittedBox(
@@ -186,8 +189,9 @@ class _HomeTabViewState extends State<HomeTabView> {
                               SizedBox(
                                 width: btnSide,
                                 height: btnSide,
-                                child: _HomeGlassCard(
+                                child: ClubalGlassCard(
                                   padding: const EdgeInsets.all(6),
+                                  radius: 16,
                                   onTap: widget.onChatTap,
                                   child: widget.hasChatNotification &&
                                           widget.chatRoomName != null &&
@@ -249,8 +253,9 @@ class _HomeTabViewState extends State<HomeTabView> {
                               SizedBox(
                                 width: btnSide,
                                 height: btnSide,
-                                child: _HomeGlassCard(
+                                child: ClubalGlassCard(
                                   padding: const EdgeInsets.all(6),
+                                  radius: 16,
                                   onTap: widget.onExtra1Tap,
                                   child: Center(
                                     child: Icon(
@@ -265,8 +270,9 @@ class _HomeTabViewState extends State<HomeTabView> {
                               SizedBox(
                                 width: btnSide,
                                 height: btnSide,
-                                child: _HomeGlassCard(
+                                child: ClubalGlassCard(
                                   padding: const EdgeInsets.all(6),
+                                  radius: 16,
                                   onTap: widget.onExtra2Tap,
                                   child: Center(
                                     child: Icon(
@@ -291,8 +297,9 @@ class _HomeTabViewState extends State<HomeTabView> {
           // 광고배너 (흔히 쓰는 비율: 5:2)
           AspectRatio(
             aspectRatio: 5 / 2,
-            child: _HomeGlassCard(
+            child: ClubalGlassCard(
               padding: EdgeInsets.zero,
+              radius: 16,
               child: Center(
                 child: Text(
                   '광고배너',
@@ -305,12 +312,13 @@ class _HomeTabViewState extends State<HomeTabView> {
             ),
           ),
           const SizedBox(height: 10),
-          // 공지: 왼쪽 이모티콘 + 텍스트 (외곽선·배경 투명)
-          _HomeGlassCard(
-            showBorder: false,
-            transparentBackground: true,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            child: Row(
+          // 공지: 왼쪽 이모티콘 + 텍스트
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              child: Row(
               children: [
                 Icon(
                   Icons.campaign_rounded,
@@ -331,20 +339,11 @@ class _HomeTabViewState extends State<HomeTabView> {
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 18),
-          // 커뮤니티 인기글 (커뮤니티 탭과 동일한 PostCard 사용)
-          Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: Text(
-              '커뮤니티 인기글',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                  ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 18),
+          const SectionLabel(title: '커뮤니티 인기글'),
+          const SizedBox(height: 8),
           ..._popularPostsData.map((post) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: PostCard(
@@ -365,68 +364,3 @@ class _HomeTabViewState extends State<HomeTabView> {
   }
 }
 
-/// 홈 전용 글라스 카드 (매칭 화면 스타일 통일)
-class _HomeGlassCard extends StatelessWidget {
-  const _HomeGlassCard({
-    required this.child,
-    this.padding,
-    this.onTap,
-    this.showBorder = true,
-    this.transparentBackground = false,
-  });
-
-  final Widget child;
-  final EdgeInsetsGeometry? padding;
-  final VoidCallback? onTap;
-  final bool showBorder;
-  final bool transparentBackground;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final BoxDecoration decoration;
-    if (transparentBackground) {
-      decoration = BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: Colors.transparent,
-      );
-    } else if (showBorder) {
-      decoration = AppGlassStyles.card(radius: 16, isDark: isDark);
-    } else {
-      decoration = BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? const [Color(0x1AFFFFFF), Color(0x0DFFFFFF)]
-              : const [Color(0x99FFFFFF), Color(0x33FFFFFF)],
-        ),
-      );
-    }
-    Widget inner = Container(
-      width: double.infinity,
-      padding: padding ?? const EdgeInsets.all(16),
-      decoration: decoration,
-      child: child,
-    );
-    if (!transparentBackground) {
-      inner = BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-        child: inner,
-      );
-    }
-    final content = ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: inner,
-    );
-    if (onTap != null) {
-      return GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: content,
-      );
-    }
-    return content;
-  }
-}

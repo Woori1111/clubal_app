@@ -1,13 +1,14 @@
 import 'dart:ui';
 
+import 'package:clubal_app/core/theme/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:clubal_app/core/utils/app_dialogs.dart';
 import 'package:clubal_app/features/home/presentation/post_detail_page.dart';
 import 'package:clubal_app/features/home/presentation/write_post_page.dart';
+import 'package:clubal_app/features/chat/widgets/segment_tab.dart';
 import 'package:clubal_app/features/home/widgets/post_card.dart';
-import 'package:clubal_app/features/navigation/widgets/clubal_top_tab_bar.dart';
 import 'package:flutter/material.dart';
 
 class CommunityTabView extends StatefulWidget {
@@ -28,9 +29,9 @@ class _CommunityTabViewState extends State<CommunityTabView> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-          child: ClubalTopTabBar(
-            tabs: const ['최신', '인기'],
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
+          child: SegmentTab(
+            labels: const ['최신', '인기'],
             selectedIndex: _topTabIndex,
             onChanged: (index) => setState(() => _topTabIndex = index),
           ),
@@ -51,9 +52,9 @@ class _CommunityTabViewState extends State<CommunityTabView> {
                   ),
                 ),
               const Positioned(
-                right: 24,
+                right: 14,
                 bottom: 96,
-                child: _WriteFab(),
+                child: _WriteFabExpanding(),
               ),
             ],
           ),
@@ -170,7 +171,7 @@ class _LatestPostsListState extends State<_LatestPostsList> {
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
           itemCount: posts.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
@@ -296,50 +297,106 @@ class _PillRefreshLayout extends StatelessWidget {
   }
 }
 
-class _WriteFab extends StatelessWidget {
-  const _WriteFab();
+/// 매칭 탭 AutoMatchFab과 동일 디자인: 접히면 원형(아이콘), 펼치면 캡슐("글 쓰기").
+class _WriteFabExpanding extends StatefulWidget {
+  const _WriteFabExpanding();
+
+  @override
+  State<_WriteFabExpanding> createState() => _WriteFabExpandingState();
+}
+
+class _WriteFabExpandingState extends State<_WriteFabExpanding> {
+  bool _expanded = false;
+  static const double _size = 58.0;
+  static const double _radius = 29.0;
+  static const double _expandedWidth = 156.0;
+
+  void _onTap() {
+    if (!_expanded) {
+      setState(() => _expanded = true);
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => const WritePostPage(),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final width = _expanded ? _expandedWidth : _size;
+    final cornerRadius = _radius;
+
     return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => const WritePostPage(),
-          ),
-        );
-      },
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
-                width: 1.2,
-              ),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF9AE1FF), Color(0xFF69C6F6)],
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x5522B8FF),
-                  blurRadius: 16,
-                  spreadRadius: -8,
-                  offset: Offset(0, 7),
+      onTap: _onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+        width: width,
+        height: _size,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(cornerRadius),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(cornerRadius),
+                border: Border.all(
+                  color: Color.fromRGBO(255, 255, 255, isDark ? 0.33 : 0.66),
+                  width: 1.5,
                 ),
-              ],
-            ),
-            child: Icon(
-              Icons.edit_rounded,
-              color: Theme.of(context).colorScheme.onPrimary,
-              size: 24,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? [
+                          const Color.fromRGBO(255, 255, 255, 0.33),
+                          const Color.fromRGBO(234, 242, 250, 0.11),
+                        ]
+                      : [
+                          const Color.fromRGBO(255, 255, 255, 0.7),
+                          const Color.fromRGBO(234, 242, 250, 0.4),
+                        ],
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.shadowSoft,
+                    blurRadius: 16,
+                    spreadRadius: -4,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: ScaleTransition(scale: animation, child: child),
+                  ),
+                  child: _expanded
+                      ? Text(
+                          '글 쓰기',
+                          key: const ValueKey('expanded_label'),
+                          style: TextStyle(
+                            color: onSurface,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
+                          ),
+                        )
+                      : Icon(
+                          Icons.edit_rounded,
+                          key: const ValueKey('compact_icon'),
+                          color: onSurface,
+                          size: 26,
+                        ),
+                ),
+              ),
             ),
           ),
         ),

@@ -24,7 +24,7 @@ class AppGlassStyles {
         ),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x20000000),
+            color: AppColors.shadowDark,
             blurRadius: 24,
             spreadRadius: -4,
             offset: Offset(0, 12),
@@ -34,18 +34,18 @@ class AppGlassStyles {
     }
     return BoxDecoration(
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: const Color(0x66FFFFFF), width: 1.2),
+      border: Border.all(color: AppColors.glassBorderLight, width: 1.2),
       gradient: const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Color(0x99FFFFFF),
-          Color(0x33FFFFFF),
+          AppColors.glassGradientStartLight,
+          AppColors.glassGradientEndLightAlt,
         ],
       ),
       boxShadow: const [
         BoxShadow(
-          color: Color(0x1A2A3D54),
+          color: AppColors.glassShadowLight,
           blurRadius: 24,
           spreadRadius: -4,
           offset: Offset(0, 12),
@@ -71,13 +71,13 @@ class AppGlassStyles {
     }
     return BoxDecoration(
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: const Color(0x4DFFFFFF), width: 1.0),
+      border: Border.all(color: AppColors.innerGlassBorderLight, width: 1.0),
       gradient: const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Color(0x66FFFFFF),
-          Color(0x1AFFFFFF),
+          AppColors.innerGlassGradientStartLight,
+          AppColors.innerGlassGradientEndLight,
         ],
       ),
     );

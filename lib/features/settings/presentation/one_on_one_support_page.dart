@@ -449,10 +449,10 @@ class _InquiryBottomSheetState extends State<_InquiryBottomSheet> {
     if (!mounted) return;
 
     setState(() => _isSubmitting = false);
-    Navigator.of(context).pop(); // Close BottomSheet
-    
-    // Show success dialog
-    showDialog(
+    if (!mounted) return;
+
+    // 다이얼로그를 먼저 띄운 뒤, 확인 시 시트를 닫음 (pop 후 context 사용 방지)
+    showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -460,12 +460,21 @@ class _InquiryBottomSheetState extends State<_InquiryBottomSheet> {
         content: const Text('담당자가 확인 후 영업일 기준 24시간 내에 답변해 드리겠습니다. 이전 문의 내역에서 상태를 확인할 수 있습니다.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              Navigator.of(ctx).pop(); // 다이얼로그 닫기
+              Navigator.of(context).pop(); // 바텀시트 닫기
+            },
             child: const Text('확인'),
           ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _contentController.dispose();
+    super.dispose();
   }
 
   @override

@@ -1,7 +1,15 @@
+import 'package:clubal_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class ClubalBackground extends StatelessWidget {
   const ClubalBackground({super.key});
+
+  static const double _bubbleLeft = -70;
+  static const double _bubbleTop = -40;
+  static const double _bubbleRight = -110;
+  static const double _bubbleTopRight = 220;
+  static const double _bubbleBottomLeft = 40;
+  static const double _bubbleBottom = 150;
 
   @override
   Widget build(BuildContext context) {
@@ -15,28 +23,28 @@ class ClubalBackground extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF0D1117),
-              Color(0xFF161B22),
-              Color(0xFF0D1117),
+              AppColors.bgDarkStart,
+              AppColors.bgDarkMid,
+              AppColors.bgDarkStart,
             ],
           ),
         ),
-        child: Stack(
-          children: const [
+        child: const Stack(
+          children: [
             Positioned(
-              left: -70,
-              top: -40,
-              child: _GlowBubble(size: 230, color: Color(0x28358EF0)),
+              left: _bubbleLeft,
+              top: _bubbleTop,
+              child: _GlowBubble(size: 230, color: AppColors.glowBlue),
             ),
             Positioned(
-              right: -110,
-              top: 220,
-              child: _GlowBubble(size: 280, color: Color(0x1A58A6FF)),
+              right: _bubbleRight,
+              top: _bubbleTopRight,
+              child: _GlowBubble(size: 280, color: AppColors.glowBlueBright),
             ),
             Positioned(
-              left: 40,
-              bottom: 150,
-              child: _GlowBubble(size: 180, color: Color(0x2239D353)),
+              left: _bubbleBottomLeft,
+              bottom: _bubbleBottom,
+              child: _GlowBubble(size: 180, color: AppColors.glowGreen),
             ),
           ],
         ),
@@ -49,25 +57,25 @@ class ClubalBackground extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFF8FBFF), Color(0xFFEFF4FA)],
+          colors: [AppColors.bgLightStart, AppColors.bgLightEnd],
         ),
       ),
-      child: Stack(
-        children: const [
+      child: const Stack(
+        children: [
           Positioned(
-            left: -70,
-            top: -40,
-            child: _GlowBubble(size: 230, color: Color(0x8066C8FF)),
+            left: _bubbleLeft,
+            top: _bubbleTop,
+            child: _GlowBubble(size: 230, color: AppColors.glowLightBlue),
           ),
           Positioned(
-            right: -110,
-            top: 220,
-            child: _GlowBubble(size: 280, color: Color(0x555E86FF)),
+            right: _bubbleRight,
+            top: _bubbleTopRight,
+            child: _GlowBubble(size: 280, color: AppColors.glowLightPurple),
           ),
           Positioned(
-            left: 40,
-            bottom: 150,
-            child: _GlowBubble(size: 180, color: Color(0x665CFFD7)),
+            left: _bubbleBottomLeft,
+            bottom: _bubbleBottom,
+            child: _GlowBubble(size: 180, color: AppColors.glowLightCyan),
           ),
         ],
       ),

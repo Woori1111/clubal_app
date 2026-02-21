@@ -1,10 +1,7 @@
-import 'package:clubal_app/core/widgets/clubal_background.dart';
-import 'package:clubal_app/core/widgets/clubal_full_body.dart';
-import 'package:clubal_app/features/matching/presentation/widgets/matching_app_bar.dart';
+import 'package:clubal_app/core/widgets/clubal_page_scaffold.dart';
 import 'package:flutter/material.dart';
 
-/// 매칭 플로우 공통 페이지 레이아웃: ClubalBackground + SafeArea + 앱바 + 본문.
-/// 자동매치, 조각 만들기, 조각 상세 등에서 동일한 뼈대 사용.
+/// 매칭 플로우 공통 페이지 레이아웃. core의 ClubalPageScaffold와 동일 구조 사용.
 class MatchingPageScaffold extends StatelessWidget {
   const MatchingPageScaffold({
     super.key,
@@ -23,35 +20,12 @@ class MatchingPageScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Builder(
-        builder: (context) => wrapFullBody(
-          context,
-          Stack(
-            children: [
-              Positioned.fill(
-                child: IgnorePointer(child: ClubalBackground()),
-              ),
-              SafeArea(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(0, 16, 0, bottomPadding),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      MatchingAppBar(
-                        title: title,
-                        onBack: onBack,
-                        trailing: appBarTrailing,
-                      ),
-                      Expanded(child: body),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return ClubalPageScaffold(
+      title: title,
+      onBack: onBack,
+      appBarTrailing: appBarTrailing,
+      body: body,
+      bottomPadding: bottomPadding,
     );
   }
 }

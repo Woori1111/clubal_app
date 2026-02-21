@@ -1,9 +1,9 @@
 import 'dart:ui';
 
 import 'package:clubal_app/core/firestore/community_post_service.dart';
-import 'package:clubal_app/core/widgets/clubal_background.dart';
-import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
+import 'package:clubal_app/core/theme/app_colors.dart';
 import 'package:clubal_app/core/theme/app_glass_styles.dart';
+import 'package:clubal_app/core/widgets/clubal_page_scaffold.dart';
 import 'package:clubal_app/core/utils/app_dialogs.dart';
 import 'package:flutter/material.dart';
 
@@ -15,7 +15,6 @@ class WritePostPage extends StatefulWidget {
 }
 
 class _WritePostPageState extends State<WritePostPage> {
-  static const Color _brandColor = Color(0xFF2ECEF2);
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
@@ -89,114 +88,94 @@ class _WritePostPageState extends State<WritePostPage> {
     final hasContent = _titleController.text.trim().isNotEmpty &&
         _contentController.text.trim().isNotEmpty;
 
-    return Scaffold(
-      // 키보드가 올라올 때 화면이 줄어들면서 스크롤 가능하게 함
-      resizeToAvoidBottomInset: true,
-      body: Stack(
-        children: [
-          const ClubalBackground(),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+    return ClubalPageScaffold(
+      title: '글쓰기',
+      bottomPadding: 18,
+      appBarTrailing: _PillButton(
+        label: _isSubmitting ? '등록 중...' : '작성하기',
+        enabled: hasContent && !_isSubmitting,
+        onTap: _submit,
+        brandColor: AppColors.brandPrimary,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      PressedIconActionButton(
-                        icon: Icons.arrow_back_ios_new_rounded,
-                        tooltip: '뒤로가기',
-                        onTap: () => Navigator.of(context).pop(),
+                  _SectionCard(
+                    title: '제목',
+                    child: TextField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(
+                        hintText: '제목을 입력하세요',
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '글쓰기',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                      ),
-                      const Spacer(),
-                      _PillButton(
-                        label: _isSubmitting ? '등록 중...' : '작성하기',
-                        enabled: hasContent && !_isSubmitting,
-                        onTap: _submit,
-                        brandColor: _brandColor,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        _SectionCard(
-                          title: '제목',
-                          child: TextField(
-                            controller: _titleController,
-                            decoration: const InputDecoration(
-                              hintText: '제목을 입력하세요',
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                            onChanged: (_) => setState(() {}),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Expanded(
-                          child: _SectionCard(
-                            title: '내용',
-                            expandChild: true,
-                            child: TextField(
-                              controller: _contentController,
-                              maxLines: null,
-                              expands: true,
-                              textAlignVertical: TextAlignVertical.top,
-                              decoration: const InputDecoration(
-                                hintText: '내용을 입력하세요',
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                              onChanged: (_) => setState(() {}),
-                            ),
-                          ),
-                        ),
-                      ],
+                      onChanged: (_) => setState(() {}),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // 하단 아이콘 섹션
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: AppGlassStyles.card(
-                      radius: 20,
-                      isDark: Theme.of(context).brightness == Brightness.dark,
-                    ),
-                    child: Row(
-                      children: [
-                        _BottomIconButton(
-                          icon: Icons.photo_camera_rounded,
-                          tooltip: '사진 첨부',
-                          onTap: () {
-                            showMessageDialog(context, message: '사진 첨부 기능은 준비 중입니다.');
-                          },
+                  Expanded(
+                    child: _SectionCard(
+                      title: '내용',
+                      expandChild: true,
+                      child: TextField(
+                        controller: _contentController,
+                        maxLines: null,
+                        expands: true,
+                        textAlignVertical: TextAlignVertical.top,
+                        decoration: const InputDecoration(
+                          hintText: '내용을 입력하세요',
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
                         ),
-                        const SizedBox(width: 16),
-                        _BottomIconButton(
-                          icon: Icons.location_on_rounded,
-                          tooltip: '위치 추가',
-                          onTap: () {
-                            showMessageDialog(context, message: '위치 추가 기능은 준비 중입니다.');
-                          },
-                        ),
-                      ],
+                        onChanged: (_) => setState(() {}),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: AppGlassStyles.card(
+                    radius: 16,
+                    isDark: Theme.of(context).brightness == Brightness.dark,
+                  ),
+                  child: Row(
+                    children: [
+                      _BottomIconButton(
+                        icon: Icons.photo_camera_rounded,
+                        tooltip: '사진 첨부',
+                        onTap: () {
+                          showMessageDialog(context, message: '사진 첨부 기능은 준비 중입니다.');
+                        },
+                      ),
+                      const SizedBox(width: 16),
+                      _BottomIconButton(
+                        icon: Icons.location_on_rounded,
+                        tooltip: '위치 추가',
+                        onTap: () {
+                          showMessageDialog(context, message: '위치 추가 기능은 준비 중입니다.');
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -221,7 +200,7 @@ class _SectionCard extends StatelessWidget {
         Text(
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: const Color(0xAA34485F),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w700,
               ),
         ),
@@ -294,11 +273,11 @@ class _PillButtonState extends State<_PillButton> {
             decoration: BoxDecoration(
               color: widget.brandColor,
               borderRadius: BorderRadius.circular(24),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x332ECEF2),
+                  color: widget.brandColor.withValues(alpha: 0.3),
                   blurRadius: 8,
-                  offset: Offset(0, 4),
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -357,7 +336,7 @@ class _BottomIconButtonState extends State<_BottomIconButton> {
             curve: Curves.easeOutCubic,
             child: Icon(
               widget.icon,
-              color: const Color(0xFF2D3E54),
+              color: Theme.of(context).colorScheme.onSurface,
               size: 28,
             ),
           ),

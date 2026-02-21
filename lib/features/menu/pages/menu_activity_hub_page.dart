@@ -14,9 +14,11 @@ class MenuActivityHubPage extends StatelessWidget {
   const MenuActivityHubPage({
     super.key,
     this.scrollController,
+    this.onSwitchToMatching,
   });
 
   final ScrollController? scrollController;
+  final VoidCallback? onSwitchToMatching;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +30,7 @@ class MenuActivityHubPage extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(
         parent: BouncingScrollPhysics(),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 120),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -48,7 +50,7 @@ class MenuActivityHubPage extends StatelessWidget {
             },
           ),
           const SizedBox(height: 24),
-          const MatchingStatusSection(),
+          MatchingStatusSection(onTap: onSwitchToMatching),
           const SizedBox(height: 16),
           const MyMeetingsSection(),
           const SizedBox(height: 16),

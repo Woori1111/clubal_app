@@ -267,7 +267,7 @@ class _BottomActions extends StatelessWidget {
             Expanded(
               child: _GlassTextButton(
                 label: '상태변경',
-                color: const Color(0xFF2ECEF2),
+                color: AppColors.brandPrimary,
                 onTap: onStatusTap,
                 isDark: isDark,
               ),
@@ -276,7 +276,7 @@ class _BottomActions extends StatelessWidget {
             Expanded(
               child: _GlassTextButton(
                 label: '삭제',
-                color: const Color(0xFFE53935),
+                color: AppColors.failure,
                 onTap: onDeleteTap,
                 isDark: isDark,
               ),
@@ -298,7 +298,7 @@ class _BottomActions extends StatelessWidget {
             width: double.infinity,
             child: _GlassTextButton(
               label: '신청',
-              color: const Color(0xFF2ECEF2),
+              color: AppColors.brandPrimary,
               onTap: onApplyTap,
               isDark: isDark,
             ),

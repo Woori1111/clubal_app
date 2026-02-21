@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:clubal_app/core/widgets/clubal_background.dart';
-import 'package:clubal_app/core/widgets/clubal_full_body.dart';
-import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
+import 'package:clubal_app/core/widgets/clubal_page_scaffold.dart';
 import 'package:clubal_app/features/settings/presentation/account_management_pages.dart';
 import 'package:clubal_app/features/settings/presentation/customer_support_pages.dart';
 import 'package:clubal_app/features/settings/presentation/marketing_notification_page.dart';
@@ -53,48 +51,21 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Builder(
-        builder: (context) => wrapFullBody(
-          context,
-          Stack(
-            children: [
-              Positioned.fill(
-                child: IgnorePointer(child: ClubalBackground()),
-              ),
-              SafeArea(
-                child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: Row(
-                    children: [
-                      PressedIconActionButton(
-                        icon: Icons.arrow_back_rounded,
-                        tooltip: '뒤로가기',
-                        onTap: () => Navigator.of(context).pop(),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _SearchBar(
-                          controller: _queryController,
-                          focusNode: _focusNode,
-                          hint: '사람, 모임, 게시물 검색',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: _SearchBody(query: _query),
-                ),
-              ],
+    return ClubalPageScaffold(
+      title: '검색',
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: _SearchBar(
+              controller: _queryController,
+              focusNode: _focusNode,
+              hint: '사람, 모임, 게시물 검색',
             ),
-              ),
-            ],
           ),
-        ),
+          Expanded(child: _SearchBody(query: _query)),
+        ],
       ),
     );
   }
@@ -322,7 +293,7 @@ class _SearchResultsList extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       itemCount: filtered.length,
       itemBuilder: (context, index) {
         final item = filtered[index];

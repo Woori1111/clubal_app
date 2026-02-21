@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:clubal_app/core/theme/app_colors.dart';
 import 'package:clubal_app/core/theme/app_glass_styles.dart';
 import 'package:clubal_app/core/widgets/liquid_pressable.dart';
 import 'package:flutter/material.dart';
@@ -196,7 +197,7 @@ class _MatchingConfirmDialogContent extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
     final confirmColor = destructive
-        ? const Color(0xFFED3241)
+        ? AppColors.failure
         : colorScheme.primaryContainer;
 
     return ClipRRect(

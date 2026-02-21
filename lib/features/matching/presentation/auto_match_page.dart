@@ -1,3 +1,4 @@
+import 'package:clubal_app/core/theme/app_colors.dart';
 import 'package:clubal_app/core/utils/app_dialogs.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
 import 'package:clubal_app/features/matching/presentation/dialogs/app_date_picker_dialog.dart';
@@ -16,8 +17,6 @@ class AutoMatchPage extends StatefulWidget {
 }
 
 class _AutoMatchPageState extends State<AutoMatchPage> {
-  static const Color _brandColor = Color(0xFF2ECEF2);
-
   String _selectedDate = '';
   String _selectedPlace = '';
 
@@ -114,7 +113,7 @@ class _AutoMatchPageState extends State<AutoMatchPage> {
             child: ConfirmButton(
               enabled: _selectedPlace.isNotEmpty && _selectedDate.isNotEmpty,
               onTap: _submit,
-              brandColor: _brandColor,
+              brandColor: AppColors.brandPrimary,
             ),
           ),
         ],

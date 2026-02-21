@@ -223,6 +223,16 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
           scrollController: scrollController,
           onMatchTap: () => _switchToTab(1),
           onChatTap: () => _switchToTab(2),
+          onExtra1Tap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const PastNotificationsPage(),
+            ),
+          ),
+          onExtra2Tap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const ClubalSettingsPage(),
+            ),
+          ),
         );
       case '매칭':
         return MatchingTabView(
@@ -239,7 +249,10 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
       case '커뮤니티':
         return CommunityTabView(scrollController: scrollController);
       case '메뉴':
-        return MenuTabView(scrollController: scrollController);
+        return MenuTabView(
+          scrollController: scrollController,
+          onSwitchToMatching: () => _switchToTab(1),
+        );
       default:
         return const SizedBox.shrink();
     }
@@ -252,6 +265,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
         builder: (_) => const CreatePieceRoomPage(),
       ),
     );
+    if (!mounted) return;
     if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
     if (created == null) return;
     await _pieceRoomService.createRoom(created);
@@ -264,6 +278,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
         builder: (_) => const AutoMatchPage(),
       ),
     );
+    if (!mounted) return;
     if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
     if (created == null) return;
     await _pieceRoomService.createRoom(created);
@@ -289,7 +304,7 @@ class _ShellHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: SizedBox(
         height: 56,
         child: Row(
@@ -299,7 +314,11 @@ class _ShellHeader extends StatelessWidget {
               child: (selectedLabel == '매칭' || selectedLabel == '메뉴')
                   ? const SizedBox.shrink()
                   : Text(
-                      selectedLabel == '채팅' ? '채팅' : '클러버 Clubal',
+                      selectedLabel == '채팅'
+                          ? '채팅'
+                          : selectedLabel == '커뮤니티'
+                              ? '커뮤니티'
+                              : '클러버 Clubal',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             color: Theme.of(context).colorScheme.onSurface,
                           ),

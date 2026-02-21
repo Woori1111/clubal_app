@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:clubal_app/core/theme/app_colors.dart';
+import 'package:clubal_app/core/theme/app_dimensions.dart';
 import 'package:clubal_app/core/widgets/liquid_pressable.dart';
 import 'package:flutter/material.dart';
 
@@ -25,24 +27,24 @@ class ConfirmButton extends StatelessWidget {
       child: Opacity(
         opacity: enabled ? 1.0 : 0.45,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: AppDimensions.borderRadiusCard,
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
             child: Container(
               width: double.infinity,
               height: 54,
               decoration: BoxDecoration(
-                color: brandColor.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(16),
+                color: brandColor.withValues(alpha: 0.8),
+                borderRadius: AppDimensions.borderRadiusCard,
                 border: Border.all(
-                  color: const Color(0x66FFFFFF),
+                  color: AppColors.glassBorderDark,
                   width: 1.5,
                 ),
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
-                    color: Color(0x332ECEF2),
+                    color: AppColors.brandPrimary.withValues(alpha: 0.2),
                     blurRadius: 16,
-                    offset: Offset(0, 8),
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),

@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:clubal_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 /// 매칭 탭 우측 하단 자동매치 플로팅 버튼 (접힌 상태: 원형, 펼친 상태: 캡슐).
@@ -62,7 +63,7 @@ class _AutoMatchFabState extends State<AutoMatchFab> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0x22000000),
+                  color: AppColors.shadowSoft,
                   blurRadius: 16 + 2 * pressT,
                   spreadRadius: -4 + pressT,
                   offset: const Offset(0, 8),
