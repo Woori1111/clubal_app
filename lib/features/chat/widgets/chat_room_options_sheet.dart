@@ -5,8 +5,10 @@ void showChatRoomOptionsSheet(
   BuildContext context, {
   required String roomName,
   required bool isMuted,
+  required bool isBlocked,
   required VoidCallback onReport,
   required VoidCallback onBlock,
+  VoidCallback? onUnblock,
   required VoidCallback onToggleMute,
   required VoidCallback onLeave,
 }) {
@@ -17,8 +19,10 @@ void showChatRoomOptionsSheet(
     builder: (context) => _ChatRoomOptionsSheet(
       roomName: roomName,
       isMuted: isMuted,
+      isBlocked: isBlocked,
       onReport: onReport,
       onBlock: onBlock,
+      onUnblock: onUnblock,
       onToggleMute: onToggleMute,
       onLeave: onLeave,
     ),
@@ -29,16 +33,20 @@ class _ChatRoomOptionsSheet extends StatelessWidget {
   const _ChatRoomOptionsSheet({
     required this.roomName,
     required this.isMuted,
+    required this.isBlocked,
     required this.onReport,
     required this.onBlock,
+    this.onUnblock,
     required this.onToggleMute,
     required this.onLeave,
   });
 
   final String roomName;
   final bool isMuted;
+  final bool isBlocked;
   final VoidCallback onReport;
   final VoidCallback onBlock;
+  final VoidCallback? onUnblock;
   final VoidCallback onToggleMute;
   final VoidCallback onLeave;
 
@@ -79,7 +87,7 @@ class _ChatRoomOptionsSheet extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              '$roomName',
+              roomName,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: colorScheme.onSurfaceVariant,
@@ -89,18 +97,22 @@ class _ChatRoomOptionsSheet extends StatelessWidget {
             const SizedBox(height: 20),
             _OptionTile(
               icon: Icons.flag_outlined,
-              label: '신고하기',
+              label: '사용자 신고',
               onTap: () {
                 Navigator.of(context).pop();
                 onReport();
               },
             ),
             _OptionTile(
-              icon: Icons.block_rounded,
-              label: '차단하기',
+              icon: isBlocked ? Icons.block_rounded : Icons.block_outlined,
+              label: isBlocked ? '차단 해제' : '사용자 차단',
               onTap: () {
                 Navigator.of(context).pop();
-                onBlock();
+                if (isBlocked) {
+                  onUnblock?.call();
+                } else {
+                  onBlock();
+                }
               },
             ),
             _OptionTile(

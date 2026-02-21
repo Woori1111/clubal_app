@@ -281,15 +281,6 @@ class _SettingRow extends StatelessWidget {
 
     Widget content = Row(
       children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: const BoxDecoration(
-            color: Color(0xFFA7ECFF),
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -353,15 +344,6 @@ class _SettingRowWithArrow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(
-                color: Color(0xFFA7ECFF),
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 title,

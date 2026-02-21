@@ -9,5 +9,8 @@ class ChatRoomPage extends pages.ChatRoomPage {
     super.otherUserName,
     super.otherUserImageUrl,
     super.repository,
+    super.initialIsMuted,
+    super.onMuteChanged,
+    super.onLeaveConfirm,
   });
 }

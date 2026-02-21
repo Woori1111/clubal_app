@@ -4,6 +4,7 @@ import 'package:clubal_app/core/theme/app_glass_styles.dart';
 import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/long_press_confirm_button.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
+import 'package:clubal_app/features/chat/widgets/chat_tab_search_sheet.dart';
 import 'package:clubal_app/features/home/presentation/chat_tab_view.dart';
 import 'package:clubal_app/features/home/presentation/community_tab_view.dart';
 import 'package:clubal_app/features/home/presentation/home_tab_view.dart';
@@ -322,12 +323,21 @@ class _ShellHeader extends StatelessWidget {
               child: (selectedLabel == '매칭' || selectedLabel == '메뉴')
                   ? const SizedBox.shrink()
                   : Text(
-                      '클러버 Clubal',
+                      selectedLabel == '채팅' ? '채팅' : '클러버 Clubal',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                     ),
             ),
+            if (selectedLabel == '채팅')
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: IconButton(
+                  icon: const Icon(Icons.search_rounded, size: 24),
+                  onPressed: () => showChatTabSearchSheet(context),
+                  tooltip: '채팅방·메시지 검색',
+                ),
+              ),
             if (selectedLabel == '매칭')
               SizedBox(
                 width: 52,

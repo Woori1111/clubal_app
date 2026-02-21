@@ -13,6 +13,10 @@ class MessageBubble extends StatelessWidget {
   final Message message;
   final bool showSenderName;
 
+  static const _duration = Duration(milliseconds: 170);
+  static const _radiusMine = 22.0;
+  static const _radiusOther = 19.0;
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -21,18 +25,24 @@ class MessageBubble extends StatelessWidget {
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 180),
+      duration: _duration,
       builder: (context, value, child) {
+        final slideOffset = isMe ? 24.0 * (1 - value) : -24.0 * (1 - value);
         return Opacity(
           opacity: value,
           child: Transform.translate(
-            offset: Offset(0, 8 * (1 - value)),
+            offset: Offset(slideOffset, 6 * (1 - value)),
             child: child,
           ),
         );
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: EdgeInsets.only(
+          left: isMe ? 40 : 8,
+          right: isMe ? 8 : 40,
+          top: 4,
+          bottom: 4,
+        ),
         child: Row(
           mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -57,13 +67,18 @@ class MessageBubble extends StatelessWidget {
                       ),
                     Material(
                       color: isMe
-                          ? (isDark ? AppColors.glassBorderDark : const Color(0xFF2ECEF2).withValues(alpha: 0.2))
-                          : Theme.of(context).colorScheme.surfaceContainerHighest,
+                          ? (isDark
+                              ? AppColors.glassBorderDark.withValues(alpha: 0.4)
+                              : const Color(0xFF2ECEF2).withValues(alpha: 0.24))
+                          : Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest
+                              .withValues(alpha: 0.85),
                       borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(20),
-                        topRight: const Radius.circular(20),
-                        bottomLeft: Radius.circular(isMe ? 20 : 4),
-                        bottomRight: Radius.circular(isMe ? 4 : 20),
+                        topLeft: Radius.circular(isMe ? _radiusMine : 6),
+                        topRight: Radius.circular(isMe ? 6 : _radiusMine),
+                        bottomLeft: Radius.circular(isMe ? _radiusMine : _radiusOther),
+                        bottomRight: Radius.circular(isMe ? _radiusOther : _radiusMine),
                       ),
                       elevation: 1,
                       shadowColor: Colors.black.withValues(alpha: 0.04),
@@ -72,14 +87,14 @@ class MessageBubble extends StatelessWidget {
                             ? () => _showImageModal(context, message.imageUrl!)
                             : null,
                         borderRadius: BorderRadius.only(
-                          topLeft: const Radius.circular(20),
-                          topRight: const Radius.circular(20),
-                          bottomLeft: Radius.circular(isMe ? 20 : 4),
-                          bottomRight: Radius.circular(isMe ? 4 : 20),
+                          topLeft: Radius.circular(isMe ? _radiusMine : 6),
+                          topRight: Radius.circular(isMe ? 6 : _radiusMine),
+                          bottomLeft: Radius.circular(isMe ? _radiusMine : _radiusOther),
+                          bottomRight: Radius.circular(isMe ? _radiusOther : _radiusMine),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          child: _buildContent(context, isDark),
+                          child: _buildContent(context, isDark, isMe),
                         ),
                       ),
                     ),
@@ -100,8 +115,8 @@ class MessageBubble extends StatelessWidget {
                           Text(
                             '읽음',
                             style: TextStyle(
-                              fontSize: 11,
-                              color: captionColor.withValues(alpha: 0.8),
+                              fontSize: 10,
+                              color: captionColor.withValues(alpha: 0.75),
                             ),
                           ),
                         ],
@@ -148,14 +163,17 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context, bool isDark) {
+  Widget _buildContent(BuildContext context, bool isDark, bool isMe) {
+    final textColor = isDark ? AppColors.textPrimaryDark : AppColors.textPrimary;
+    final effectiveColor = isMe ? textColor : textColor.withValues(alpha: 0.9);
+
     switch (message.type) {
       case MessageType.text:
       case MessageType.system:
         return Text(
           message.displayContent,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                color: effectiveColor,
                 height: 1.4,
               ),
         );
