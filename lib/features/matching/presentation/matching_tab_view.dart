@@ -1,3 +1,4 @@
+import 'package:clubal_app/core/firestore/piece_room_service.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
 import 'package:clubal_app/features/matching/presentation/piece_room_detail_page.dart';
 import 'package:clubal_app/core/widgets/long_press_confirm_button.dart';
@@ -19,6 +20,7 @@ class MatchingTabView extends StatefulWidget {
     required this.rooms,
     required this.myRooms,
     required this.activeMatches,
+    required this.pieceRoomService,
     this.topPadding = 86.0,
     this.scrollController,
   });
@@ -27,6 +29,7 @@ class MatchingTabView extends StatefulWidget {
   final List<PieceRoom> rooms;
   final List<PieceRoom> myRooms;
   final List<PieceRoom> activeMatches;
+  final PieceRoomService pieceRoomService;
   final double topPadding;
   final ScrollController? scrollController;
 
@@ -58,7 +61,11 @@ class _MatchingTabViewState extends State<MatchingTabView> {
     if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', false);
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => PieceRoomDetailPage(room: room, isMyRoom: isMyRoom),
+        builder: (_) => PieceRoomDetailPage(
+          room: room,
+          isMyRoom: isMyRoom,
+          pieceRoomService: widget.pieceRoomService,
+        ),
       ),
     );
     if (_isIOSNative && context.mounted) _navChannel.invokeMethod('setTabBarVisible', true);

@@ -3,10 +3,12 @@ import 'dart:ui';
 import 'package:clubal_app/core/theme/app_colors.dart';
 import 'package:clubal_app/core/theme/app_glass_styles.dart';
 import 'package:clubal_app/core/utils/app_dialogs.dart';
-import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
 import 'package:clubal_app/features/matching/presentation/dialogs/matching_info_dialog.dart';
+import 'package:clubal_app/features/matching/presentation/room_applicants_page.dart';
 import 'package:clubal_app/features/matching/presentation/widgets/matching_page_scaffold.dart';
+import 'package:clubal_app/core/firestore/piece_room_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class PieceRoomDetailPage extends StatefulWidget {
@@ -14,23 +16,27 @@ class PieceRoomDetailPage extends StatefulWidget {
     super.key,
     required this.room,
     required this.isMyRoom,
+    required this.pieceRoomService,
   });
 
   final PieceRoom room;
   final bool isMyRoom;
+  final PieceRoomService pieceRoomService;
 
   @override
   State<PieceRoomDetailPage> createState() => _PieceRoomDetailPageState();
 }
 
 class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
-  late PieceRoom _room;
-
-  @override
-  void initState() {
-    super.initState();
-    _room = widget.room;
+  PieceRoom get _room => widget.room;
+  bool get _isMyRoom {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null && widget.room.creatorUid != null) {
+      return widget.room.creatorUid == uid;
+    }
+    return widget.isMyRoom;
   }
+  PieceRoomService get _service => widget.pieceRoomService;
 
   Future<void> _showRecruitmentStatusSheet() async {
     await showModalBottomSheet<void>(
@@ -60,10 +66,11 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
                 tileColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                 leading: Icon(Icons.check_circle_rounded, color: AppColors.success),
                 title: const Text('모집중'),
-                onTap: () {
-                  setState(() => _room = _room.copyWith(isRecruitmentClosed: false));
+                onTap: () async {
                   Navigator.of(context).pop();
-                  showMatchingInfoDialog(context, message: '모집중으로 변경되었습니다.');
+                  final id = _room.id;
+                  if (id != null) await _service.updateRecruitmentClosed(id, false);
+                  if (mounted) showMatchingInfoDialog(context, message: '모집중으로 변경되었습니다.');
                 },
               ),
               const SizedBox(height: 8),
@@ -72,16 +79,46 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
                 tileColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                 leading: Icon(Icons.cancel_rounded, color: AppColors.failure),
                 title: const Text('모집완료'),
-                onTap: () {
-                  setState(() => _room = _room.copyWith(isRecruitmentClosed: true));
+                onTap: () async {
                   Navigator.of(context).pop();
-                  showMatchingInfoDialog(context, message: '모집완료로 변경되었습니다.');
+                  final id = _room.id;
+                  if (id != null) await _service.updateRecruitmentClosed(id, true);
+                  if (mounted) showMatchingInfoDialog(context, message: '모집완료로 변경되었습니다.');
                 },
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _deleteRoom() async {
+    final id = _room.id;
+    if (id == null) return;
+    await _service.deleteRoom(id);
+    if (mounted) {
+      showMatchingInfoDialog(context, message: '방이 삭제되었습니다.');
+      Navigator.of(context).pop();
+    }
+  }
+
+  Future<void> _applyToRoom() async {
+    final id = _room.id;
+    if (id == null) return;
+    await _service.applyToRoom(id);
+    if (mounted) {
+      showMatchingInfoDialog(context, message: '신청이 완료되었습니다.');
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _showApplicants() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => RoomApplicantsPage(room: _room),
     );
   }
 
@@ -92,169 +129,264 @@ class _PieceRoomDetailPageState extends State<PieceRoomDetailPage> {
     final onSurfaceVariant = colorScheme.onSurfaceVariant;
     final outlineVariant = colorScheme.outlineVariant;
     final room = _room;
-    final isMyRoom = widget.isMyRoom;
 
-    return MatchingPageScaffold(
-      title: '조각 상세',
-      bottomPadding: isMyRoom ? 24 : 18,
-      appBarTrailing: isMyRoom
-          ? IconButton(
-              onPressed: () {
-                showMatchingInfoDialog(context, message: '편집 기능은 준비 중입니다.');
-              },
-              icon: Icon(Icons.edit_rounded, color: onSurface),
-            )
-          : null,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    room.title,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
+    return StreamBuilder<PieceRoom?>(
+      stream: room.id != null ? _service.streamRoom(room.id!) : null,
+      builder: (context, snap) {
+        final currentRoom = snap.hasData && snap.data != null ? snap.data! : room;
+
+        return MatchingPageScaffold(
+          title: '조각 상세',
+          bottomPadding: 0,
+          appBarTrailing: _isMyRoom
+              ? IconButton(
+                  onPressed: () {
+                    showMessageDialog(context, message: '편집 기능은 준비 중입니다.');
+                  },
+                  icon: Icon(Icons.edit_rounded, color: onSurface),
+                )
+              : null,
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.person_rounded, size: 20, color: onSurfaceVariant),
-                      const SizedBox(width: 8),
                       Text(
-                        '${room.creator} 님',
+                        currentRoom.title,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Icon(Icons.person_rounded, size: 20, color: onSurfaceVariant),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${currentRoom.creator} 님',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: onSurfaceVariant,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: outlineVariant.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              currentRoom.capacityLabel,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _LocationCard(location: currentRoom.locationDisplay),
+                      const SizedBox(height: 24),
+                      Divider(height: 1, color: outlineVariant),
+                      const SizedBox(height: 24),
+                      Text(
+                        currentRoom.description ?? '',
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: onSurfaceVariant,
+                          height: 1.6,
+                          color: onSurface,
                         ),
                       ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: outlineVariant.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          room.capacityLabel,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: onSurface,
-                          ),
-                        ),
-                      ),
-                      if (isMyRoom)
-                        IconButton(
-                          onPressed: () {
-                            showMessageDialog(context, message: '편집 기능은 준비 중입니다.');
-                          },
-                          icon: const Icon(Icons.edit_rounded),
-                        ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  _LocationCard(location: room.locationDisplay),
-                  const SizedBox(height: 24),
-                  Divider(height: 1, color: outlineVariant),
-                  const SizedBox(height: 24),
-                  Text(
-                    room.description ?? '',
+                ),
+              ),
+              _BottomActions(
+                isMyRoom: _isMyRoom,
+                room: currentRoom,
+                onStatusTap: _showRecruitmentStatusSheet,
+                onDeleteTap: _deleteRoom,
+                onApplicantsTap: _showApplicants,
+                onApplyTap: _applyToRoom,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _BottomActions extends StatelessWidget {
+  const _BottomActions({
+    required this.isMyRoom,
+    required this.room,
+    required this.onStatusTap,
+    required this.onDeleteTap,
+    required this.onApplicantsTap,
+    required this.onApplyTap,
+  });
+
+  final bool isMyRoom;
+  final PieceRoom room;
+  final VoidCallback onStatusTap;
+  final VoidCallback onDeleteTap;
+  final VoidCallback onApplicantsTap;
+  final VoidCallback onApplyTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hasId = room.id != null;
+
+    if (isMyRoom && hasId) {
+      return Container(
+        padding: EdgeInsets.fromLTRB(20, 16, 20, 16 + MediaQuery.paddingOf(context).bottom),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
+        ),
+        child: Row(
+          children: [
+            _GlassIconButton(
+              icon: Icons.people_rounded,
+              tooltip: '신청한 사람',
+              onTap: onApplicantsTap,
+              isDark: isDark,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _GlassTextButton(
+                label: '상태변경',
+                color: const Color(0xFF2ECEF2),
+                onTap: onStatusTap,
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _GlassTextButton(
+                label: '삭제',
+                color: const Color(0xFFE53935),
+                onTap: onDeleteTap,
+                isDark: isDark,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (!isMyRoom && hasId && !room.isFullOrClosed) {
+      return Container(
+        padding: EdgeInsets.fromLTRB(20, 16, 20, 16 + MediaQuery.paddingOf(context).bottom),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            width: double.infinity,
+            child: _GlassTextButton(
+              label: '신청',
+              color: const Color(0xFF2ECEF2),
+              onTap: onApplyTap,
+              isDark: isDark,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+}
+
+class _GlassIconButton extends StatelessWidget {
+  const _GlassIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    required this.isDark,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: AppGlassStyles.innerCard(radius: 16, isDark: isDark),
+          child: Icon(icon, size: 24, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassTextButton extends StatelessWidget {
+  const _GlassTextButton({
+    required this.label,
+    required this.color,
+    required this.onTap,
+    required this.isDark,
+  });
+
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color, width: 1.5),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(16),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Center(
+                  child: Text(
+                    label,
                     style: TextStyle(
                       fontSize: 16,
-                      height: 1.6,
-                      color: onSurface,
+                      fontWeight: FontWeight.w700,
+                      color: label == '삭제' ? Colors.white : color,
                     ),
                   ),
-                  // 하단 버튼들 (내 방일 경우)
-                  if (isMyRoom)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: const Color(0x332ECEF2),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0xFF2ECEF2), width: 1.5),
-                                ),
-                                child: InkWell(
-                                  onTap: () {
-                                    showMessageDialog(context, message: '상태가 변경되었습니다.');
-                                  },
-                                  child: const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 16),
-                                    child: Center(
-                                      child: Text(
-                                        '상태변경',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                          color: Color(0xFF2ECEF2),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: const Color(0xD9FF5E5E),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0x66FFFFFF), width: 1.5),
-                                ),
-                                child: InkWell(
-                                  onTap: () {
-                                    showMessageDialog(context, message: '방이 삭제되었습니다.');
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 16),
-                                    child: Center(
-                                      child: Text(
-                                        '삭제',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

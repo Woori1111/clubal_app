@@ -37,19 +37,16 @@ class _CreatePieceRoomPageState extends State<CreatePieceRoomPage> {
 
   Future<void> _onTapDate() async {
     final now = DateTime.now();
-    final minDate = DateTime(now.year, now.month, now.day, now.hour);
+    final minDate = DateTime(now.year, now.month, now.day);
     final maxDate = minDate.add(const Duration(days: 365));
-    final picked = await showDialog<DateTime>(
-      context: context,
-      builder: (_) => AppDatePickerDialog(
-        initialDate: minDate,
-        minDate: minDate,
-        maxDate: maxDate,
-      ),
+    final picked = await AppDatePickerDialog.showModal(
+      context,
+      initialDate: minDate,
+      minDate: minDate,
+      maxDate: maxDate,
     );
     if (picked != null && mounted) {
-      final str = '${picked.month}월 ${picked.day}일 ${picked.hour.toString().padLeft(2, '0')}시';
-      _appendContent('📅 날짜: $str');
+      _appendContent('📅 날짜: ${picked.month}월 ${picked.day}일');
     }
   }
 

@@ -21,5 +21,10 @@ service cloud.firestore {
         allow read, write: if true;
       }
     }
+
+    // 조각 방 (매칭) - 목록/상세/생성/수정/삭제/신청
+    match /piece_rooms/{roomId} {
+      allow read, write: if true;
+    }
   }
 }

@@ -1,8 +1,6 @@
 import 'package:clubal_app/core/utils/app_dialogs.dart';
-import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
 import 'package:clubal_app/features/matching/presentation/dialogs/app_date_picker_dialog.dart';
-import 'package:clubal_app/features/matching/presentation/dialogs/matching_info_dialog.dart';
 import 'package:clubal_app/features/matching/presentation/place/place_selection.dart';
 import 'package:clubal_app/features/matching/presentation/place/place_selection_page.dart';
 import 'package:clubal_app/features/matching/presentation/widgets/confirm_button.dart';
@@ -25,21 +23,16 @@ class _AutoMatchPageState extends State<AutoMatchPage> {
 
   Future<void> _onTapDate() async {
     final now = DateTime.now();
-    final minDate = DateTime(now.year, now.month, now.day, now.hour);
+    final minDate = DateTime(now.year, now.month, now.day);
     final maxDate = minDate.add(const Duration(days: 365));
-    final picked = await showDialog<DateTime>(
-      context: context,
-      builder: (_) => AppDatePickerDialog(
-        initialDate: minDate,
-        minDate: minDate,
-        maxDate: maxDate,
-      ),
+    final picked = await AppDatePickerDialog.showModal(
+      context,
+      initialDate: minDate,
+      minDate: minDate,
+      maxDate: maxDate,
     );
     if (picked != null && mounted) {
-      setState(() {
-        _selectedDate =
-            '${picked.month}월 ${picked.day}일 ${picked.hour.toString().padLeft(2, '0')}시';
-      });
+      setState(() => _selectedDate = '${picked.month}월 ${picked.day}일');
     }
   }
 
