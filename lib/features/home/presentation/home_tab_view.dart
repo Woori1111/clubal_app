@@ -1,46 +1,7 @@
 import 'dart:ui';
 
 import 'package:clubal_app/core/widgets/clubal_glass_card.dart';
-import 'package:clubal_app/core/widgets/section_label.dart';
-import 'package:clubal_app/features/home/widgets/post_card.dart';
 import 'package:flutter/material.dart';
-
-/// 커뮤니티 인기글 목록 (커뮤니티 탭과 동일한 구조)
-const List<Map<String, Object?>> _popularPostsData = [
-  {
-    'userName': '김민수',
-    'userProfileImageUrl': null,
-    'title': '오늘 클럽 가실 분 구해요!',
-    'location': '강남',
-    'date': '2시간 전',
-    'viewCount': 24,
-    'likeCount': 3,
-    'commentCount': 5,
-    'imageUrl': null,
-  },
-  {
-    'userName': '이지은',
-    'userProfileImageUrl': null,
-    'title': '주말에 함께 갈 사람 있나요? 정말 재밌는 클럽이에요!',
-    'location': '홍대',
-    'date': '5시간 전',
-    'viewCount': 48,
-    'likeCount': 7,
-    'commentCount': 12,
-    'imageUrl': 'https://picsum.photos/200/200?random=1',
-  },
-  {
-    'userName': '박준호',
-    'userProfileImageUrl': null,
-    'title': '클럽 테이블비 1/N으로 나눠요',
-    'location': '압구정',
-    'date': '1일 전',
-    'viewCount': 67,
-    'likeCount': 2,
-    'commentCount': 8,
-    'imageUrl': null,
-  },
-];
 
 class HomeTabView extends StatefulWidget {
   const HomeTabView({
@@ -341,23 +302,6 @@ class _HomeTabViewState extends State<HomeTabView> {
             ),
             ),
           ),
-          const SizedBox(height: 18),
-          const SectionLabel(title: '커뮤니티 인기글'),
-          const SizedBox(height: 8),
-          ..._popularPostsData.map((post) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: PostCard(
-                  userName: post['userName'] as String,
-                  userProfileImageUrl: post['userProfileImageUrl'] as String?,
-                  title: post['title'] as String,
-                  location: post['location'] as String?,
-                  date: post['date'] as String?,
-                  viewCount: post['viewCount'] as int?,
-                  likeCount: post['likeCount'] as int? ?? 0,
-                  commentCount: post['commentCount'] as int? ?? 0,
-                  imageUrl: post['imageUrl'] as String?,
-                ),
-              )),
         ],
       ),
     );
