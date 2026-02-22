@@ -14,6 +14,9 @@ class PieceRoom {
     this.creatorProfileImageUrl,
     this.isRecruitmentClosed = false,
     this.applicantIds = const [],
+    this.memberIds = const [],
+    this.isAutoMatch = false,
+    this.autoMatchDate,
   });
 
   /// Firestore 문서 ID. 로컬 생성 시 null.
@@ -33,6 +36,12 @@ class PieceRoom {
   final bool isRecruitmentClosed;
   /// 신청한 사용자 UID 목록
   final List<String> applicantIds;
+  /// 확정된 멤버 UID (자동매치 완료 시 6명)
+  final List<String> memberIds;
+  /// 자동매치로 생성된 방 여부
+  final bool isAutoMatch;
+  /// 자동매치 날짜 키 "YYYY-MM-DD" (같은 날짜+장소 방 찾기용)
+  final String? autoMatchDate;
 
   String get capacityLabel => '$currentMembers/$maxMembers';
 
@@ -65,6 +74,9 @@ class PieceRoom {
     String? creatorProfileImageUrl,
     bool? isRecruitmentClosed,
     List<String>? applicantIds,
+    List<String>? memberIds,
+    bool? isAutoMatch,
+    String? autoMatchDate,
   }) {
     return PieceRoom(
       id: id ?? this.id,
@@ -79,6 +91,9 @@ class PieceRoom {
       creatorProfileImageUrl: creatorProfileImageUrl ?? this.creatorProfileImageUrl,
       isRecruitmentClosed: isRecruitmentClosed ?? this.isRecruitmentClosed,
       applicantIds: applicantIds ?? this.applicantIds,
+      memberIds: memberIds ?? this.memberIds,
+      isAutoMatch: isAutoMatch ?? this.isAutoMatch,
+      autoMatchDate: autoMatchDate ?? this.autoMatchDate,
     );
   }
 
@@ -95,6 +110,9 @@ class PieceRoom {
       'creatorProfileImageUrl': creatorProfileImageUrl,
       'isRecruitmentClosed': isRecruitmentClosed,
       'applicantIds': applicantIds,
+      'memberIds': memberIds,
+      'isAutoMatch': isAutoMatch,
+      'autoMatchDate': autoMatchDate,
     };
   }
 
@@ -115,6 +133,9 @@ class PieceRoom {
       creatorProfileImageUrl: map['creatorProfileImageUrl'] as String?,
       isRecruitmentClosed: map['isRecruitmentClosed'] as bool? ?? false,
       applicantIds: List<String>.from(map['applicantIds'] as List<dynamic>? ?? []),
+      memberIds: List<String>.from(map['memberIds'] as List<dynamic>? ?? []),
+      isAutoMatch: map['isAutoMatch'] as bool? ?? false,
+      autoMatchDate: map['autoMatchDate'] as String?,
     );
   }
 }

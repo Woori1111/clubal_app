@@ -26,7 +26,20 @@ import 'package:flutter/services.dart';
 
 // iOS 네이티브 TabView → Flutter 탭 전환 채널
 const _navChannel = MethodChannel('com.clubal.app/navigation');
-const int _shellTabCount = 5;
+
+/// 웹 베타: 하단 배너는 채팅·매칭·메뉴만 표시
+const _webTabs = [
+  NavTab(label: '채팅', icon: Icons.chat_bubble_rounded),
+  NavTab(label: '매칭', icon: Icons.people_alt_rounded),
+  NavTab(label: '메뉴', icon: Icons.menu_rounded),
+];
+const _fullTabs = [
+  NavTab(label: '홈', icon: Icons.home_rounded),
+  NavTab(label: '매칭', icon: Icons.people_alt_rounded),
+  NavTab(label: '채팅', icon: Icons.chat_bubble_rounded),
+  NavTab(label: '커뮤니티', icon: Icons.groups_rounded),
+  NavTab(label: '메뉴', icon: Icons.menu_rounded),
+];
 
 class ClubalHomeShell extends StatefulWidget {
   const ClubalHomeShell({super.key, this.navigatorKey});
@@ -40,24 +53,19 @@ class ClubalHomeShell extends StatefulWidget {
 class _ClubalHomeShellState extends State<ClubalHomeShell> {
   int _selectedIndex = 0;
 
+  int get _tabCount => kIsWeb ? 3 : 5;
+  List<NavTab> get _tabs => kIsWeb ? _webTabs : _fullTabs;
+
   /// 탭별 스크롤 컨트롤러 (같은 탭 다시 탭 시 맨 위로 스크롤용)
-  late final List<ScrollController> _scrollControllers =
-      List.generate(_shellTabCount, (_) => ScrollController());
+  late List<ScrollController> _scrollControllers;
 
   final PieceRoomService _pieceRoomService = PieceRoomService();
   List<PieceRoom> _pieceRooms = [];
   List<PieceRoom> _myPieceRooms = [];
-  final List<PieceRoom> _activeMatches = [];
+  List<PieceRoom> _roomsWhereIAmMember = [];
   StreamSubscription<List<PieceRoom>>? _roomsSub;
   StreamSubscription<List<PieceRoom>>? _myRoomsSub;
-
-  final List<NavTab> _tabs = const [
-    NavTab(label: '홈', icon: Icons.home_rounded),
-    NavTab(label: '매칭', icon: Icons.people_alt_rounded),
-    NavTab(label: '채팅', icon: Icons.chat_bubble_rounded),
-    NavTab(label: '커뮤니티', icon: Icons.groups_rounded),
-    NavTab(label: '메뉴', icon: Icons.menu_rounded),
-  ];
+  StreamSubscription<List<PieceRoom>>? _memberRoomsSub;
 
   bool get _isIOSNative =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
@@ -87,12 +95,39 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
   @override
   void initState() {
     super.initState();
-    _roomsSub = _pieceRoomService.streamAllRooms().listen((rooms) {
-      if (mounted) setState(() => _pieceRooms = rooms);
-    });
-    _myRoomsSub = _pieceRoomService.streamMyRooms().listen((rooms) {
-      if (mounted) setState(() => _myPieceRooms = rooms);
-    });
+    _scrollControllers = List.generate(_tabCount, (_) => ScrollController());
+    try {
+      final timeout = kIsWeb ? const Duration(seconds: 10) : null;
+      Stream<List<PieceRoom>> streamAll = _pieceRoomService.streamAllRooms();
+      if (timeout != null) {
+        streamAll = streamAll.timeout(timeout, onTimeout: (sink) => sink.add([]));
+      }
+      _roomsSub = streamAll.listen((rooms) {
+        if (mounted) setState(() => _pieceRooms = rooms);
+      }, onError: (_) {
+        if (mounted) setState(() => _pieceRooms = []);
+      });
+      Stream<List<PieceRoom>> streamMy = _pieceRoomService.streamMyRooms();
+      if (timeout != null) {
+        streamMy = streamMy.timeout(timeout, onTimeout: (sink) => sink.add([]));
+      }
+      _myRoomsSub = streamMy.listen((rooms) {
+        if (mounted) setState(() => _myPieceRooms = rooms);
+      }, onError: (_) {
+        if (mounted) setState(() => _myPieceRooms = []);
+      });
+      Stream<List<PieceRoom>> streamMember = _pieceRoomService.streamRoomsWhereIAmMember();
+      if (timeout != null) {
+        streamMember = streamMember.timeout(timeout, onTimeout: (sink) => sink.add([]));
+      }
+      _memberRoomsSub = streamMember.listen((rooms) {
+        if (mounted) setState(() => _roomsWhereIAmMember = rooms);
+      }, onError: (_) {
+        if (mounted) setState(() => _roomsWhereIAmMember = []);
+      });
+    } catch (_) {
+      // Firebase 미초기화 등 시 빈 목록 유지
+    }
     if (_isIOSNative) {
       _navChannel.setMethodCallHandler((call) async {
         if (call.method == 'setTab') {
@@ -124,6 +159,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
   void dispose() {
     _roomsSub?.cancel();
     _myRoomsSub?.cancel();
+    _memberRoomsSub?.cancel();
     if (_isIOSNative) _navChannel.setMethodCallHandler(null);
     for (final c in _scrollControllers) {
       c.dispose();
@@ -214,7 +250,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
 
   Widget _buildTabBody(String label) {
     final index = _tabs.indexWhere((t) => t.label == label);
-    final scrollController = index >= 0 && index < _shellTabCount
+    final scrollController = index >= 0 && index < _tabCount
         ? _scrollControllers[index]
         : null;
     switch (label) {
@@ -235,10 +271,22 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
           ),
         );
       case '매칭':
+        final byId = <String, PieceRoom>{};
+        for (final r in _myPieceRooms) {
+          if (r.id != null) byId[r.id!] = r;
+        }
+        for (final r in _roomsWhereIAmMember) {
+          if (r.id != null) byId[r.id!] = r;
+        }
+        final allParticipating = byId.values.toList();
+        allParticipating.sort((a, b) => b.meetingAt.compareTo(a.meetingAt));
+        final activeMatches = allParticipating.where((r) => !r.isFullOrClosed).toList();
+        final completedMatches = allParticipating.where((r) => r.isFullOrClosed).toList();
         return MatchingTabView(
           rooms: _pieceRooms,
           myRooms: _myPieceRooms,
-          activeMatches: _activeMatches,
+          activeMatches: activeMatches,
+          completedMatches: completedMatches,
           pieceRoomService: _pieceRoomService,
           onAutoMatchTap: _openAutoMatch,
           topPadding: 8,
@@ -275,13 +323,16 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
     if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', false);
     final created = await Navigator.of(context).push<PieceRoom>(
       MaterialPageRoute<PieceRoom>(
-        builder: (_) => const AutoMatchPage(),
+        builder: (_) => AutoMatchPage(pieceRoomService: _pieceRoomService),
       ),
     );
     if (!mounted) return;
     if (_isIOSNative) _navChannel.invokeMethod('setTabBarVisible', true);
     if (created == null) return;
-    await _pieceRoomService.createRoom(created);
+    // 자동매치 완료 시 방은 이미 Firestore 트랜잭션으로 생성됨
+    if (!created.isAutoMatch) {
+      await _pieceRoomService.createRoom(created);
+    }
   }
 }
 

@@ -178,11 +178,27 @@ private final class NativeTabBarViewController: UIViewController, UITabBarDelega
 }
 
 // MARK: - PassThroughView
+// 빈 영역 터치는 Flutter로 넘기되, 탭바 영역 안에서 하위 뷰가 터치를 받지 않았을 때
+// (예: 타이틀 레이블이 userInteractionEnabled=false) 해당 좌표를 포함하는 탭 버튼을 찾아 반환.
 
 private class PassThroughView: UIView {
   override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
     let hit = super.hitTest(point, with: event)
-    return hit == self ? nil : hit
+    if hit != nil && hit != self { return hit }
+    guard hit == self else { return hit }
+    for subview in subviews {
+      guard subview.frame.contains(point) else { continue }
+      let ptInBar = convert(point, to: subview)
+      for barItem in subview.subviews {
+        guard barItem.isUserInteractionEnabled else { continue }
+        let ptInItem = subview.convert(ptInBar, to: barItem)
+        if barItem.bounds.contains(ptInItem) {
+          return barItem
+        }
+      }
+      return subview
+    }
+    return nil
   }
 }
 

@@ -10,6 +10,7 @@ class DummyChatRepository implements ChatRepository {
 
   final List<ChatRoom> _rooms = createDummyRooms();
   final Map<String, List<Message>> _messagesByChatId = createDummyMessages();
+  static const String _autoMatchChatPrefix = 'piece_';
   final StreamController<List<ChatRoom>> _roomsController =
       StreamController<List<ChatRoom>>.broadcast();
   final Map<String, StreamController<List<Message>>> _messagesControllers = {};
@@ -121,5 +122,53 @@ class DummyChatRepository implements ChatRepository {
     _messagesByChatId[chatId]!.add(msg);
     _emitMessages(chatId);
     _updateRoomLastMessage(chatId, '[사진]');
+  }
+
+  @override
+  Future<ChatRoom> createGroupRoom({
+    required String pieceRoomId,
+    required List<String> participantIds,
+    required String roomName,
+    String? locationTag,
+    DateTime? meetingDate,
+  }) async {
+    final chatId = '$_autoMatchChatPrefix$pieceRoomId';
+    if (_rooms.any((r) => r.id == chatId)) {
+      return _rooms.firstWhere((r) => r.id == chatId);
+    }
+    final now = DateTime.now();
+    final participants = participantIds
+        .asMap()
+        .entries
+        .map((e) => ChatParticipant(
+              userId: e.value,
+              name: '참여자 ${e.key + 1}',
+            ))
+        .toList();
+    final room = ChatRoom(
+      id: chatId,
+      otherUserId: participantIds.isNotEmpty ? participantIds.first : '',
+      otherUserName: roomName,
+      name: roomName,
+      participants: participants,
+      isGroup: true,
+      lastMessage: '자동매치로 6인이 모였습니다.',
+      lastMessageAt: now,
+      locationTag: locationTag,
+      meetingDate: meetingDate,
+    );
+    _rooms.insert(0, room);
+    _messagesByChatId[chatId] = [
+      Message(
+        id: 'sys_${now.millisecondsSinceEpoch}',
+        type: MessageType.system,
+        content: '자동매치로 6인이 모였습니다. 채팅을 시작해보세요!',
+        createdAt: now,
+        isMe: false,
+        isSystemMessage: true,
+      ),
+    ];
+    _roomsController.add(List.from(_rooms));
+    return room;
   }
 }

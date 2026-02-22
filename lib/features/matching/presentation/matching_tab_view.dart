@@ -20,6 +20,7 @@ class MatchingTabView extends StatefulWidget {
     required this.rooms,
     required this.myRooms,
     required this.activeMatches,
+    required this.completedMatches,
     required this.pieceRoomService,
     this.topPadding = 86.0,
     this.scrollController,
@@ -29,6 +30,7 @@ class MatchingTabView extends StatefulWidget {
   final List<PieceRoom> rooms;
   final List<PieceRoom> myRooms;
   final List<PieceRoom> activeMatches;
+  final List<PieceRoom> completedMatches;
   final PieceRoomService pieceRoomService;
   final double topPadding;
   final ScrollController? scrollController;
@@ -38,7 +40,6 @@ class MatchingTabView extends StatefulWidget {
 }
 
 class _MatchingTabViewState extends State<MatchingTabView> {
-  static const List<PieceRoom> _completedMatches = [];
   final ValueNotifier<double> _fabScaleNotifier = ValueNotifier<double>(1.0);
   final ValueNotifier<bool> _fabCompactNotifier = ValueNotifier<bool>(false);
 
@@ -94,7 +95,7 @@ class _MatchingTabViewState extends State<MatchingTabView> {
 
                   const MatchingSectionLabel(title: '매칭완료'),
                   const SizedBox(height: 8),
-                  ..._roomListItems(_completedMatches, isMyRoom: true),
+                  ..._roomListItems(widget.completedMatches, isMyRoom: true),
                   const SizedBox(height: _sectionSpacing),
 
                   const MatchingSectionLabel(title: '내가 만든 조각'),

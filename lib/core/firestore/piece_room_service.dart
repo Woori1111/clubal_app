@@ -81,4 +81,124 @@ class PieceRoomService {
       return PieceRoom.fromMap(doc.id, doc.data()!);
     });
   }
+
+  /// 내가 멤버로 포함된 방 스트림 (자동매치 완료 등, memberIds에 내 UID 포함)
+  Stream<List<PieceRoom>> streamRoomsWhereIAmMember() {
+    final uid = _currentUid;
+    if (uid == null) return Stream.value([]);
+    return _col
+        .where('memberIds', arrayContains: uid)
+        .snapshots()
+        .map((snap) {
+          final list = snap.docs
+              .map((d) => PieceRoom.fromMap(d.id, d.data()))
+              .toList();
+          list.sort((a, b) => b.meetingAt.compareTo(a.meetingAt));
+          return list;
+        });
+  }
+
+  static const int _autoMatchMax = 6;
+
+  /// 자동매치: 같은 날짜+장소 방이 있으면 참가, 없으면 새 방 생성. 매칭중에 카드로 바로 노출.
+  /// 6명이 되면 isRecruitmentClosed 처리 후 채팅방은 호출측에서 생성.
+  Future<AutoMatchRoomResult> findOrCreateAutoMatchRoom({
+    required String placeLabel,
+    required DateTime meetingAt,
+    required String dateKey,
+    String? userName,
+  }) async {
+    final uid = _currentUid;
+    if (uid == null) {
+      return AutoMatchRoomResult(error: '로그인이 필요합니다.');
+    }
+
+    final existingSnap = await _col
+        .where('isAutoMatch', isEqualTo: true)
+        .where('location', isEqualTo: placeLabel)
+        .where('autoMatchDate', isEqualTo: dateKey)
+        .limit(1)
+        .get();
+
+    if (existingSnap.docs.isNotEmpty) {
+      final docRef = existingSnap.docs.first.reference;
+      return _firestore.runTransaction<AutoMatchRoomResult>((tx) async {
+        final doc = await tx.get(docRef);
+        if (!doc.exists || doc.data() == null) {
+          return _createAutoMatchRoomInTx(tx, placeLabel, meetingAt, dateKey, uid, userName);
+        }
+        final data = doc.data()!;
+        final room = PieceRoom.fromMap(doc.id, data);
+        if (room.currentMembers >= _autoMatchMax) {
+          return AutoMatchRoomResult(error: '이미 6명이 모인 매칭입니다.');
+        }
+        if (room.memberIds.contains(uid)) {
+          return AutoMatchRoomResult(room: room.copyWith(id: doc.id));
+        }
+        final newMemberIds = [...room.memberIds, uid];
+        final newCount = newMemberIds.length;
+        tx.update(docRef, {
+          'memberIds': newMemberIds,
+          'currentMembers': newCount,
+          if (newCount >= _autoMatchMax) 'isRecruitmentClosed': true,
+        });
+        final updated = room.copyWith(
+          id: doc.id,
+          memberIds: newMemberIds,
+          currentMembers: newCount,
+          isRecruitmentClosed: newCount >= _autoMatchMax,
+        );
+        return AutoMatchRoomResult(
+          room: updated,
+          isNewlyCompleted: newCount >= _autoMatchMax,
+          memberIds: newMemberIds,
+        );
+      });
+    }
+
+    return _firestore.runTransaction<AutoMatchRoomResult>((tx) async {
+      return _createAutoMatchRoomInTx(tx, placeLabel, meetingAt, dateKey, uid, userName);
+    });
+  }
+
+  Future<AutoMatchRoomResult> _createAutoMatchRoomInTx(
+    Transaction tx,
+    String placeLabel,
+    DateTime meetingAt,
+    String dateKey,
+    String uid,
+    String? userName,
+  ) async {
+    final newRoom = PieceRoom(
+      title: '$placeLabel · $dateKey',
+      currentMembers: 1,
+      maxMembers: _autoMatchMax,
+      creator: userName ?? '참여자',
+      creatorUid: uid,
+      location: placeLabel,
+      meetingAt: meetingAt,
+      description: '자동매치로 6명 모이면 매칭완료·채팅방 생성.',
+      isRecruitmentClosed: false,
+      memberIds: [uid],
+      isAutoMatch: true,
+      autoMatchDate: dateKey,
+    );
+    final ref = _col.doc();
+    tx.set(ref, newRoom.toMap()..['creatorUid'] = uid);
+    return AutoMatchRoomResult(room: newRoom.copyWith(id: ref.id));
+  }
+}
+
+class AutoMatchRoomResult {
+  const AutoMatchRoomResult({
+    this.room,
+    this.isNewlyCompleted = false,
+    this.memberIds,
+    this.error,
+  });
+
+  final PieceRoom? room;
+  final bool isNewlyCompleted;
+  final List<String>? memberIds;
+  final String? error;
 }
