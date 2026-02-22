@@ -7,8 +7,14 @@ class UserProfileController extends ChangeNotifier {
     UserProfile? initial,
   }) : _profile = initial ??
             const UserProfile(
+              id: 'me',
               displayName: '주지훈',
+              username: 'jujihun',
               bio: '나는 주지훈 입니다. 1000만 영화배우입니다!!',
+              totalMatches: 12,
+              successfulMatches: 8,
+              preferredGenres: ['EDM', '힙합'],
+              recentMatchLocation: '강남',
             );
 
   UserProfile _profile;
@@ -28,6 +34,11 @@ class UserProfileController extends ChangeNotifier {
       displayName: displayName,
       bio: bio,
     );
+    notifyListeners();
+  }
+
+  void updateFromProfile(UserProfile value) {
+    _profile = value;
     notifyListeners();
   }
 }

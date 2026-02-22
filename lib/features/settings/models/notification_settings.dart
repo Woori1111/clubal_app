@@ -8,8 +8,12 @@ class NotificationSettings {
     this.postLikes = true,
     this.commentsReplies = true,
     this.recommendedPosts = true,
+    this.popularPosts = true,
     this.recommendation = true,
     this.promotion = false,
+    this.marketingConsent = false,
+    this.marketingSms = false,
+    this.marketingAppPush = false,
   });
 
   final bool chat;
@@ -20,8 +24,12 @@ class NotificationSettings {
   final bool postLikes;
   final bool commentsReplies;
   final bool recommendedPosts;
+  final bool popularPosts;
   final bool recommendation;
   final bool promotion;
+  final bool marketingConsent;
+  final bool marketingSms;
+  final bool marketingAppPush;
 
   NotificationSettings copyWith({
     bool? chat,
@@ -32,8 +40,12 @@ class NotificationSettings {
     bool? postLikes,
     bool? commentsReplies,
     bool? recommendedPosts,
+    bool? popularPosts,
     bool? recommendation,
     bool? promotion,
+    bool? marketingConsent,
+    bool? marketingSms,
+    bool? marketingAppPush,
   }) {
     return NotificationSettings(
       chat: chat ?? this.chat,
@@ -44,8 +56,12 @@ class NotificationSettings {
       postLikes: postLikes ?? this.postLikes,
       commentsReplies: commentsReplies ?? this.commentsReplies,
       recommendedPosts: recommendedPosts ?? this.recommendedPosts,
+      popularPosts: popularPosts ?? this.popularPosts,
       recommendation: recommendation ?? this.recommendation,
       promotion: promotion ?? this.promotion,
+      marketingConsent: marketingConsent ?? this.marketingConsent,
+      marketingSms: marketingSms ?? this.marketingSms,
+      marketingAppPush: marketingAppPush ?? this.marketingAppPush,
     );
   }
 }

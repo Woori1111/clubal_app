@@ -155,6 +155,17 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
     if (_isIOSNative) _navChannel.invokeMethod('setTab', index);
   }
 
+  Future<void> _openPastNotifications() async {
+    final result = await Navigator.of(context).push<int>(
+      MaterialPageRoute<int>(
+        builder: (_) => const PastNotificationsPage(),
+      ),
+    );
+    if (result != null && mounted && result >= 0 && result < _tabCount) {
+      _switchToTab(result);
+    }
+  }
+
   @override
   void dispose() {
     _roomsSub?.cancel();
@@ -200,11 +211,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
                               builder: (_) => const SearchPage(),
                             ),
                           ),
-                          onNotifications: () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const PastNotificationsPage(),
-                            ),
-                          ),
+                          onNotifications: _openPastNotifications,
                           onSettings: () => Navigator.of(context).push(
                             MaterialPageRoute<void>(
                               builder: (_) => const ClubalSettingsPage(),
@@ -259,11 +266,7 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
           scrollController: scrollController,
           onMatchTap: () => _switchToTab(1),
           onChatTap: () => _switchToTab(2),
-          onExtra1Tap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const PastNotificationsPage(),
-            ),
-          ),
+          onExtra1Tap: _openPastNotifications,
           onExtra2Tap: () => Navigator.of(context).push(
             MaterialPageRoute<void>(
               builder: (_) => const ClubalSettingsPage(),

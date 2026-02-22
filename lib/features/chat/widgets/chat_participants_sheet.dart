@@ -77,9 +77,9 @@ class _ChatParticipantsSheet extends StatelessWidget {
                     backgroundImage: p.imageUrl != null ? NetworkImage(p.imageUrl!) : null,
                     child: p.imageUrl == null
                         ? Text(
-                            p.name.isNotEmpty ? p.name[0].toUpperCase() : '?',
+                            '👤',
                             style: TextStyle(
-                              fontWeight: FontWeight.w600,
+                              fontSize: 24,
                               color: colorScheme.onSurfaceVariant,
                             ),
                           )

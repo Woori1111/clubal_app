@@ -29,11 +29,10 @@ class UserAvatar extends StatelessWidget {
           imageUrl != null && imageUrl!.isNotEmpty ? NetworkImage(imageUrl!) : null,
       child: imageUrl == null || imageUrl!.isEmpty
           ? Text(
-              displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+              '👤',
               style: TextStyle(
                 color: onSurfaceVariant,
-                fontSize: radius * 0.7,
-                fontWeight: FontWeight.w600,
+                fontSize: radius * 0.9,
               ),
             )
           : null,

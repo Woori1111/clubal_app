@@ -110,13 +110,15 @@ class MessageBubble extends StatelessWidget {
                             color: captionColor,
                           ),
                         ),
-                        if (isMe && message.isRead) ...[
+                        if (isMe) ...[
                           const SizedBox(width: 4),
                           Text(
-                            '읽음',
+                            message.isRead ? '읽음' : '안읽음',
                             style: TextStyle(
                               fontSize: 10,
-                              color: captionColor.withValues(alpha: 0.75),
+                              color: message.isRead
+                                  ? captionColor.withValues(alpha: 0.75)
+                                  : captionColor.withValues(alpha: 0.9),
                             ),
                           ),
                         ],

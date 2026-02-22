@@ -2,7 +2,7 @@ import 'package:clubal_app/core/widgets/clubal_background.dart';
 import 'package:clubal_app/core/widgets/clubal_full_body.dart';
 import 'package:clubal_app/core/widgets/glass_card.dart';
 import 'package:clubal_app/core/widgets/pressed_icon_action_button.dart';
-import 'package:clubal_app/features/settings/presentation/marketing_notification_page.dart';
+import 'package:clubal_app/features/settings/models/notification_settings.dart';
 import 'package:clubal_app/features/settings/presentation/notification_settings_controller.dart';
 import 'package:flutter/material.dart';
 
@@ -29,8 +29,12 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     'postLikes': GlobalKey(),
     'commentsReplies': GlobalKey(),
     'recommendedPosts': GlobalKey(),
+    'popularPosts': GlobalKey(),
     'recommendation': GlobalKey(),
     'promotion': GlobalKey(),
+    'marketingConsent': GlobalKey(),
+    'marketingSms': GlobalKey(),
+    'marketingAppPush': GlobalKey(),
   };
 
   @override
@@ -57,10 +61,12 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     super.dispose();
   }
 
+  void _update(NotificationSettings Function(NotificationSettings) updater) {
+    _controller.update(updater(_controller.settings));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final settings = _controller.settings;
-
     return Scaffold(
       body: Builder(
         builder: (context) => wrapFullBody(
@@ -75,7 +81,11 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
               child: SingleChildScrollView(
                 controller: _scrollController,
-                child: Column(
+                child: ListenableBuilder(
+                  listenable: _controller,
+                  builder: (context, _) {
+                    final settings = _controller.settings;
+                    return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
@@ -112,52 +122,28 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                             key: _itemKeys['chat'],
                             label: '채팅 알림',
                             value: settings.chat,
-                            onChanged: (v) {
-                              setState(
-                                () => _controller.update(
-                                  settings.copyWith(chat: v),
-                                ),
-                              );
-                            },
+                            onChanged: (v) => _update((s) => s.copyWith(chat: v)),
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
                             key: _itemKeys['matching'],
                             label: '매칭 알림',
                             value: settings.matching,
-                            onChanged: (v) {
-                              setState(
-                                () => _controller.update(
-                                  settings.copyWith(matching: v),
-                                ),
-                              );
-                            },
+                            onChanged: (v) => _update((s) => s.copyWith(matching: v)),
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
                             key: _itemKeys['sound'],
                             label: '소리',
                             value: settings.sound,
-                            onChanged: (v) {
-                              setState(
-                                () => _controller.update(
-                                  settings.copyWith(sound: v),
-                                ),
-                              );
-                            },
+                            onChanged: (v) => _update((s) => s.copyWith(sound: v)),
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
                             key: _itemKeys['vibration'],
                             label: '진동',
                             value: settings.vibration,
-                            onChanged: (v) {
-                              setState(
-                                () => _controller.update(
-                                  settings.copyWith(vibration: v),
-                                ),
-                              );
-                            },
+                            onChanged: (v) => _update((s) => s.copyWith(vibration: v)),
                           ),
                         ],
                       ),
@@ -179,52 +165,35 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                             key: _itemKeys['postActivity'],
                             label: '게시물 및 활동',
                             value: settings.postActivity,
-                            onChanged: (v) {
-                              setState(
-                                () => _controller.update(
-                                  settings.copyWith(postActivity: v),
-                                ),
-                              );
-                            },
+                            onChanged: (v) => _update((s) => s.copyWith(postActivity: v)),
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
                             key: _itemKeys['postLikes'],
                             label: '내 게시물에 좋아요',
                             value: settings.postLikes,
-                            onChanged: (v) {
-                              setState(
-                                () => _controller.update(
-                                  settings.copyWith(postLikes: v),
-                                ),
-                              );
-                            },
+                            onChanged: (v) => _update((s) => s.copyWith(postLikes: v)),
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
                             key: _itemKeys['commentsReplies'],
                             label: '댓글과 답글',
                             value: settings.commentsReplies,
-                            onChanged: (v) {
-                              setState(
-                                () => _controller.update(
-                                  settings.copyWith(commentsReplies: v),
-                                ),
-                              );
-                            },
+                            onChanged: (v) => _update((s) => s.copyWith(commentsReplies: v)),
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
                             key: _itemKeys['recommendedPosts'],
                             label: '추천 게시물',
                             value: settings.recommendedPosts,
-                            onChanged: (v) {
-                              setState(
-                                () => _controller.update(
-                                  settings.copyWith(recommendedPosts: v),
-                                ),
-                              );
-                            },
+                            onChanged: (v) => _update((s) => s.copyWith(recommendedPosts: v)),
+                          ),
+                          const SizedBox(height: 12),
+                          _AnimatedToggleRow(
+                            key: _itemKeys['popularPosts'],
+                            label: '인기게시글 알림',
+                            value: settings.popularPosts,
+                            onChanged: (v) => _update((s) => s.copyWith(popularPosts: v)),
                           ),
                         ],
                       ),
@@ -246,45 +215,58 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                             key: _itemKeys['recommendation'],
                             label: '정기 추천 알림',
                             value: settings.recommendation,
-                            onChanged: (v) {
-                              setState(
-                                () => _controller.update(
-                                  settings.copyWith(recommendation: v),
-                                ),
-                              );
-                            },
+                            onChanged: (v) => _update((s) => s.copyWith(recommendation: v)),
                           ),
                           const SizedBox(height: 12),
                           _AnimatedToggleRow(
                             key: _itemKeys['promotion'],
                             label: '각종 프로모션',
                             value: settings.promotion,
-                            onChanged: (v) {
-                              setState(
-                                () => _controller.update(
-                                  settings.copyWith(promotion: v),
-                                ),
-                              );
-                            },
+                            onChanged: (v) => _update((s) => s.copyWith(promotion: v)),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
+                    Text(
+                      '마케팅·광고성 알림',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
                     GlassCard(
-                      child: _SettingRowWithArrow(
-                        title: '마케팅·광고성 알림',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const MarketingNotificationPage(),
-                            ),
-                          );
-                        },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _AnimatedToggleRow(
+                            key: _itemKeys['marketingConsent'],
+                            label: '마케팅 목적 개인정보 수집·이용 동의',
+                            value: settings.marketingConsent,
+                            onChanged: (v) => _update((s) => s.copyWith(marketingConsent: v)),
+                          ),
+                          const SizedBox(height: 12),
+                          _AnimatedToggleRow(
+                            key: _itemKeys['marketingSms'],
+                            label: 'SMS 알림',
+                            value: settings.marketingSms,
+                            onChanged: (v) => _update((s) => s.copyWith(marketingSms: v)),
+                          ),
+                          const SizedBox(height: 12),
+                          _AnimatedToggleRow(
+                            key: _itemKeys['marketingAppPush'],
+                            label: '마케팅·광고성 정보 앱 푸시',
+                            value: settings.marketingAppPush,
+                            onChanged: (v) => _update((s) => s.copyWith(marketingAppPush: v)),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 24),
                   ],
+                );
+                  },
                 ),
               ),
             ),
@@ -293,45 +275,6 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
       ),
     ),
   ),
-    );
-  }
-}
-
-class _SettingRowWithArrow extends StatelessWidget {
-  const _SettingRowWithArrow({
-    required this.title,
-    required this.onTap,
-  });
-
-  final String title;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 20,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

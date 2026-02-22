@@ -7,6 +7,8 @@ class NotificationItem {
     required this.createdAt,
     this.icon,
     this.isRead = false,
+    /// 탭으로 이동해야 하는 알림이면 0~4 (홈, 매칭, 채팅, 커뮤니티, 메뉴), null이면 확인용(확대 효과)
+    this.targetTabIndex,
   });
 
   final String id;
@@ -15,6 +17,7 @@ class NotificationItem {
   final DateTime createdAt;
   final String? icon;
   final bool isRead;
+  final int? targetTabIndex;
 
   String get timeAgo {
     final now = DateTime.now();
@@ -32,6 +35,7 @@ class NotificationItem {
     DateTime? createdAt,
     String? icon,
     bool? isRead,
+    int? targetTabIndex,
   }) {
     return NotificationItem(
       id: id ?? this.id,
@@ -40,6 +44,7 @@ class NotificationItem {
       createdAt: createdAt ?? this.createdAt,
       icon: icon ?? this.icon,
       isRead: isRead ?? this.isRead,
+      targetTabIndex: targetTabIndex ?? this.targetTabIndex,
     );
   }
 }

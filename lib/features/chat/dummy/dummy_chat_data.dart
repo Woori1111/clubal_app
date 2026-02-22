@@ -155,7 +155,7 @@ Map<String, List<Message>> createDummyMessages() {
         content: '내일 저녁 7시에 강남역에서 만나요!',
         createdAt: now.subtract(const Duration(minutes: 5)),
         isMe: true,
-        isRead: true,
+        isRead: false,
       ),
     ],
     'room1': [
@@ -194,6 +194,7 @@ Map<String, List<Message>> createDummyMessages() {
         text: '내일 저녁 7시에 강남역에서 만나요!',
         createdAt: now.subtract(const Duration(minutes: 5)),
         isMe: true,
+        isRead: false,
       ),
     ],
     'room2': [
@@ -233,6 +234,7 @@ Map<String, List<Message>> createDummyMessages() {
         text: '네! Noir Stage 가보고 싶어요',
         createdAt: now.subtract(const Duration(days: 1, hours: 1)),
         isMe: true,
+        isRead: false,
       ),
       Message(
         id: 'm19',
@@ -256,6 +258,7 @@ Map<String, List<Message>> createDummyMessages() {
         text: '이번 주말에 같이 가요!',
         createdAt: now.subtract(const Duration(days: 2)),
         isMe: true,
+        isRead: false,
       ),
     ],
   };

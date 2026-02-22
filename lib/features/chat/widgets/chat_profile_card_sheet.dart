@@ -1,6 +1,5 @@
 import 'package:clubal_app/core/theme/app_colors.dart';
 import 'package:clubal_app/features/chat/models/chat_room.dart';
-import 'package:clubal_app/features/chat/widgets/stacked_avatars.dart';
 import 'package:flutter/material.dart';
 
 void showChatProfileCardSheet(
@@ -69,12 +68,9 @@ class _ChatProfileCardSheet extends StatelessWidget {
                   : null,
               child: participant.imageUrl == null
                   ? Text(
-                      participant.name.isNotEmpty
-                          ? participant.name[0].toUpperCase()
-                          : '?',
+                      '👤',
                       style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 48,
                         color: onSurfaceVariant,
                       ),
                     )

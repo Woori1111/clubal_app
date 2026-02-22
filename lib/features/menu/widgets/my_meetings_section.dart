@@ -1,3 +1,7 @@
+import 'package:clubal_app/features/meeting/presentation/ended_meetings_page.dart';
+import 'package:clubal_app/features/meeting/presentation/joined_meetings_page.dart';
+import 'package:clubal_app/features/meeting/presentation/my_created_meetings_page.dart';
+import 'package:clubal_app/features/meeting/presentation/scheduled_meetings_page.dart';
 import 'package:clubal_app/features/menu/dummy/menu_dummy_data.dart';
 import 'package:clubal_app/features/menu/widgets/activity_row_item.dart';
 import 'package:clubal_app/features/menu/widgets/activity_section_card.dart';
@@ -17,19 +21,47 @@ class MyMeetingsSection extends StatelessWidget {
           ActivityRowItem(
             label: '내가 만든 모임',
             value: '${MenuDummyData.myCreatedMeetings}개',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const MyCreatedMeetingsPage(),
+                ),
+              );
+            },
           ),
           ActivityRowItem(
             label: '참여한 모임',
             value: '${MenuDummyData.myJoinedMeetings}개',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const JoinedMeetingsPage(),
+                ),
+              );
+            },
           ),
           ActivityRowItem(
             label: '예정된 모임',
             value: MenuDummyData.nextMeetingTitle,
             badge: 'D-${MenuDummyData.nextMeetingDDay}',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const ScheduledMeetingsPage(),
+                ),
+              );
+            },
           ),
           ActivityRowItem(
             label: '종료된 모임',
             value: '${MenuDummyData.pastMeetings}개',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const EndedMeetingsPage(),
+                ),
+              );
+            },
           ),
         ],
       ),

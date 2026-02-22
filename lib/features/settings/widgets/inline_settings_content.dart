@@ -4,6 +4,7 @@ import 'package:clubal_app/features/settings/presentation/account_management_pag
 import 'package:clubal_app/features/settings/presentation/customer_support_pages.dart';
 import 'package:clubal_app/features/settings/presentation/notification_settings_page.dart';
 import 'package:clubal_app/features/settings/presentation/notification_settings_controller.dart';
+import 'package:clubal_app/features/settings/presentation/safety_block_body.dart';
 import 'package:clubal_app/features/settings/presentation/settings_sub_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -74,6 +75,22 @@ class _InlineSettingsContentState extends State<InlineSettingsContent> {
     showMessageDialog(context, message: text);
   }
 
+  void _pushNotificationSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const NotificationSettingsPage(),
+      ),
+    );
+  }
+
+  void _pushSubPage(String title, {Widget? child}) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SettingsSubPage(title: title, child: child),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -82,28 +99,13 @@ class _InlineSettingsContentState extends State<InlineSettingsContent> {
           child: StreamBuilder<User?>(
             stream: FirebaseAuth.instance.authStateChanges(),
             builder: (context, snapshot) {
-              final user = snapshot.data;
-              final isLoggedIn = user != null;
+              final isLoggedIn = snapshot.data != null;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _SettingRowWithArrow(
-                    title: '알림 설정',
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const NotificationSettingsPage(),
-                        ),
-                      );
-                    },
-                  ),
+                  _SettingRow(title: '알림 설정', onTap: _pushNotificationSettings),
                   const SizedBox(height: 14),
-                  _SettingRow(
-                    title: '계정/인증',
-                    subtitle: isLoggedIn
-                        ? '연결 계정: ${user.email ?? user.displayName ?? user.uid}'
-                        : '구글 로그인으로 계정을 연결해 주세요',
-                  ),
+                  const _SettingRow(title: '계정/인증'),
                   const SizedBox(height: 12),
                   _GoogleAuthButton(
                     busy: _isAuthBusy,
@@ -113,61 +115,23 @@ class _InlineSettingsContentState extends State<InlineSettingsContent> {
                   ),
                   const SizedBox(height: 14),
                   _SettingRow(
-                    title: '결제/정산',
-                    subtitle: '1/N 결제 수단 및 내역',
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const SettingsSubPage(
-                            title: '결제/정산',
-                          ),
-                        ),
-                      );
-                    },
+                    title: '안전 & 차단 관리',
+                    onTap: () => _pushSubPage('안전 & 차단 관리', child: const SafetyBlockBody()),
                   ),
                   const SizedBox(height: 14),
                   _SettingRow(
                     title: '고객지원',
-                    subtitle: '문의 및 신고 접수',
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const SettingsSubPage(
-                            title: '고객지원',
-                            child: CustomerSupportBody(),
-                          ),
-                        ),
-                      );
-                    },
+                    onTap: () => _pushSubPage('고객지원', child: const CustomerSupportBody()),
                   ),
                   const SizedBox(height: 14),
                   _SettingRow(
                     title: '약관 및 정보',
-                    subtitle: '이용약관·개인정보처리방침',
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const SettingsSubPage(
-                            title: '약관 및 정보',
-                          ),
-                        ),
-                      );
-                    },
+                    onTap: () => _pushSubPage('약관 및 정보'),
                   ),
                   const SizedBox(height: 14),
                   _SettingRow(
                     title: '계정 관리',
-                    subtitle: '프로필·보안·연동 관리',
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const SettingsSubPage(
-                            title: '계정 관리',
-                            child: AccountManagementBody(),
-                          ),
-                        ),
-                      );
-                    },
+                    onTap: () => _pushSubPage('계정 관리', child: const AccountManagementBody()),
                   ),
                 ],
               );
@@ -267,12 +231,10 @@ class _GoogleAuthButtonState extends State<_GoogleAuthButton> {
 class _SettingRow extends StatelessWidget {
   const _SettingRow({
     required this.title,
-    required this.subtitle,
     this.onTap,
   });
 
   final String title;
-  final String subtitle;
   final VoidCallback? onTap;
 
   @override
@@ -282,24 +244,12 @@ class _SettingRow extends StatelessWidget {
     Widget content = Row(
       children: [
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-              ),
-            ],
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
         ),
         if (isTappable) ...[
@@ -321,45 +271,6 @@ class _SettingRow extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: content,
-      ),
-    );
-  }
-}
-
-class _SettingRowWithArrow extends StatelessWidget {
-  const _SettingRowWithArrow({
-    required this.title,
-    required this.onTap,
-  });
-
-  final String title;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 20,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ],
-        ),
       ),
     );
   }

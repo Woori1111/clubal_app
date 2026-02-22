@@ -1,9 +1,7 @@
-import 'package:clubal_app/features/menu/widgets/community_activity_section.dart';
 import 'package:clubal_app/features/menu/widgets/favorite_places_section.dart';
 import 'package:clubal_app/features/menu/widgets/matching_status_section.dart';
 import 'package:clubal_app/features/menu/widgets/my_meetings_section.dart';
 import 'package:clubal_app/features/menu/widgets/profile_card.dart';
-import 'package:clubal_app/features/menu/widgets/safety_block_section.dart';
 import 'package:clubal_app/features/profile/presentation/profile_detail_page.dart';
 import 'package:clubal_app/features/profile/presentation/user_profile_scope.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +17,18 @@ class MenuActivityHubPage extends StatelessWidget {
 
   final ScrollController? scrollController;
   final VoidCallback? onSwitchToMatching;
+
+  void _openProfileDetail(BuildContext context) {
+    final controller = UserProfileScope.of(context);
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => UserProfileScope(
+          controller: controller,
+          child: const ProfileDetailPage(),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,18 +46,8 @@ class MenuActivityHubPage extends StatelessWidget {
         children: [
           const SizedBox(height: 8),
           MenuProfileCard(
-            displayName: profile.displayName,
-            bio: profile.bio,
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => UserProfileScope(
-                    controller: controller,
-                    child: const ProfileDetailPage(),
-                  ),
-                ),
-              );
-            },
+            profile: profile,
+            onTap: () => _openProfileDetail(context),
           ),
           const SizedBox(height: 24),
           MatchingStatusSection(onTap: onSwitchToMatching),
@@ -55,10 +55,6 @@ class MenuActivityHubPage extends StatelessWidget {
           const MyMeetingsSection(),
           const SizedBox(height: 16),
           const FavoritePlacesSection(),
-          const SizedBox(height: 16),
-          const CommunityActivitySection(),
-          const SizedBox(height: 16),
-          const SafetyBlockSection(),
           const SizedBox(height: 24),
         ],
       ),

@@ -14,7 +14,7 @@ class PastNotificationsPage extends StatefulWidget {
 }
 
 class _PastNotificationsPageState extends State<PastNotificationsPage> {
-  final NotificationRepository _repository = LocalNotificationRepository();
+  final NotificationRepository _repository = LocalNotificationRepository.instance;
   List<NotificationItem> _notifications = [];
   bool _isLoading = true;
 
@@ -44,11 +44,35 @@ class _PastNotificationsPageState extends State<PastNotificationsPage> {
   }
 
   Future<void> _deleteAll() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('전체 삭제'),
+        content: const Text('정말 모든 알림을 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('확인', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
     await _repository.deleteAll();
-    if (mounted) {
-      setState(() {
-        _notifications.clear();
-      });
+    if (!mounted) return;
+
+    final count = _notifications.length;
+    for (var i = 0; i < count; i++) {
+      if (!mounted) return;
+      setState(() => _notifications.removeAt(0));
+      await Future.delayed(const Duration(milliseconds: 100));
     }
   }
 
@@ -62,6 +86,74 @@ class _PastNotificationsPageState extends State<PastNotificationsPage> {
         }
       });
     }
+  }
+
+  void _onNotificationTap(BuildContext context, NotificationItem item) {
+    _markAsRead(item.id);
+    if (item.targetTabIndex != null) {
+      Navigator.of(context).pop(item.targetTabIndex);
+    } else {
+      _showExpandedNotification(context, item);
+    }
+  }
+
+  void _showExpandedNotification(BuildContext context, NotificationItem item) {
+    showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '알림',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return const SizedBox.shrink();
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return ScaleTransition(
+          scale: CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          ),
+          child: Center(
+            child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: GlassCard(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.title,
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                  ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              item.body,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    height: 1.5,
+                                  ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              item.timeAgo,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -135,13 +227,13 @@ class _PastNotificationsPageState extends State<PastNotificationsPage> {
                                   final item = _notifications[index];
                                   return Dismissible(
                                     key: Key(item.id),
-                                    direction: DismissDirection.endToStart,
+                                    direction: DismissDirection.startToEnd,
                                     onDismissed: (_) {
                                       _deleteItem(item.id);
                                     },
                                     background: Container(
-                                      alignment: Alignment.centerRight,
-                                      padding: const EdgeInsets.only(right: 20),
+                                      alignment: Alignment.centerLeft,
+                                      padding: const EdgeInsets.only(left: 20),
                                       decoration: BoxDecoration(
                                         color: Colors.redAccent,
                                         borderRadius: BorderRadius.circular(16),
@@ -149,7 +241,7 @@ class _PastNotificationsPageState extends State<PastNotificationsPage> {
                                       child: const Icon(Icons.delete_rounded, color: Colors.white),
                                     ),
                                     child: GestureDetector(
-                                      onTap: () => _markAsRead(item.id),
+                                      onTap: () => _onNotificationTap(context, item),
                                       child: _NotificationListTile(item: item),
                                     ),
                                   );

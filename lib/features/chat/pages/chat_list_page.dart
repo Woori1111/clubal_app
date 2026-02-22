@@ -46,7 +46,7 @@ class _ChatListPageState extends State<ChatListPage> {
 
   void _onLeaveRoom(String chatId) {
     setState(() => _removingRoomIds.add(chatId));
-    Future.delayed(const Duration(milliseconds: 200), () {
+    Future<void>.delayed(const Duration(milliseconds: 200), () {
       if (!mounted) return;
       setState(() {
         _removingRoomIds.remove(chatId);
@@ -131,6 +131,8 @@ class _ChatListPageState extends State<ChatListPage> {
             ),
             SliverList(
               delegate: SliverChildBuilderDelegate(
+                addAutomaticKeepAlives: false,
+                addRepaintBoundaries: true,
                 (context, index) {
                   final room = filtered[index];
                   final isMuted = _displayIsMuted(room);
