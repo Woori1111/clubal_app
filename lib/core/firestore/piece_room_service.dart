@@ -3,35 +3,56 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:clubal_app/features/matching/models/piece_room.dart';
 
 /// 조각 방(piece_room) Firestore CRUD 및 스트림
+/// Firebase 미초기화(웹 타임아웃 등) 시에도 생성만은 성공하고, 스트림/메서드는 빈 결과 반환.
 class PieceRoomService {
   PieceRoomService({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  })  : _firestore = firestore ?? _safeFirestore,
+        _auth = auth ?? _safeAuth;
 
-  final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
+  static FirebaseFirestore? get _safeFirestore {
+    try {
+      return FirebaseFirestore.instance;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static FirebaseAuth? get _safeAuth {
+    try {
+      return FirebaseAuth.instance;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  final FirebaseFirestore? _firestore;
+  final FirebaseAuth? _auth;
 
   static const String _collection = 'piece_rooms';
 
-  CollectionReference<Map<String, dynamic>> get _col =>
-      _firestore.collection(_collection);
+  CollectionReference<Map<String, dynamic>>? get _col =>
+      _firestore?.collection(_collection);
 
-  String? get _currentUid => _auth.currentUser?.uid;
+  String? get _currentUid => _auth?.currentUser?.uid;
 
-  /// 방 생성. 반환: 문서 ID
+  /// 방 생성. 반환: 문서 ID (미연결 시 빈 문자열)
   Future<String> createRoom(PieceRoom room) async {
+    final col = _col;
+    if (col == null) return '';
     final uid = _currentUid;
     final data = room.toMap();
     if (uid != null) data['creatorUid'] = uid;
-    final doc = await _col.add(data);
+    final doc = await col.add(data);
     return doc.id;
   }
 
-  /// 전체 조각 목록 스트림 (최신순)
+  /// 전체 조각 목록 스트림 (최신순). Firebase 미연결 시 빈 스트림.
   Stream<List<PieceRoom>> streamAllRooms() {
-    return _col
+    final col = _col;
+    if (col == null) return Stream.value([]);
+    return col
         .orderBy('meetingAt', descending: true)
         .snapshots()
         .map((snap) => snap.docs
@@ -43,7 +64,9 @@ class PieceRoomService {
   Stream<List<PieceRoom>> streamMyRooms() {
     final uid = _currentUid;
     if (uid == null) return Stream.value([]);
-    return _col
+    final col = _col;
+    if (col == null) return Stream.value([]);
+    return col
         .where('creatorUid', isEqualTo: uid)
         .snapshots()
         .map((snap) {
@@ -57,26 +80,28 @@ class PieceRoomService {
 
   /// 모집 상태 변경
   Future<void> updateRecruitmentClosed(String roomId, bool closed) async {
-    await _col.doc(roomId).update({'isRecruitmentClosed': closed});
+    await _col?.doc(roomId).update({'isRecruitmentClosed': closed});
   }
 
   /// 방 삭제
   Future<void> deleteRoom(String roomId) async {
-    await _col.doc(roomId).delete();
+    await _col?.doc(roomId).delete();
   }
 
   /// 방에 신청 (applicantIds에 현재 유저 추가)
   Future<void> applyToRoom(String roomId) async {
     final uid = _currentUid;
     if (uid == null) return;
-    await _col.doc(roomId).update({
+    await _col?.doc(roomId).update({
       'applicantIds': FieldValue.arrayUnion([uid]),
     });
   }
 
   /// 단일 방 스트림 (상세/수정 반영)
   Stream<PieceRoom?> streamRoom(String roomId) {
-    return _col.doc(roomId).snapshots().map((doc) {
+    final col = _col;
+    if (col == null) return Stream.value(null);
+    return col.doc(roomId).snapshots().map((doc) {
       if (!doc.exists || doc.data() == null) return null;
       return PieceRoom.fromMap(doc.id, doc.data()!);
     });
@@ -86,7 +111,9 @@ class PieceRoomService {
   Stream<List<PieceRoom>> streamRoomsWhereIAmMember() {
     final uid = _currentUid;
     if (uid == null) return Stream.value([]);
-    return _col
+    final col = _col;
+    if (col == null) return Stream.value([]);
+    return col
         .where('memberIds', arrayContains: uid)
         .snapshots()
         .map((snap) {
@@ -108,12 +135,16 @@ class PieceRoomService {
     required String dateKey,
     String? userName,
   }) async {
+    final col = _col;
+    if (col == null) {
+      return const AutoMatchRoomResult(error: '연결을 불러오는 중입니다. 잠시 후 다시 시도해 주세요.');
+    }
     final uid = _currentUid;
     if (uid == null) {
       return AutoMatchRoomResult(error: '로그인이 필요합니다.');
     }
 
-    final existingSnap = await _col
+    final existingSnap = await col
         .where('isAutoMatch', isEqualTo: true)
         .where('location', isEqualTo: placeLabel)
         .where('autoMatchDate', isEqualTo: dateKey)
@@ -122,7 +153,7 @@ class PieceRoomService {
 
     if (existingSnap.docs.isNotEmpty) {
       final docRef = existingSnap.docs.first.reference;
-      return _firestore.runTransaction<AutoMatchRoomResult>((tx) async {
+      return _firestore!.runTransaction<AutoMatchRoomResult>((tx) async {
         final doc = await tx.get(docRef);
         if (!doc.exists || doc.data() == null) {
           return _createAutoMatchRoomInTx(tx, placeLabel, meetingAt, dateKey, uid, userName);
@@ -156,7 +187,7 @@ class PieceRoomService {
       });
     }
 
-    return _firestore.runTransaction<AutoMatchRoomResult>((tx) async {
+    return _firestore!.runTransaction<AutoMatchRoomResult>((tx) async {
       return _createAutoMatchRoomInTx(tx, placeLabel, meetingAt, dateKey, uid, userName);
     });
   }
@@ -183,7 +214,7 @@ class PieceRoomService {
       isAutoMatch: true,
       autoMatchDate: dateKey,
     );
-    final ref = _col.doc();
+    final ref = _col!.doc();
     tx.set(ref, newRoom.toMap()..['creatorUid'] = uid);
     return AutoMatchRoomResult(room: newRoom.copyWith(id: ref.id));
   }
