@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import 'package:clubal_app/app/clubal_app.dart';
+import 'package:clubal_app/core/kakao/kakao_config.dart';
+import 'package:clubal_app/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:clubal_app/app/clubal_app.dart';
-import 'package:clubal_app/firebase_options.dart';
+import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +23,9 @@ Future<void> main() async {
     );
   } on Exception catch (_) {
     // 웹 등에서 Firebase 초기화가 멈추거나 실패해도 앱은 그대로 진입 (Firestore 등은 빈 데이터)
+  }
+  if (kIsWeb && KakaoConfig.isWebEnabled) {
+    KakaoSdk.init(javaScriptAppKey: KakaoConfig.javascriptAppKey);
   }
   runApp(const ClubalApp());
 }

@@ -223,29 +223,21 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
                       ],
                     ),
                   ),
+                  if (kIsWeb) _WebFloatingNav(
+                    tabs: _tabs,
+                    selectedIndex: _selectedIndex,
+                    onTap: _onTabTapped,
+                  ),
                 ],
               ),
             ),
           );
         },
       ),
-      // iOS: 반드시 null. 네이티브 UITabBar만 쓰고, Flutter 쪽 젤리 네비는 겹치면 안 됨.
-      bottomNavigationBar: isIOS
+      // iOS: null. 웹: 플로팅 캡슐은 body Stack에 그려짐.
+      bottomNavigationBar: isIOS || kIsWeb
           ? null
-          : kIsWeb
-              ? BottomNavigationBar(
-                  type: BottomNavigationBarType.fixed,
-                  currentIndex: _selectedIndex,
-                  onTap: _onTabTapped,
-                  items: [
-                    for (final tab in _tabs)
-                      BottomNavigationBarItem(
-                        icon: Icon(tab.icon),
-                        label: tab.label,
-                      ),
-                  ],
-                )
-              : Material(
+          : Material(
                   color: Colors.transparent,
                   child: ClubalJellyBottomNav(
                     tabs: _tabs,
@@ -337,6 +329,189 @@ class _ClubalHomeShellState extends State<ClubalHomeShell> {
     if (!created.isAutoMatch) {
       await _pieceRoomService.createRoom(created);
     }
+  }
+}
+
+/// 웹 전용: 하단 플로팅 캡슐 네비 (젤리 버튼 형식, 탭 시 바운스 애니메이션).
+class _WebFloatingNav extends StatefulWidget {
+  const _WebFloatingNav({
+    required this.tabs,
+    required this.selectedIndex,
+    required this.onTap,
+  });
+
+  final List<NavTab> tabs;
+  final int selectedIndex;
+  final ValueChanged<int> onTap;
+
+  @override
+  State<_WebFloatingNav> createState() => _WebFloatingNavState();
+}
+
+class _WebFloatingNavState extends State<_WebFloatingNav>
+    with TickerProviderStateMixin {
+  late List<AnimationController> _bounceControllers;
+  late List<Animation<double>> _scaleAnimations;
+
+  @override
+  void initState() {
+    super.initState();
+    _bounceControllers = List.generate(
+      widget.tabs.length,
+      (_) => AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 520),
+      ),
+    );
+    _scaleAnimations = _bounceControllers.map((c) {
+      return TweenSequence<double>([
+        TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.14), weight: 22),
+        TweenSequenceItem(tween: Tween(begin: 1.14, end: 0.93), weight: 26),
+        TweenSequenceItem(tween: Tween(begin: 0.93, end: 1.05), weight: 30),
+        TweenSequenceItem(tween: Tween(begin: 1.05, end: 0.985), weight: 12),
+        TweenSequenceItem(tween: Tween(begin: 0.985, end: 1.00), weight: 10),
+      ]).animate(CurvedAnimation(parent: c, curve: Curves.linear));
+    }).toList();
+    _bounceControllers[widget.selectedIndex].forward();
+  }
+
+  @override
+  void didUpdateWidget(covariant _WebFloatingNav oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedIndex != widget.selectedIndex) {
+      _bounceControllers[widget.selectedIndex].forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _bounceControllers) c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(48, 0, 48, 20),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isDark
+                        ? [const Color(0x22FFFFFF), const Color(0x12FFFFFF)]
+                        : [const Color(0x36FFFFFF), const Color(0x1CFFFFFF)],
+                  ),
+                  border: Border.all(
+                    color: isDark ? const Color(0x33FFFFFF) : const Color(0x55FFFFFF),
+                    width: 0.9,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x18000000),
+                      blurRadius: 30,
+                      spreadRadius: -8,
+                      offset: Offset(0, 14),
+                    ),
+                    BoxShadow(
+                      color: Color(0x0A000000),
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    for (int i = 0; i < widget.tabs.length; i++)
+                      Expanded(
+                        child: AnimatedBuilder(
+                          animation: _scaleAnimations[i],
+                          builder: (context, child) {
+                            return GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => widget.onTap(i),
+                              child: _WebJellyNavItem(
+                                tab: widget.tabs[i],
+                                isSelected: widget.selectedIndex == i,
+                                bounceScale: _scaleAnimations[i].value,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WebJellyNavItem extends StatelessWidget {
+  const _WebJellyNavItem({
+    required this.tab,
+    required this.isSelected,
+    required this.bounceScale,
+  });
+
+  final NavTab tab;
+  final bool isSelected;
+  final double bounceScale;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = isDark
+        ? (isSelected ? const Color(0xFFE6EDF3) : const Color(0xFF8B949E))
+        : (isSelected ? const Color(0xFF1C1C1E) : const Color(0xFFA0A0A5));
+    final labelColor = iconColor;
+
+    return Center(
+      child: Transform.scale(
+        scale: bounceScale,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Icon(tab.icon, color: iconColor, size: 22),
+            ),
+            const SizedBox(height: 4),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOutCubic,
+              style: TextStyle(
+                fontFamily: 'Pretendard',
+                color: labelColor,
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                letterSpacing: isSelected ? 0.1 : 0.0,
+              ),
+              child: Text(tab.label),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
