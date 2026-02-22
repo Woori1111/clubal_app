@@ -27,10 +27,11 @@ import 'package:flutter/services.dart';
 // iOS 네이티브 TabView → Flutter 탭 전환 채널
 const _navChannel = MethodChannel('com.clubal.app/navigation');
 
-/// 웹 베타: 하단 배너는 채팅·매칭·메뉴만 표시
+/// 웹: 홈·매칭·채팅·메뉴 (커뮤니티 제외)
 const _webTabs = [
-  NavTab(label: '채팅', icon: Icons.chat_bubble_rounded),
+  NavTab(label: '홈', icon: Icons.home_rounded),
   NavTab(label: '매칭', icon: Icons.people_alt_rounded),
+  NavTab(label: '채팅', icon: Icons.chat_bubble_rounded),
   NavTab(label: '메뉴', icon: Icons.menu_rounded),
 ];
 const _fullTabs = [
@@ -53,7 +54,7 @@ class ClubalHomeShell extends StatefulWidget {
 class _ClubalHomeShellState extends State<ClubalHomeShell> {
   int _selectedIndex = 0;
 
-  int get _tabCount => kIsWeb ? 3 : 5;
+  int get _tabCount => kIsWeb ? 4 : 5;
   List<NavTab> get _tabs => kIsWeb ? _webTabs : _fullTabs;
 
   /// 탭별 스크롤 컨트롤러 (같은 탭 다시 탭 시 맨 위로 스크롤용)
