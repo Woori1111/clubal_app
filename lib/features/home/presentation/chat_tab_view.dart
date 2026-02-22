@@ -12,4 +12,3 @@ class ChatTabView extends StatelessWidget {
     return ChatListPage(scrollController: scrollController);
   }
 }
-
